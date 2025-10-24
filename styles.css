@@ -1,5 +1,8 @@
+
+
+@media(min-width: 900px){
 * {
-  box-sizing: border-box;
+  box-sizing: border-box; 
 }
 
 body {
@@ -8,38 +11,26 @@ body {
   background-color: #e6e6fa;
 }
 
-/* Style the side navigation */
-.sidenav {
-  height: 100%;
-  width: 200px;
-  position: fixed;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  background-color: #fff8dc;
-  overflow-x: hidden;
+/* Style the top navigation bar */
+.topnav {
+  overflow: hidden;
+  background-color: #333;
 }
 
-
-/* Side navigation links */
-.sidenav a {
-  color: #000;
-  padding: 16px;
-  text-decoration: none;
+/* Style the topnav links */
+.topnav a {
+  float: left;
   display: block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
 }
 
 /* Change color on hover */
-.sidenav a:hover {
-  background-color: #e6e6fa;
-  color: #8A2BE2;
-}
-
-/* Style the content */
-.content {
-  margin-left: 200px;
-  padding-left: 20px;
-  
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
 }
 
 .box {
@@ -60,6 +51,7 @@ body {
   margin-bottom: 5px;
   grid-column: 1 / span 4;
   grid-row: 2;
+  width: 1000px;
 }
 .pricing {
   margin-bottom: 5px;
@@ -77,6 +69,8 @@ body {
 .calendly {
   grid-column: 4;
   grid-row: 3;
+  padding-bottom: 5px;
+  padding-left: 0%;
 }
 
 .product-name {
@@ -147,4 +141,6 @@ body {
   border-color: #fff8dc;
   border-width: 3px;
   color: #fff8dc;
+}
+
 }
