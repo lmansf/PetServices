@@ -1,3 +1,11 @@
+:root {
+  --brand-purple: #663399;
+  --hover-purple: #8A5AA8;
+  --text-gray: #2D3748;
+  --light-purple-bg: #F5F2FF;
+  --content-bg: #EDF2F7;
+}
+
 * {
   box-sizing: border-box; 
 }
@@ -128,17 +136,20 @@ img {vertical-align: middle;}
   
   /* Mobile product box adjustments */
   .clicker {
-    padding: 8px;
-    gap: 8px;
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .box .clicker .product-name,
+  .box .clicker .pricing p {
+    font-size: 1rem;
   }
   
   .box .clicker .product-name {
-    font-size: 1.0rem;
     white-space: nowrap;
   }
   
   .box .clicker .pricing p {
-    font-size: 1.0rem;
     margin: 0;
   }
   
@@ -192,12 +203,9 @@ img {vertical-align: middle;}
     gap: 6px;
   }
   
-  .box .clicker .product-name {
-    font-size: 0.75rem;
-  }
-  
+  .box .clicker .product-name,
   .box .clicker .pricing p {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
   }
   
   /* Very small screen content adjustments */
@@ -266,7 +274,7 @@ h2 {
 }
 
 .box:hover {
-  background-color: #8A5AA8;
+  background-color: var(--hover-purple);
   color:#f2f2f2
 }
 
@@ -285,7 +293,7 @@ h2 {
 .box {
   display: grid;
   grid-template-columns: 1fr;
-  background-color: #663399;
+  background-color: var(--brand-purple);
   padding: 3px;
   gap: 1px;
   border-radius: 6px;
@@ -312,7 +320,7 @@ h2 {
   font-size: 26px;
   font-weight: bold;
   text-align: center;
-  color: #663399;
+  color: var(--brand-purple);
 }
 
 .calendly {
@@ -407,10 +415,6 @@ h2 {
 }
 
 @media(min-width: 900px){
-* {
-  box-sizing: border-box;
-}
-
 body {
   margin: 0;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
