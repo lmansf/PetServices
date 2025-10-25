@@ -3,11 +3,16 @@
 }
 
 body {
-  margin: 0;
+  margin: 3px;
+  padding: 3px;
   font-family: Arial, Helvetica, sans-serif;
-  background-color: #e6e6fa;
+  background-color: #ffffff;
+  color: #2D3748;
 }
-
+h2 {
+  text-align: center;
+  color: #2D3748;
+}
 /* Style the top navigation bar */
 .topnav {
   overflow: hidden;
@@ -29,63 +34,70 @@ body {
   background-color: #ddd;
   color: black;
 }
+
 .clicker {
   width: 100%;
-  padding: 10px;
-  background-color: #8A2BE2;
+  /* padding: 10px; */
+
   color: white;
   text-align: center;
   cursor: pointer;
   border-radius: 5px;
   outline: none;
+  transition: background-color 0.3s ease;
 }
+
+.box:hover {
+  background-color: #8A5AA8;
+  color:#f2f2f2
+}
+
 
 .hidden-box {
   display: none;
   margin-top: 5px;
   padding: 10px;
-  background-color: #f1f1f1;
-  border: 2px solid #8A2BE2;
+  background-color: #F5F2FF;
+  border: 2px solid #663399;
   border-radius: 5px;
   width: 100%;
+  color: #2D3748;
 }
 
 .box {
   display: grid;
-  grid-template-columns: auto auto auto;
-  background-color: #8A2BE2;
+  grid-template-columns: 1fr auto;
+  background-color: #663399;
   padding: 3px;
   gap: 1px;  
 }
 .box div {
-  background-color: #f1f1f1;
-  color: #000;
+  background-color: #ffffff;
+  color: #2D3748;
   padding: 3px;
-
 }
 .product-description {
   margin-bottom: 5px;
-  grid-column: 1;
-  grid-row: 1;
+  grid-column: 1 / span 2;
+  grid-row: 2;
   font-size: 12px;
   width: 100%;
 }
 .pricing {
   margin-bottom: 5px;
-  grid-column: 4;
+  grid-column: 2;
   grid-row: 1;
-
 }
 .pricing p {
   font-size: 32px;
   font-weight: bold;
   text-align: center;
-  color:#8A2BE2;
+  color: #663399;
 }
 
 .calendly {
-  grid-column: 1;
-  grid-row: 2;
+  grid-column: 1 / span 2;
+  grid-row: 3;
   padding-bottom: 5px;
   padding-left: 0%;
   align-items: center;
@@ -100,40 +112,39 @@ body {
 }
 .flexbox {
   display: flex;
-  background-color: #8A2BE2;
+  background-color: #EDF2F7;
   flex-direction: column;
   padding: 3px;
 }
 
 .flexbox div {
-  background-color: #f1f1f1;
+  background-color: #ffffff;
   margin: 3px;
   padding: 3px;
-  font-size: 12px;
+  color: #2D3748;
 }
 
 .header {
-  background-color: none;
+  background-color: #F5F2FF;
   padding: 5px;
   text-align: center;
   font-size: 18px;
   font-weight: bold;
-  color: #8A2BE2;
-  border: 3px solid #fff8dc;
+  color: #663399;
+  border: 3px solid #663399;
 }
-
 
 
 .button-22 {
   align-items: center;
   appearance: button;
-  background-color: #e6e6fa;
+  background-color: #38A169;
   border-radius: 8px;
-  border-color: #32cd32;
+  border-color: #38A169;
   border-width: 3px;
   box-shadow: rgba(255, 255, 255, 0.26) 0 1px 2px inset;
-  width:200px;
-  color: #32cd32;
+  /* width:140px; */
+  color: #ffffff;
   cursor: pointer;
   display: flex;
   flex-direction: row;
@@ -141,25 +152,29 @@ body {
   font-family: "RM Neue",sans-serif;
   font-size: 100%;
   line-height: 1.15;
+  position: relative;
+    left: 50%;
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
   margin: 0;
   padding: 10px 21px;
   text-align: center;
   text-transform: none;
-  transition: color .13s ease-in-out,background .13s ease-in-out,opacity .13s ease-in-out,box-shadow .13s ease-in-out;
+  transition: all .13s ease-in-out;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
 }
 
 .button-22:active {
-  background-color: #8A2BE2;
+  background-color: #2F855A;
 }
 
 .button-22:hover {
-  background-color: #8A2BE2;
-  border-color: #fff8dc;
+  background-color: #2F855A;
+  border-color: #2F855A;
   border-width: 3px;
-  color: #fff8dc;
+  color: #ffffff;
 }
 
 @media(min-width: 900px){
@@ -190,28 +205,26 @@ body {
 
 .box {
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: 1fr auto;
   padding: 5px;
   gap: 5px;  
 }
 .box div {
-  background-color: #f1f1f1;
-
+  background-color: #ffffff;
+  color: #2D3748;
   padding: 5px;
   font-size: 30px;
-
 }
 .product-description {
   margin-bottom: 5px;
-  grid-column: 1 / span 4;
+  grid-column: 1 / span 2;
   grid-row: 2;
   width: 1000px;
 }
 .pricing {
   margin-bottom: 5px;
-  grid-column: 4;
+  grid-column: 2;
   grid-row: 1;
-
 }
 .pricing p {
   font-size: 24px;
@@ -220,14 +233,14 @@ body {
 }
 
 .calendly {
-  grid-column: 4;
+  grid-column: 1 / span 2;
   grid-row: 3;
   padding-bottom: 5px;
   padding-left: 0%;
 }
 
 .product-name {
-  grid-column: 2 / span 2;
+  grid-column: 1;
   grid-row: 1;
   font-size: 36px;
   font-weight: bold;
@@ -242,11 +255,13 @@ body {
   margin: 5px;
   padding: 5px;
   font-size: 24px;
+  color: #2D3748;
 }
 
 .header {
   padding: 10px;
   font-size: 24px;
+  color: #2D3748;
 }
 
 }
