@@ -74,12 +74,14 @@ h2 {
   grid-template-columns: 1fr auto;
   background-color: #663399;
   padding: 3px;
-  gap: 1px;  
+  gap: 1px;
+  border-radius: 6px;
 }
 .box div {
   background-color: #ffffff;
   color: #2D3748;
   padding: 3px;
+  border-radius: 4px;
 }
 .product-description {
   margin-bottom: 5px;
@@ -121,6 +123,7 @@ h2 {
   background-color: #EDF2F7;
   flex-direction: column;
   padding: 3px;
+  border-radius: 8px;
 }
 
 .flexbox div {
@@ -128,6 +131,7 @@ h2 {
   margin: 3px;
   padding: 3px;
   color: #2D3748;
+  border-radius: 4px;
 }
 
 .header {
@@ -214,13 +218,15 @@ body {
   display: grid;
   grid-template-columns: 1fr auto;
   padding: 5px;
-  gap: 5px;  
+  gap: 5px;
+  border-radius: 6px;
 }
 .box div {
   background-color: #ffffff;
   color: #2D3748;
   padding: 5px;
   font-size: 30px;
+  border-radius: 4px;
 }
 .product-description {
   margin-bottom: 5px;
@@ -257,6 +263,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 5px;
+  border-radius: 8px;
 }
 
 .flexbox div {
@@ -264,6 +271,7 @@ body {
   padding: 5px;
   font-size: 24px;
   color: #2D3748;
+  border-radius: 4px;
 }
 
 .header {
