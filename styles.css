@@ -29,6 +29,26 @@ body {
   background-color: #ddd;
   color: black;
 }
+.clicker {
+  width: 100%;
+  padding: 10px;
+  background-color: #8A2BE2;
+  color: white;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 5px;
+  outline: none;
+}
+
+.hidden-box {
+  display: none;
+  margin-top: 5px;
+  padding: 10px;
+  background-color: #f1f1f1;
+  border: 2px solid #8A2BE2;
+  border-radius: 5px;
+  width: 100%;
+}
 
 .box {
   display: grid;
@@ -45,8 +65,8 @@ body {
 }
 .product-description {
   margin-bottom: 5px;
-  grid-column: 1 / span 4;
-  grid-row: 2;
+  grid-column: 1;
+  grid-row: 1;
   font-size: 12px;
   width: 100%;
 }
@@ -65,14 +85,14 @@ body {
 
 .calendly {
   grid-column: 1;
-  grid-row: 3 / span 4;
+  grid-row: 2;
   padding-bottom: 5px;
   padding-left: 0%;
   align-items: center;
 }
 
 .product-name {
-  grid-column: 1 / span 2;
+  grid-column: 1;
   grid-row: 1;
   font-size: 32px;
   font-weight: bold;
