@@ -36,7 +36,7 @@
   max-width: 100%;
   position: relative;
   margin: 0;
-  height: 400px;
+  height: 200px;
   border-radius: 0 0 8px 8px;
   overflow: hidden;
 }
@@ -62,6 +62,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   border-radius: 0;
 }
 
@@ -91,29 +92,117 @@ img {vertical-align: middle;}
 
 /* Mobile responsiveness for carousel */
 @media(max-width: 600px) {
-  .text-overlay h1 {
-    font-size: 1.8rem;
+  .header {
+    position: relative;
+    height: 150px;
   }
   
-  .text-overlay p {
-    font-size: 1rem;
+  .fixed-heading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 12px 16px;
+    width: 85%;
+    max-width: 280px;
+    margin: 0;
   }
   
-  .text-overlay {
-    padding: 15px 20px;
+  .fixed-heading h1 {
+    font-size: 1.6rem;
+    margin: 0 0 6px 0;
+  }
+  
+  .fixed-heading p {
+    font-size: 0.9rem;
+    margin: 0;
   }
   
   .slideshow-container {
-    height: 250px;
+    height: 150px;
   }
   
   .slide img {
     height: 100%;
   }
   
-  .prev, .next {
-    padding: 12px;
-    font-size: 16px;
+  /* Mobile product box adjustments */
+  .clicker {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .box .clicker .product-name {
+    font-size: 1.0rem;
+    white-space: nowrap;
+  }
+  
+  .box .clicker .pricing p {
+    font-size: 1.0rem;
+    margin: 0;
+  }
+  
+  /* Adjust product content layout for mobile */
+  .product-content {
+    grid-template-columns: 2fr 1fr;
+    gap: 6px;
+    align-items: center;
+  }
+  
+  .box .clicker .product-name {
+    text-align: left;
+  }
+  
+  .pricing {
+    text-align: right;
+  }
+  
+  /* Reduce container padding on mobile */
+  .flexbox {
+    padding: 5px;
+  }
+  
+  /* Ensure boxes don't exceed screen width */
+  .box {
+    max-width: 100%;
+    overflow: hidden;
+  }
+}
+
+/* Very small mobile screens */
+@media(max-width: 400px) {
+  .fixed-heading {
+    padding: 10px 12px;
+    width: 90%;
+    max-width: 240px;
+  }
+  
+  .fixed-heading h1 {
+    font-size: 1.4rem;
+    margin: 0 0 4px 0;
+  }
+  
+  .fixed-heading p {
+    font-size: 0.8rem;
+  }
+  
+  /* Very small screen product adjustments */
+  .clicker {
+    padding: 6px;
+    gap: 6px;
+  }
+  
+  .box .clicker .product-name {
+    font-size: 0.75rem;
+  }
+  
+  .box .clicker .pricing p {
+    font-size: 0.75rem;
+  }
+  
+  /* Very small screen content adjustments */
+  .product-content {
+    gap: 5px;
   }
 }
 
@@ -157,14 +246,23 @@ h2 {
 
 .clicker {
   width: 100%;
-  /* padding: 10px; */
-
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
   color: white;
   text-align: center;
   cursor: pointer;
   border-radius: 5px;
   outline: none;
   transition: background-color 0.3s ease;
+}
+
+.product-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  width: 100%;
 }
 
 .box:hover {
@@ -186,7 +284,7 @@ h2 {
 
 .box {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   background-color: #663399;
   padding: 3px;
   gap: 1px;
@@ -202,7 +300,7 @@ h2 {
   margin-bottom: 5px;
   grid-column: 1 / span 2;
   grid-row: 2;
-  font-size: 12px;
+  font-size: 18px;
   width: 100%;
 }
 .pricing {
@@ -211,7 +309,7 @@ h2 {
   grid-row: 1;
 }
 .pricing p {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: bold;
   text-align: center;
   color: #663399;
@@ -225,10 +323,14 @@ h2 {
   align-items: center;
 }
 
+.calendly a {
+  text-decoration: none;
+}
+
 .product-name {
   grid-column: 1;
   grid-row: 1;
-  font-size: 32px;
+  font-size: 26px;
   font-weight: bold;
   font-family: 'Coustard', Georgia, serif;
   text-align: center;
@@ -250,8 +352,9 @@ h2 {
 }
 
 .header {
+  position: relative;
   background-color: #F5F2FF;
-  padding: 5px;
+  padding: 0;
   text-align: center;
   font-size: 18px;
   font-weight: bold;
@@ -315,7 +418,19 @@ body {
 
 /* Desktop carousel adjustments */
 .slideshow-container {
-  height: 500px;
+  height: 300px;
+}
+
+.fixed-heading {
+  padding: 25px 35px;
+}
+
+.fixed-heading h1 {
+  font-size: 2.8rem;
+}
+
+.fixed-heading p {
+  font-size: 1.3rem;
 }
 
 .slide img {

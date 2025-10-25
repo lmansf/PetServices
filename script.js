@@ -51,7 +51,6 @@ function createCarouselSlides() {
         
         slide.innerHTML = `
             <img src="imgs/${image.src}" alt="${image.alt}">
-            <div class="text">${image.alt}</div>
         `;
         
         slidesContainer.appendChild(slide);
