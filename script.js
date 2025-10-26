@@ -130,3 +130,26 @@ clickers.forEach(clicker => {
     }
   });
 })
+
+
+        var targetElement = document.getElementById('targetElement1');
+        var scrollButton = document.getElementById('scroll1');
+
+        scrollButton.addEventListener('click', () => {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+
+        var targetElement = document.getElementById('targetElement2');
+        var scrollButton = document.getElementById('scroll2');
+
+        scrollButton.addEventListener('click', () => {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        var targetElement = document.getElementById('targetElement3');
+        var scrollButton = document.getElementById('scroll3');
+
+        scrollButton.addEventListener('click', () => {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
