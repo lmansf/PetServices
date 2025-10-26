@@ -1,3 +1,52 @@
+// Pet Carousel Logic for About.html
+document.addEventListener('DOMContentLoaded', function() {
+  const carousel = document.querySelector('.pet-carousel');
+  if (!carousel) return;
+  const slides = Array.from(carousel.querySelectorAll('.pet-slide'));
+  const leftArrow = document.querySelector('.pet-carousel-arrow.left');
+  const rightArrow = document.querySelector('.pet-carousel-arrow.right');
+  const dots = Array.from(document.querySelectorAll('.pet-dot'));
+  let current = 0;
+
+  function showSlide(idx) {
+    slides.forEach((slide, i) => {
+      slide.classList.toggle('active', i === idx);
+    });
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === idx);
+    });
+    current = idx;
+  }
+
+  leftArrow.addEventListener('click', () => {
+    showSlide((current - 1 + slides.length) % slides.length);
+  });
+  rightArrow.addEventListener('click', () => {
+    showSlide((current + 1) % slides.length);
+  });
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => showSlide(i));
+  });
+
+  // Optional: swipe support for mobile
+  let startX = null;
+  carousel.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) startX = e.touches[0].clientX;
+  });
+  carousel.addEventListener('touchend', e => {
+    if (startX === null) return;
+    const endX = e.changedTouches[0].clientX;
+    if (endX - startX > 40) {
+      showSlide((current - 1 + slides.length) % slides.length);
+    } else if (startX - endX > 40) {
+      showSlide((current + 1) % slides.length);
+    }
+    startX = null;
+  });
+
+  // Initialize
+  showSlide(0);
+});
 // Carousel image configuration
 const carouselImages = [
     { src: "original (13).webp", alt: "Professional dog walking and pet care services" },
@@ -95,7 +144,7 @@ function initializeCarousel() {
     startAutoSlide();
 }
 
-// Your existing accordion functionality
+// Enhanced accordion functionality with smooth animations and scroll positioning
 const clickers = document.querySelectorAll('.clicker');
 
 clickers.forEach(clicker => {
@@ -105,18 +154,38 @@ clickers.forEach(clicker => {
     const hiddenBox = parentBox.nextElementSibling;
     
     if (hiddenBox && hiddenBox.classList.contains('hidden-box')) {
-      // Check if this box is currently visible
-      const isCurrentlyVisible = hiddenBox.style.display === 'block';
+      // Check if this box is currently open
+      const isCurrentlyOpen = hiddenBox.classList.contains('open');
       
-      // Hide all hidden boxes first
+      // Close all hidden boxes first with smooth animation
       document.querySelectorAll('.hidden-box').forEach(box => {
-        box.style.display = 'none';
+        box.classList.remove('open');
       });
       
-      // If this box wasn't visible before, show it (toggle behavior)
-      if (!isCurrentlyVisible) {
-        hiddenBox.style.display = 'block';
-        
+      // If this box wasn't open before, open it immediately
+      if (!isCurrentlyOpen) {
+        // Scroll the product box to the top smoothly
+        parentBox.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
+        });
+
+        // Open the hidden box immediately for a snappy feel
+        hiddenBox.classList.add('open');
+
+        // After a short delay, adjust scroll to center the calendly area (if present)
+        setTimeout(() => {
+          const calendlySection = hiddenBox.querySelector('.calendly');
+          if (calendlySection) {
+            calendlySection.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+          }
+        }, 150); // Minimal delay for transition to start
+
         // Log analytics event for product interaction
         if (window.analytics) {
           const productName = parentBox.querySelector('.product-name')?.textContent || 'Unknown Product';
@@ -126,30 +195,13 @@ clickers.forEach(clicker => {
           });
         }
       }
-      // If it was visible, it stays hidden (toggled off)
     }
   });
 })
+// card slide out for first appointments
+document.addEventListener('DOMContentLoaded', function() {
+    const card = document.getElementById('myCard');
+    card.classList.add('slide-in');
+});
 
-
-        var targetElement = document.getElementById('targetElement1');
-        var scrollButton = document.getElementById('scroll1');
-
-        scrollButton.addEventListener('click', () => {
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-
-
-        var targetElement = document.getElementById('targetElement2');
-        var scrollButton = document.getElementById('scroll2');
-
-        scrollButton.addEventListener('click', () => {
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-
-        var targetElement = document.getElementById('targetElement3');
-        var scrollButton = document.getElementById('scroll3');
-
-        scrollButton.addEventListener('click', () => {
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
+// callout removed — no positioning needed

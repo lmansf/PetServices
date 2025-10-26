@@ -41,30 +41,47 @@
       <a href="About.html">About Me</a>
       <a href="gallery.html">Gallery</a>
     </div>
-
-    <!-- <div class="content"> -->
-<div class="box" id="about-me">
- <img class="profile-picture" src="imgs/original.webp">
-  <div class="about-me-blurb">
-    <h2>About Me</h2>
-    <p>I have fostered dogs, in my home for a rescue for the past 10 years. Fostering requires me to get them ready to be adopted. 
-      Housebreaking, working on manners, and caring for older pets. I have fostered almost every breed and even have experience with a blind dog. 
-      I have also enjoyed being a pet sitter for cats as well.
-    </p>
+    <div class="content">
+      <div class="box" id="about-me">
+        <img class="profile-picture" src="imgs/original.webp">
+        <div class="about-me-blurb">
+          <h3>About Me</h3> 
+          <p>I have fostered dogs, in my home for a rescue for the past 10 years. Fostering requires me to get them ready to be adopted. 
+            Housebreaking, working on manners, and caring for older pets. I have fostered almost every breed and even have experience with a blind dog. 
+            I have also enjoyed being a pet sitter for cats as well.
+          </p>
+        </div>
   </div>
-</div>
-
-<h1 class="meet-pets">Meet My Pets!</h1>
-<div class="box" id="about-pets">
-  <h2 class="pet-name">Sox | Chihuahua</h2>
-  <img class="pet-pic" src="imgs\original (9).webp">
-  <!-- <h3 class="pet-breed">Chihuahua</h3> -->
-    <div class="pet-blurb">
-      <p>I have fostered dogs, in my home for a rescue for the past 10 years. Fostering requires me to get them ready to be adopted.</p>
+      <h1 class="meet-pets"><i class="fa-solid fa-paw" style="color: #663399;font-size: 1em;"></i> Meet My Pets</h1>
+      <div class="pet-carousel-container">
+        <div class="pet-carousel">
+          <div class="pet-slide active">
+            <div class="box" id="about-pets">
+              <h2 class="pet-name">Sox | Chihuahua</h2>
+              <img class="pet-pic" src="imgs/original (9).webp" alt="Sox the Chihuahua">
+              <div class="pet-blurb">
+                <p>Super friendly and high energy</p>
+              </div>
+            </div>
+          </div>
+          <div class="pet-slide">
+            <div class="box" id="about-pets">
+              <h2 class="pet-name">Fennway | Boston Terrier</h2>
+              <img class="pet-pic" src="imgs/Fennway.webp" alt="Fennway the Boston Terrier">
+              <div class="pet-blurb">
+                <p>Likes to chase small animals</p>
+              </div>
+            </div>
+          </div>
+          <!-- Add more pet-slide divs here if needed -->
+        </div>
+        <button class="pet-carousel-arrow left" aria-label="Previous pet">&#10094;</button>
+        <button class="pet-carousel-arrow right" aria-label="Next pet">&#10095;</button>
+        <div class="pet-carousel-indicators">
+          <span class="pet-dot active"></span>
+          <span class="pet-dot"></span>
+        </div>
+      </div>
     </div>
-</div>
-
-
-    <!-- </div> -->
   </body>
 </html>
