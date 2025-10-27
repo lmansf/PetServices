@@ -450,7 +450,7 @@ h2 {
 }
 /* Style the top navigation bar */
 .topnav {
-  overflow: hidden;
+  overflow: visible; /* allow dropdowns to extend outside */
   background-color: #333;
 
 }
@@ -469,6 +469,39 @@ h2 {
 .topnav a:hover {
   background-color: #ddd;
   color: black;
+}
+
+/* Dropdown inside topnav */
+.dropdown{float:left; position:relative}
+.dropbtn{
+  background-color:transparent;
+  color: #f2f2f2;
+  padding: 14px 16px;
+  font-size:16px;
+  border:none;
+  cursor:pointer;
+}
+.dropbtn:focus{outline:none}
+.dropdown-content{
+  display:none;
+  position:absolute;
+  left:0;
+  top:100%;
+  background-color:#fff;
+  min-width:180px;
+  box-shadow:0 8px 16px rgba(0,0,0,0.2);
+  z-index:50;
+}
+.dropdown-content a{color:#333; padding:10px 14px; text-decoration:none; display:block}
+.dropdown-content a:hover{background:#f1f1f1}
+.dropdown:hover .dropdown-content, .dropdown:focus-within .dropdown-content, .dropdown.open .dropdown-content{display:block}
+.dropdown:hover .dropbtn, .dropdown.open .dropbtn{background-color:rgba(255,255,255,0.05)}
+
+/* Small-screen: make dropdown items full-width and stack */
+@media(max-width:600px){
+  .dropdown{float:none}
+  .dropbtn{display:block; width:100%; text-align:left}
+  .dropdown-content{position:static; box-shadow:none}
 }
 
 .clicker {
@@ -633,6 +666,14 @@ grid-row: 4 / span 1;
 grid-column: 1;
 grid-row: 5 / span 3;
 
+}
+.left-right-flexbox{
+
+  display: flex;
+  background-color: #EDF2F7;
+  flex-direction: row;
+  padding: 3px;
+  border-radius: 8px;
 }
 
 .flexbox {

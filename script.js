@@ -205,3 +205,34 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // callout removed — no positioning needed
+
+// Dropdown click/toggle behavior for topnav Home button (supports touch and click)
+document.addEventListener('DOMContentLoaded', function() {
+  const dropdowns = document.querySelectorAll('.dropdown');
+  dropdowns.forEach(dd => {
+    const btn = dd.querySelector('.dropbtn');
+    const menu = dd.querySelector('.dropdown-content');
+    if (!btn || !menu) return;
+
+    // Toggle open class on click
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dd.classList.toggle('open');
+      // If opening, focus first link for keyboard users
+      if (dd.classList.contains('open')) {
+        const firstLink = menu.querySelector('a');
+        if (firstLink) firstLink.focus();
+      }
+    });
+
+    // Close when clicking an item
+    menu.addEventListener('click', () => {
+      dd.classList.remove('open');
+    });
+  });
+
+  // Close any open dropdown when clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+  });
+});
