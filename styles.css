@@ -13,13 +13,17 @@
   padding: 2rem 0 1.5rem 0;
 }
 
-@media (max-width: 900px) {
-  .pet-slide .box {
-    width: 98vw;
-    max-width: 98vw;
-    padding: 1.2rem 0 1rem 0;
+
+/* Ensure all topnav links are white on small screens (override order/precedence).
+   This keeps the mobile header consistent: All Services, About Me, Gallery, etc. */
+@media(max-width: 600px){
+  .topnav a,
+  .topnav .dropbtn {
+    color: #ffffff !important;
   }
 }
+
+
 /* About Page Pet Carousel Image and Name Styling */
 .pet-slide .pet-pic {
   width: 180px;
@@ -299,6 +303,32 @@ img {vertical-align: middle;}
 
 /* Mobile responsiveness for carousel */
 @media(max-width: 600px) {
+  /* Fix horizontal cropping on small screens by avoiding 100vw and
+     canceling centering transforms that push elements off-canvas. */
+  html, body { overflow-x: hidden; }
+
+  /* Replace full-viewport widths and translated centering with
+     fluid 100% widths so components fit the device viewport. */
+  .pet-slide .box,
+  .pet-carousel-container,
+  .pet-carousel,
+  .pet-slide {
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    position: relative !important;
+  }
+
+  /* Make any image-based heading/icon scale down to avoid overflow */
+  .product-name, .pet-slide .pet-pic, .profile-picture img {
+    max-width: 90%;
+    box-sizing: border-box;
+  }
+
+  /* Prevent horizontal overflow introduced by 100vw-based components */
+  html, body { overflow-x: hidden; }
   .header {
     position: relative;
     height: 150px;
@@ -372,6 +402,51 @@ img {vertical-align: middle;}
   .flexbox {
     padding: 5px;
   }
+
+  /* Mobile tweaks: reduce space above product title and center the price */
+  .product-name {
+    margin: 6px 0 4px 0; /* tighter spacing above/below title on small screens */
+    padding-top: 0;
+    text-align: center;
+    font-size: 1.6rem; /* scale title for mobile so it doesn't overflow */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  /* Place pricing on its own line and center it for mobile */
+  .product-description .pricing {
+    grid-column: 1; /* span full width in the stacked mobile layout */
+    text-align: center;
+    margin: 0.4rem 0 0.6rem 0;
+  }
+
+  .pricing p { margin: 0; }
+
+  /* Scope the inline pricing + caption styling to mobile only so desktop
+     layout remains unaffected. This handles the case where the markup uses
+     a sibling <em> after the .pricing element (as in walking.html). */
+  .product-description {
+    text-align: center;
+  }
+  .product-description > p:first-of-type,
+  .product-description > p:last-of-type {
+    text-align: left; /* keep description and the neighborhood line left-aligned */
+  }
+  .product-description .pricing {
+    display: inline-block; /* allow the following <em> to sit inline */
+    vertical-align: middle;
+    margin: 0;
+  }
+  .product-description .pricing + em {
+    display: inline-block;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    color: #55626a;
+    font-style: italic;
+    font-size: 0.95rem;
+  }
   
   /* Ensure boxes don't exceed screen width */
   .box {
@@ -385,6 +460,17 @@ img {vertical-align: middle;}
   .topnav a,
   .topnav .dropbtn {
     color: #ffffff;
+  }
+
+  /* Make dropdown menu items purple on the grey dropdown background so
+     they remain readable on mobile (override the white color above). */
+  .topnav .dropdown-content a {
+    color: var(--brand-purple) !important;
+  }
+  .topnav .dropdown-content a:hover,
+  .topnav .dropdown-content a:focus {
+    background: var(--brand-purple);
+    color: #fff !important;
   }
 }
 
@@ -640,17 +726,59 @@ h2 {
   font-size: 18px;
   width: 100%;
 }
-.pricing {
-  margin-bottom: 5px;
-  grid-column: 2;
-  grid-row: 1;
-}
-.pricing p {
-  font-size: 26px;
-  font-weight: bold;
-  text-align: center;
-  color: var(--brand-purple);
-}
+  .pricing {
+    margin-bottom: 5px;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .pricing p {
+    font-size: 26px;
+    font-weight: bold;
+    text-align: center;
+    color: var(--brand-purple);
+    margin: 0;
+  }
+
+  /* Arrange the pricing and the following small-caption (e.g. "(per 30mins)")
+     on the same centered row while keeping the other list items on their
+     own line. We use a wrapping flex layout and specific sibling selectors
+     so the markup doesn't need to change. Applies to mobile and desktop. */
+  .product-description ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  /* The pricing block stays its natural size */
+  .product-description .pricing {
+    flex: 0 0 auto;
+    order: 1;
+  }
+
+  /* The list item immediately after .pricing (the per-30mins note)
+     will sit inline with the price */
+  .product-description .pricing + li {
+    flex: 0 0 auto;
+    order: 2;
+    margin: 0;
+    color: #55626a; /* subtle gray for the small caption */
+    font-style: italic;
+    font-size: 0.95rem;
+  }
+
+  /* Any subsequent list items should break to the next line and be centered */
+  .product-description .pricing + li + li {
+    order: 3;
+    flex: 0 0 100%;
+    text-align: center;
+    margin-top: 0.4rem;
+  }
+ 
 
 .calendly {
   grid-column: 1 / span 2;
