@@ -206,33 +206,102 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // callout removed — no positioning needed
 
-// Dropdown click/toggle behavior for topnav Home button (supports touch and click)
+// Enhanced dropdown behavior: click/touch + hover on desktop + keyboard navigation and ARIA
 document.addEventListener('DOMContentLoaded', function() {
   const dropdowns = document.querySelectorAll('.dropdown');
+
+  function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown.open').forEach(d => {
+      d.classList.remove('open');
+      const b = d.querySelector('.dropbtn');
+      if (b) b.setAttribute('aria-expanded', 'false');
+      const m = d.querySelector('.dropdown-content');
+      if (m) m.querySelectorAll('[role="menuitem"]').forEach(i => i.setAttribute('tabindex','-1'));
+    });
+  }
+
   dropdowns.forEach(dd => {
     const btn = dd.querySelector('.dropbtn');
     const menu = dd.querySelector('.dropdown-content');
     if (!btn || !menu) return;
 
-    // Toggle open class on click
+    const items = Array.from(menu.querySelectorAll('[role="menuitem"]'));
+
+    // Initialize ARIA and tabindex
+    btn.setAttribute('aria-haspopup', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+    items.forEach(it => it.setAttribute('tabindex','-1'));
+
+    function openDropdown() {
+      closeAllDropdowns();
+      dd.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      items.forEach(it => it.setAttribute('tabindex','0'));
+    }
+
+    function closeDropdown() {
+      dd.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      items.forEach(it => it.setAttribute('tabindex','-1'));
+    }
+
+    // Click toggles dropdown
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      dd.classList.toggle('open');
-      // If opening, focus first link for keyboard users
-      if (dd.classList.contains('open')) {
-        const firstLink = menu.querySelector('a');
-        if (firstLink) firstLink.focus();
+      if (dd.classList.contains('open')) closeDropdown(); else openDropdown();
+    });
+
+    // Keyboard handling on button
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        openDropdown();
+        items[0]?.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        openDropdown();
+        items[items.length-1]?.focus();
+      } else if (e.key === 'Escape') {
+        closeDropdown();
+        btn.focus();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (dd.classList.contains('open')) closeDropdown(); else { openDropdown(); items[0]?.focus(); }
       }
     });
 
-    // Close when clicking an item
-    menu.addEventListener('click', () => {
-      dd.classList.remove('open');
+    // Keyboard navigation within menu
+    menu.addEventListener('keydown', (e) => {
+      const currentIndex = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = items[(currentIndex + 1) % items.length]; next.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = items[(currentIndex - 1 + items.length) % items.length]; prev.focus();
+      } else if (e.key === 'Home') {
+        e.preventDefault(); items[0].focus();
+      } else if (e.key === 'End') {
+        e.preventDefault(); items[items.length-1].focus();
+      } else if (e.key === 'Escape') {
+        e.preventDefault(); closeDropdown(); btn.focus();
+      }
+    });
+
+    // When clicking a menu item, close the dropdown (let link follow)
+    items.forEach(it => {
+      it.addEventListener('click', () => { closeDropdown(); });
     });
   });
 
   // Close any open dropdown when clicking outside
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+  document.addEventListener('click', (e) => {
+    // if click inside an open dropdown, ignore (already handled). Otherwise close.
+    if (!e.target.closest('.dropdown')) closeAllDropdowns();
+  });
+
+  // Close on Escape globally
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAllDropdowns();
   });
 });

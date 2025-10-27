@@ -153,51 +153,33 @@
   display: inline-block;
   transition: background 0.2s;
   cursor: pointer;
-}
-.pet-dot.active {
-  background: var(--brand-purple, #663399);
-}
-@media (max-width: 900px) {
-  .pet-carousel-container {
-    max-width: 98vw;
-    width: 98vw;
-    margin: 1rem auto;
-    left: 0;
-    right: 0;
-    transform: none;
   }
-  .pet-carousel {
-    min-height: 260px;
-    width: 98vw;
-    max-width: 98vw;
-  }
-  .pet-slide {
-    min-width: 98vw;
-    max-width: 98vw;
-  }
-  .pet-slide .box {
-    padding: 1rem 0.5rem;
-  }
-  .pet-carousel-arrow {
-    width: 2rem;
-    height: 2rem;
-    font-size: 1.1rem;
-  }
-  .pet-dot {
-    width: 0.7rem;
-    height: 0.7rem;
-  }
+  .topnav {
+    overflow: visible; /* allow dropdowns to extend outside */
+  background-color: var(--nav-bg, #f4f4f7); /* neutral navbar background */
+  position: fixed; /* keep the navbar above page content */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
 }
 :root {
   --brand-purple: #663399;
   --hover-purple: #8A5AA8;
+  --nav-bg: #f4f4f7;
+  --dropdown-bg: #efeff2;
   --text-gray: #2D3748;
   --light-purple-bg: #F5F2FF;
   --content-bg: #EDF2F7;
 }
 
 * {
-  box-sizing: border-box; 
+  box-sizing: border-box;
+}
+
+/* Ensure page content is pushed below the fixed navbar on all devices */
+.content {
+  padding-top: 64px; /* matches nav height + comfortable spacing; adjust if needed */
 }
 
 html{
@@ -396,6 +378,14 @@ img {vertical-align: middle;}
     max-width: 100%;
     overflow: hidden;
   }
+
+  /* Mobile: ensure navbar text is white so it remains readable on top of
+     the brand-colored header background. This overrides the global/desktop
+     rules only for small screens. */
+  .topnav a,
+  .topnav .dropbtn {
+    color: #ffffff;
+  }
 }
 
 /* Very small mobile screens */
@@ -451,8 +441,9 @@ h2 {
 /* Style the top navigation bar */
 .topnav {
   overflow: visible; /* allow dropdowns to extend outside */
-  background-color: #333;
-
+  background-color: var(--brand-purple); /* match the site's brand purple for a cohesive header */
+  position: relative; /* ensure absolute dropdowns are positioned relative to the nav */
+  z-index: 10;
 }
 
 /* Style the topnav links */
@@ -466,44 +457,121 @@ h2 {
 }
 
 /* Change color on hover */
-.topnav a:hover {
-  background-color: #ddd;
-  color: black;
+.topnav a:hover,
+.topnav a:focus-visible {
+  background-color: var(--hover-purple);
+  color: #fff;
 }
 
+/* Remove persistent highlight for mouse interactions: only show focus styles for keyboard users
+   (use :focus-visible). Also ensure active state doesn't leave a background on sibling links. */
+.topnav a:focus {
+  outline: none;
+  background-color: transparent;
+}
+.topnav a:active { background-color: transparent; }
+
+/* Default nav link/button backgrounds should be transparent so only hovered/active
+   items show a highlight. This prevents links like "Gallery" from appearing highlighted
+   when they're not being interacted with. */
+.topnav a, .dropbtn { background-color: transparent; color: var(--brand-purple); }
+
 /* Dropdown inside topnav */
-.dropdown{float:left; position:relative}
+.dropdown{position:relative; display:inline-block}
 .dropbtn{
   background-color:transparent;
-  color: #f2f2f2;
-  padding: 14px 16px;
+  color:#f2f2f2;
+  padding:14px 16px;
   font-size:16px;
   border:none;
   cursor:pointer;
+  display:block;
 }
 .dropbtn:focus{outline:none}
 .dropdown-content{
   display:none;
   position:absolute;
-  left:0;
-  top:100%;
-  background-color:#fff;
-  min-width:180px;
+  background-color:var(--dropdown-bg);
+  min-width:200px;
   box-shadow:0 8px 16px rgba(0,0,0,0.2);
-  z-index:50;
+  left:50%;
+  transform:translateX(-50%);
+  top:calc(100% + 6px); /* place slightly below the button */
+  z-index:1000;
 }
-.dropdown-content a{color:#333; padding:10px 14px; text-decoration:none; display:block}
-.dropdown-content a:hover{background:#f1f1f1}
-.dropdown:hover .dropdown-content, .dropdown:focus-within .dropdown-content, .dropdown.open .dropdown-content{display:block}
-.dropdown:hover .dropbtn, .dropdown.open .dropbtn{background-color:rgba(255,255,255,0.05)}
+.dropdown-content a{color:var(--brand-purple); padding:12px 16px; text-decoration:none; display:block}
+.dropdown-content a:hover{background:var(--brand-purple); color:#fff}
+.dropdown.open .dropdown-content{display:block}
+.dropdown.open .dropbtn{background-color:var(--brand-purple); color:#fff}
 
-/* Small-screen: make dropdown items full-width and stack */
+/* Small-screen: keep nav items visible side-by-side where possible
+   Use flexbox with wrapping so Home's button doesn't consume the full width */
 @media(max-width:600px){
-  .dropdown{float:none}
-  .dropbtn{display:block; width:100%; text-align:left}
-  .dropdown-content{position:static; box-shadow:none}
+  .topnav{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    padding:8px;
+    flex-wrap:wrap;
+    position:relative; /* ensure dropdown absolute positions below nav */
+  }
+  .topnav a, .dropdown{float:none; display:inline-flex; align-items:center}
+  .dropdown{display:inline-flex}
+  .dropbtn{display:inline-block; width:auto; text-align:left; padding:10px 12px}
+  /* Place the dropdown panel below the entire nav on mobile so it doesn't overlap nav items */
+  .dropbtn{display:inline-block; width:auto; text-align:left; padding:12px 14px}
+  /* Place the dropdown panel below the entire nav on mobile so it doesn't overlap nav items.
+     Use max-height/opacity/transform for a smooth slide-down animation and ensure touch targets
+     are larger for easier tapping. */
+  .dropdown-content{
+    position:absolute; /* positioned relative to .topnav (which is relative) */
+    left:0;
+    right:0;
+    top:100%;
+    width:100%;
+    box-sizing: border-box;
+    transform: none; /* cancel the desktop centering transform so it doesn't shift off-screen */
+    box-shadow:0 8px 16px rgba(0,0,0,0.15);
+  background:var(--dropdown-bg);
+    z-index:1000;
+    display: block; /* allow animation via max-height */
+    max-height: 0; /* collapsed by default */
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: top center;
+    transform: translateY(-6px);
+    transition: max-height 300ms cubic-bezier(.2,.9,.2,1), opacity 220ms ease, transform 260ms ease;
+  }
+  /* When the dropdown is open on mobile, expand with a slide-down feel */
+  .dropdown.open .dropdown-content{
+    max-height: 420px; /* enough to show a few menu items; safe upper bound */
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  /* Increase tappable area for menu links */
+  .dropdown-content a{padding:14px 16px}
 }
 
+/* On desktop, allow hover to open the menu (keeps keyboard click behavior too) */
+@media(min-width:900px){
+  .dropdown:hover .dropdown-content,
+  .dropdown:focus-within .dropdown-content,
+  .dropdown.open .dropdown-content{display:block}
+  .dropdown:hover .dropbtn,
+  .dropdown.open .dropbtn{background-color:var(--brand-purple); color:#fff}
+
+  /* Nudge desktop dropdown panel slightly to the right so its options
+     don't get visually clipped against the left edge in some layouts. */
+  .topnav .dropdown .dropdown-content {
+    /* shift the panel further to the right from centered under the button
+       so menu items aren't tight against the left edge */
+    left: calc(50% + 28px);
+    /* keep the centering transform in place */
+    transform: translateX(-50%);
+  }
+}
 .clicker {
   width: 100%;
   display: flex;
@@ -790,7 +858,15 @@ body {
 
 /* Style the top navigation bar */
 .topnav {
-  overflow: hidden;
+  overflow: visible; /* ensure dropdowns are visible on desktop */
+}
+
+/* Desktop: ensure nav link text is readable against whatever header background
+   (use brand purple for text when nav background is light). This overrides the
+   global white text so links remain visible on desktop layouts where header
+   background may be light.) */
+.topnav a, .topnav .dropbtn {
+  color: var(--brand-purple);
 }
 
 /* Style the topnav links */
@@ -801,6 +877,11 @@ body {
   padding: 14px 16px;
   text-decoration: none;
 }
+
+/* Desktop: make sure the dropdown sits with the other nav links on the left
+   and that the dropdown button uses the same font-size and padding as links. */
+.topnav .dropdown { float: left; }
+.topnav .dropbtn { padding: 14px 16px; font-size: 16px; font-family: inherit; display: block; text-align: center; color: var(--brand-purple); }
 
 /* Change color on hover */
 
