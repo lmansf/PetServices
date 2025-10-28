@@ -207,6 +207,25 @@ document.addEventListener('DOMContentLoaded', function() {
 // callout removed — no positioning needed
 
 // Enhanced dropdown behavior: click/touch + hover on desktop + keyboard navigation and ARIA
+
+// Set a cookie with a given name and value
+function setCookie(name, value, days = 7) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+}
+
+// Add event listeners to navigation buttons on index.html
+document.addEventListener('DOMContentLoaded', function() {
+  const navBtns = document.querySelectorAll('.nav-btn[data-page][data-href]');
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const page = btn.getAttribute('data-page');
+      const href = btn.getAttribute('data-href');
+      setCookie('nextpage', page);
+      window.location.href = href;
+    });
+  });
+});
 document.addEventListener('DOMContentLoaded', function() {
   const dropdowns = document.querySelectorAll('.dropdown');
 

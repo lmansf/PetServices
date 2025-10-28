@@ -37,12 +37,6 @@
     </div>
 
     <div class="content">
-      <div style="margin: 2rem 0; display: flex; gap: 1rem; justify-content: center;">
-        <button class="nav-btn" data-page="dropins" data-href="firstVisit.html">Go to Drop-Ins</button>
-        <button class="nav-btn" data-page="walking" data-href="firstVisit.html">Go to Walking</button>
-        <button class="nav-btn" data-page="housesitting" data-href="firstVisit.html">Go to House Sitting</button>
-      </div>
-      
         <div class="product-name"><i class="fa-solid fa-house-chimney" style="color: #663399; font-size: 1.5rem;"></i> Free Introduction</div>           
 
       <div class="flexbox">
@@ -56,12 +50,30 @@
 <div class="calendly-inline-widget" data-url="https://calendly.com/lmansf96/30min?hide_event_type_details=1&hide_gdpr_banner=1&primary_color=663399" style="min-width:320px;height:700px;"></div>
 <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <!-- Calendly inline widget end -->
-
-
-  
-
       </div>
-
+<a id="continue-service-link" href="#">Or continue to schedule your service</a>
+<script>
+  // Map cookie value to page
+  const pageMap = {
+    dropins: 'dropIns.html',
+    walking: 'walking.html',
+    housesitting: 'houseSitting.html'
+  };
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const link = document.getElementById('continue-service-link');
+    const nextPage = getCookie('nextpage');
+    if (nextPage && pageMap[nextPage]) {
+      link.href = pageMap[nextPage];
+    } else {
+      link.href = 'index.html'; // fallback
+    }
+  });
+</script>
       
 
 
