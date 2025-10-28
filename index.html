@@ -27,6 +27,8 @@
       <img src="imgs/original (25).webp" alt="Dog walking hero" style="width:100%;height:320px;object-fit:cover;object-position:center;display:block;">
     </div>
     <div class="topnav">
+      <a href="index.html">Home</a>
+      <a href="About.html">About Me</a>
       <div class="dropdown">
         <button id="home-button" class="dropbtn" aria-haspopup="true" aria-controls="home-menu" aria-expanded="false">All Services ▾</button>
         <div id="home-menu" class="dropdown-content" role="menu" aria-labelledby="home-button">
@@ -35,8 +37,6 @@
           <a href="walking.html" role="menuitem" tabindex="-1">Dog Walking</a>
         </div>
       </div>
-      <a href="index.html">Home</a>
-      <a href="About.html">About Me</a>
     </div>
     
     <div class="content">
@@ -162,100 +162,7 @@
         </div>
       </div>
       
-<script>
-// Review carousel logic with dynamic dots and unique service reviews
-(function() {
-  // Only keep one review per button kind (service), plus the gold intro card
-  const allReviews = Array.from(document.querySelectorAll('.review-block'));
-  const seenServices = new Set();
-  const filteredReviews = [];
-  let goldSlide = null;
-  allReviews.forEach(r => {
-    const service = r.getAttribute('data-service');
-    if (r.classList.contains('gold-slide')) {
-      goldSlide = r;
-      return;
-    }
-    if (!seenServices.has(service)) {
-      seenServices.add(service);
-      filteredReviews.push(r);
-    } else {
-      r.style.display = 'none';
-    }
-  });
-  if (goldSlide) filteredReviews.unshift(goldSlide);
-
-  // Hide all review-blocks not in filteredReviews
-  allReviews.forEach(r => {
-    if (!filteredReviews.includes(r)) r.style.display = 'none';
-    else r.style.display = '';
-  });
-
-  // Generate dots dynamically
-  const indicators = document.querySelector('.review-carousel-indicators');
-  indicators.innerHTML = '';
-  const dots = [];
-  for (let i = 0; i < filteredReviews.length; i++) {
-    const dot = document.createElement('span');
-    dot.className = 'review-dot' + (i === 0 ? ' active' : '');
-    indicators.appendChild(dot);
-    dots.push(dot);
-  }
-
-  let current = 0;
-  function showReview(idx) {
-    filteredReviews.forEach((r, i) => {
-      r.classList.toggle('active', i === idx);
-      r.style.display = i === idx ? '' : 'none';
-    });
-    dots.forEach((d, i) => {
-      d.classList.toggle('active', i === idx);
-    });
-    current = idx;
-  }
-
-  // Attach arrow listeners to each review-block's arrows
-  filteredReviews.forEach((review, i) => {
-    const leftArrow = review.querySelector('.review-arrow.left');
-    const rightArrow = review.querySelector('.review-arrow.right');
-    if (leftArrow) {
-      leftArrow.addEventListener('click', function(e) {
-        e.stopPropagation();
-        showReview((current - 1 + filteredReviews.length) % filteredReviews.length);
-      });
-    }
-    if (rightArrow) {
-      rightArrow.addEventListener('click', function(e) {
-        e.stopPropagation();
-        showReview((current + 1) % filteredReviews.length);
-      });
-    }
-  });
-
-  dots.forEach((dot, i) => {
-    dot.addEventListener('click', () => showReview(i));
-  });
-
-  // Optional: auto-advance every 7 seconds
-  let interval = setInterval(() => {
-    showReview((current + 1) % filteredReviews.length);
-  }, 7000);
-
-  // Pause on hover
-  const container = document.querySelector('.review-carousel-container');
-  if (container) {
-    container.addEventListener('mouseenter', () => clearInterval(interval));
-    container.addEventListener('mouseleave', () => {
-      interval = setInterval(() => {
-        showReview((current + 1) % filteredReviews.length);
-      }, 7000);
-    });
-  }
-
-  // Show first review
-  showReview(0);
-})();
-</script>
+<!-- Review carousel initialization moved to script.js -->
 
     </div>
 

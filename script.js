@@ -47,6 +47,77 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize
   showSlide(0);
 });
+
+// Review carousel logic (previously inline in index.html)
+// This runs on any page that includes the `.review-carousel-container` markup.
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.querySelector('.review-carousel-container');
+  if (!container) return;
+
+  (function initReviewCarousel() {
+    const allReviews = Array.from(container.querySelectorAll('.review-block'));
+    const seenServices = new Set();
+    const filteredReviews = [];
+    let goldSlide = null;
+
+    allReviews.forEach(r => {
+      const service = r.getAttribute('data-service');
+      if (r.classList.contains('gold-slide')) { goldSlide = r; return; }
+      if (!seenServices.has(service)) {
+        seenServices.add(service);
+        filteredReviews.push(r);
+      } else {
+        r.style.display = 'none';
+      }
+    });
+    if (goldSlide) filteredReviews.unshift(goldSlide);
+
+    // Hide all review-blocks not in filteredReviews
+    allReviews.forEach(r => {
+      if (!filteredReviews.includes(r)) r.style.display = 'none';
+      else r.style.display = '';
+    });
+
+    // Generate dots dynamically
+    const indicators = container.querySelector('.review-carousel-indicators');
+    if (!indicators) return;
+    indicators.innerHTML = '';
+    const dots = [];
+    for (let i = 0; i < filteredReviews.length; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'review-dot' + (i === 0 ? ' active' : '');
+      indicators.appendChild(dot);
+      dots.push(dot);
+    }
+
+    let current = 0;
+    function showReview(idx) {
+      filteredReviews.forEach((r, i) => {
+        r.classList.toggle('active', i === idx);
+        r.style.display = i === idx ? '' : 'none';
+      });
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+      current = idx;
+    }
+
+    // Attach arrow listeners
+    filteredReviews.forEach((review, i) => {
+      const leftArrow = review.querySelector('.review-arrow.left');
+      const rightArrow = review.querySelector('.review-arrow.right');
+      if (leftArrow) leftArrow.addEventListener('click', e => { e.stopPropagation(); showReview((current - 1 + filteredReviews.length) % filteredReviews.length); });
+      if (rightArrow) rightArrow.addEventListener('click', e => { e.stopPropagation(); showReview((current + 1) % filteredReviews.length); });
+    });
+
+    dots.forEach((dot, i) => dot.addEventListener('click', () => showReview(i)));
+
+    // Optional: auto-advance every 7 seconds
+    let interval = setInterval(() => showReview((current + 1) % filteredReviews.length), 7000);
+    container.addEventListener('mouseenter', () => clearInterval(interval));
+    container.addEventListener('mouseleave', () => { interval = setInterval(() => showReview((current + 1) % filteredReviews.length), 7000); });
+
+    showReview(0);
+  })();
+});
 // Calculate and set the CSS variable that controls where the side nav starts
 function updateSideNavTop() {
   try {
