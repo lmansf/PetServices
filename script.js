@@ -47,6 +47,230 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize
   showSlide(0);
 });
+// Calculate and set the CSS variable that controls where the side nav starts
+function updateSideNavTop() {
+  try {
+    const hero = document.querySelector('.hero-banner') || document.querySelector('.header');
+    if (!hero) {
+      document.documentElement.style.setProperty('--sidenav-top', `0px`);
+      return;
+    }
+
+    // Use boundingClientRect so we can react to scrolling. When the hero is
+    // visible, set the side-nav top to the hero's bottom (so the nav sits
+    // underneath). Once the hero scrolls out of view, set top to 0 so the
+    // nav locks to the viewport top and no blank space is left behind.
+    const rect = hero.getBoundingClientRect();
+    const bottom = Math.max(0, Math.round(rect.bottom));
+    document.documentElement.style.setProperty('--sidenav-top', `${bottom}px`);
+  } catch (err) {
+    // fail silently
+    console.warn('updateSideNavTop error', err);
+  }
+}
+
+// Initialize and keep in sync on resize/load
+window.addEventListener('load', updateSideNavTop);
+window.addEventListener('resize', updateSideNavTop);
+// Update on scroll so the side-nav snaps to the top when the hero scrolls out
+window.addEventListener('scroll', updateSideNavTop, { passive: true });
+
+// Add a page-specific class so we can tweak styles (e.g., move Calendly badge)
+(function markAboutPage(){
+  try {
+    const p = window.location.pathname || '';
+    const filename = p.split('/').pop().toLowerCase();
+    if (filename === 'about.html' || document.title.toLowerCase().includes('about')) {
+      document.body.classList.add('about-page');
+    }
+  } catch (e) { /* ignore */ }
+})();
+
+// Right sidebar carousel: inject a fixed right sidebar on desktop and populate
+// it with images from the imgs/ folder. Uses CSS animation for seamless scroll.
+(function createRightSidebarCarousel(){
+  const images = [
+    'Fennway.webp',
+    'original (13).webp',
+    'original (25).webp',
+    'original (8).webp',
+    'original (9).webp',
+    'original.webp'
+  ];
+
+  function isDesktop() { return window.matchMedia('(min-width: 900px)').matches; }
+
+  let sidebar = null;
+
+  function build() {
+    if (!isDesktop()) return remove();
+    if (document.getElementById('right-sidebar-carousel')) return; // already exists
+
+    sidebar = document.createElement('aside');
+    sidebar.id = 'right-sidebar-carousel';
+    sidebar.setAttribute('aria-hidden', 'true');
+
+    const track = document.createElement('div');
+    track.className = 'rsc-track';
+
+    // Append images, then append same set again for seamless loop
+    images.forEach(src => {
+      const item = document.createElement('div');
+      item.className = 'rsc-item';
+      const img = document.createElement('img');
+      img.src = `imgs/${src}`;
+      img.alt = '';
+      item.appendChild(img);
+      track.appendChild(item);
+    });
+    // duplicate
+    images.forEach(src => {
+      const item = document.createElement('div');
+      item.className = 'rsc-item';
+      const img = document.createElement('img');
+      img.src = `imgs/${src}`;
+      img.alt = '';
+      item.appendChild(img);
+      track.appendChild(item);
+    });
+
+    sidebar.appendChild(track);
+    document.body.appendChild(sidebar);
+
+    // Wait for images to load (with a short timeout fallback) so the track's
+    // height is stable before starting the CSS animation. This prevents the
+    // brief visual pause that happens when the animation begins before layout
+    // settles.
+    function waitForImages(imgs, timeout = 2500) {
+      const promises = imgs.map(img => {
+        return new Promise(resolve => {
+          if (img.complete && img.naturalWidth > 0) return resolve(true);
+          const onLoad = () => { cleanup(); resolve(true); };
+          const onErr = () => { cleanup(); resolve(false); };
+          const cleanup = () => { img.removeEventListener('load', onLoad); img.removeEventListener('error', onErr); };
+          img.addEventListener('load', onLoad);
+          img.addEventListener('error', onErr);
+        });
+      });
+      // Race between all images and a timeout so we never wait forever
+      return Promise.race([
+        Promise.all(promises),
+        new Promise(resolve => setTimeout(resolve, timeout))
+      ]);
+    }
+
+    function computeAndSetDuration(trackEl, speedPxPerSec = 28) {
+      // The track contains two copies; we animate by translating -50% so the
+      // distance we travel equals half the track scrollHeight.
+      const totalPx = trackEl.scrollHeight / 2;
+      // Minimum duration to keep the motion gentle
+      const minDuration = 10; // seconds
+      const duration = Math.max(minDuration, Math.round((totalPx / speedPxPerSec) * 10) / 10);
+      trackEl.style.animationDuration = `${duration}s`;
+      return duration;
+    }
+
+    const imgs = Array.from(track.querySelectorAll('img'));
+    waitForImages(imgs).then(() => {
+      // Ensure duration matches the rendered size, then start animation
+      computeAndSetDuration(track);
+      // small timeout to ensure browser laid out the height change
+      requestAnimationFrame(() => requestAnimationFrame(() => track.classList.add('animating')));
+    }).catch(() => {
+      // fallback: start the animation regardless after a short delay
+      setTimeout(() => track.classList.add('animating'), 600);
+    });
+
+    // Recompute duration on resize (track height may change). Throttle to avoid
+    // excessive recalculations.
+    let resizeTimeout = null;
+    window.addEventListener('resize', () => {
+      if (!track) return;
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      // Pause animation while recalculating to avoid visible speed jumps
+      track.classList.remove('animating');
+      resizeTimeout = setTimeout(() => {
+        computeAndSetDuration(track);
+        // restart the animation in the next frame
+        requestAnimationFrame(() => track.classList.add('animating'));
+      }, 180);
+    });
+
+    // keep sidebar top/height in sync with --sidenav-top
+    updateSidebarPosition();
+    window.addEventListener('resize', updateSidebarPosition);
+    window.addEventListener('scroll', updateSidebarPosition, { passive: true });
+  }
+
+  function remove() {
+    const existing = document.getElementById('right-sidebar-carousel');
+    if (existing) existing.remove();
+    sidebar = null;
+  }
+
+  function updateSidebarPosition(){
+    const el = document.getElementById('right-sidebar-carousel');
+    if (!el) return;
+    const top = getComputedStyle(document.documentElement).getPropertyValue('--sidenav-top') || '0px';
+    el.style.top = top.trim();
+    // height should account for --sidenav-top
+    el.style.height = `calc(100vh - ${top.trim()})`;
+  }
+
+  // Build on load and when viewport crosses the desktop threshold
+  window.addEventListener('load', build);
+  window.addEventListener('resize', () => {
+    if (isDesktop()) build(); else remove();
+  });
+})();
+
+// Ensure profile picture loads even if the file was moved out of `imgs/`.
+// This will try a small set of likely alternate paths if the current src fails.
+(function ensureProfileImage(){
+  document.addEventListener('DOMContentLoaded', function(){
+    const img = document.getElementById('profile-picture');
+    if (!img) return;
+
+    // If the image loads fine, nothing to do
+    if (img.complete && img.naturalWidth > 0) return;
+
+    const originalSrc = img.getAttribute('src') || '';
+
+    const candidates = [
+      originalSrc, // keep current as first
+      'original.webp',
+      'profile.webp',
+      'profile.jpg',
+      'imgs/original.webp',
+      'imgs/original (25).webp'
+    ];
+
+    // Remove duplicates and undefined
+    const uniq = Array.from(new Set(candidates.filter(Boolean)));
+
+    let idx = 0;
+    function tryNext(){
+      if (idx >= uniq.length) {
+        console.warn('Profile image: no candidate loaded.', uniq);
+        return;
+      }
+      const src = uniq[idx++];
+      const test = new Image();
+      test.onload = function(){
+        img.src = src;
+        console.log('Profile image loaded from', src);
+      };
+      test.onerror = function(){
+        tryNext();
+      };
+      test.src = src;
+    }
+
+    // Start with the next candidate if current didn't load
+    if (!(img.complete && img.naturalWidth > 0)) tryNext();
+  });
+})();
+
 // Carousel image configuration
 const carouselImages = [
     { src: "original (13).webp", alt: "Professional dog walking and pet care services" },
@@ -144,34 +368,29 @@ function initializeCarousel() {
     startAutoSlide();
 }
 
-// Enhanced accordion functionality with smooth animations and scroll positioning
-const clickers = document.querySelectorAll('.clicker');
+// Enhanced accordion: only open the hidden-box when the Details trigger is clicked.
+// Prevent default link navigation (href="#") and avoid scrolling the product box to top.
+const detailTriggers = document.querySelectorAll('.details-link, .nav-btn.details');
 
-clickers.forEach(clicker => {
-  clicker.addEventListener('click', () => {
-    // Find the hidden box that belongs to this clicker's parent box
-    const parentBox = clicker.closest('.box');
+detailTriggers.forEach(trigger => {
+  trigger.addEventListener('click', (e) => {
+    // Prevent anchor default behavior which can jump to top (href="#")
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Find the hidden box that belongs to this trigger's parent .box
+    const parentBox = trigger.closest('.box');
+    if (!parentBox) return;
     const hiddenBox = parentBox.nextElementSibling;
-    
-    if (hiddenBox && hiddenBox.classList.contains('hidden-box')) {
-      // Check if this box is currently open
-      const isCurrentlyOpen = hiddenBox.classList.contains('open');
-      
-      // Close all hidden boxes first with smooth animation
-      document.querySelectorAll('.hidden-box').forEach(box => {
-        box.classList.remove('open');
-      });
-      
-      // If this box wasn't open before, open it immediately
-      if (!isCurrentlyOpen) {
-        // Scroll the product box to the top smoothly
-        parentBox.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start',
-          inline: 'nearest'
-        });
 
-        // Open the hidden box immediately for a snappy feel
+    if (hiddenBox && hiddenBox.classList.contains('hidden-box')) {
+      const isCurrentlyOpen = hiddenBox.classList.contains('open');
+
+      // Close all hidden boxes first
+      document.querySelectorAll('.hidden-box').forEach(box => box.classList.remove('open'));
+
+      // If it wasn't open, open it (no scroll-to-top)
+      if (!isCurrentlyOpen) {
         hiddenBox.classList.add('open');
 
         // After a short delay, adjust scroll to center the calendly area (if present)
@@ -184,9 +403,9 @@ clickers.forEach(clicker => {
               inline: 'nearest'
             });
           }
-        }, 150); // Minimal delay for transition to start
+        }, 150);
 
-        // Log analytics event for product interaction
+        // Analytics event
         if (window.analytics) {
           const productName = parentBox.querySelector('.product-name')?.textContent || 'Unknown Product';
           window.analytics.logEvent('product_view', {
@@ -197,7 +416,7 @@ clickers.forEach(clicker => {
       }
     }
   });
-})
+});
 // card slide out for first appointments
 document.addEventListener('DOMContentLoaded', function() {
     const card = document.getElementById('myCard');

@@ -288,7 +288,8 @@
   margin: 0;
   border-radius: 16px;
   box-sizing: border-box;
-  background: var(--brand-purple, #663399);
+  /* Softer/lighter purple for background to be less dominant */
+  background: var(--pet-bg, #7e57a8);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -997,6 +998,237 @@ h2 {
   width: 100%;
 }
 
+/* Desktop: turn the top horizontal nav into a vertical side nav */
+@media (min-width: 900px) {
+  /* Side nav width */
+  :root { --sidenav-width: 220px; }
+
+  .topnav {
+    position: fixed !important;
+    /* Start the side-nav below the hero/header when available. The
+       `--sidenav-top` variable is set via JS based on the hero height; if
+       not set it falls back to 0. */
+    top: var(--sidenav-top, 0);
+    left: 0;
+    bottom: 0;
+    right: auto;
+    width: var(--sidenav-width);
+    height: calc(100vh - var(--sidenav-top, 0px));
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.25rem 0.5rem;
+    gap: 0.25rem;
+    background-color: var(--nav-bg, #f4f4f7);
+    box-shadow: 1px 0 6px rgba(0,0,0,0.06);
+    z-index: 10000;
+  }
+
+  /* Nav links become full-width stack inside the side nav */
+  .topnav a,
+  .topnav .dropbtn {
+    float: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 18px;
+    color: var(--brand-purple);
+    background: transparent;
+    border-radius: 8px;
+  }
+
+  .topnav a:hover, .topnav a:focus-visible,
+  .topnav .dropbtn:hover, .topnav .dropbtn:focus-visible {
+    background: var(--light-purple-bg);
+    color: var(--brand-purple);
+  }
+
+  /* Keep dropdown content inside the side nav and flow with document */
+  .topnav .dropdown .dropdown-content {
+    position: static;
+    transform: none;
+    left: auto;
+    top: auto;
+    width: 100%;
+    box-shadow: none;
+    background: transparent;
+  }
+  .topnav .dropdown .dropdown-content a {
+    padding-left: 34px; /* indent dropdown items */
+    background: transparent;
+    color: var(--text-gray);
+  }
+
+  /* Adjust content so it doesn't sit under the side nav */
+  .content {
+    padding-top: 1rem; /* less top padding when nav is at left */
+    padding-left: calc(var(--sidenav-width) + 2rem);
+  }
+
+  /* Make the hero/banner and other full-width areas account for the side nav
+     by constraining their max-width where appropriate. These are conservative
+     overrides to reduce layout surprises. */
+  .home-hero-row, .pet-carousel-container, .service-section, .content > .box {
+    max-width: calc(100% - (var(--sidenav-width) + 2rem));
+  }
+}
+
+/* Right-hand mirror sidebar for desktop only. Empty purple panel that
+   visually balances the left side nav. Implemented as a fixed pseudo-elem
+   so it doesn't require HTML changes. */
+@media (min-width: 900px) {
+  :root { --rightbar-width: 220px; }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: var(--sidenav-top, 0);
+    right: 0;
+    width: var(--rightbar-width);
+    height: calc(100vh - var(--sidenav-top, 0px));
+    background: var(--brand-purple);
+    z-index: 0; /* place the right bar behind page content */
+    box-shadow: -1px 0 6px rgba(0,0,0,0.06);
+  }
+
+  /* Push content left so it doesn't sit under the right bar */
+  .content {
+    padding-right: calc(var(--rightbar-width) + 2rem);
+    position: relative;
+    z-index: 2; /* ensure content sits above the right pseudo-sidebar */
+  }
+
+  /* Reduce max-widths to account for both left + right sidebars */
+  .home-hero-row, .pet-carousel-container, .service-section, .content > .box {
+    max-width: calc(100% - (var(--sidenav-width) + var(--rightbar-width) + 4rem));
+  }
+}
+
+/* Ensure Calendly badge sits above the pseudo right sidebar and allow page-specific
+   repositioning (About page) so it doesn't overlap the right purple bar. */
+@media (min-width: 900px) {
+  .calendly-badge,
+  .calendly-badge-widget,
+  a.calendly-badge,
+  .calendly-badge-content {
+    z-index: 10002 !important;
+  }
+
+  /* Move the badge left on pages where we add the .about-page body class */
+  .about-page .calendly-badge,
+  .about-page a.calendly-badge,
+  .about-page .calendly-badge-widget {
+    right: calc(var(--rightbar-width) + 18px) !important;
+    left: auto !important;
+  }
+}
+
+/* Make service tiles expand to fill the content area between sidebars */
+@media (min-width: 900px) {
+  /* Ensure the service-section and its inner description box take full width
+     of the content column (content is already offset by padding-left/right). */
+  .service-section,
+  .service-section .service-description-box,
+  .content > .box,
+  .content > .box .service-description-box {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+  }
+
+  /* Remove the earlier centering that limited the card width on wide screens */
+  .service-description-box {
+    max-width: none;
+    padding-right: 1rem; /* small breathing room from right edge */
+  }
+}
+
+/* Also allow the Meet My Pets carousel to span the full content column on desktop */
+@media (min-width: 900px) {
+  .pet-carousel-container,
+  .pet-carousel,
+  .pet-slide,
+  .pet-slide .box {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  /* Ensure the slide card uses the content column width (no extra inset) */
+  .pet-slide .box {
+    padding-left: 1rem; /* small internal padding */
+    padding-right: 1rem;
+  }
+
+  /* If arrows are absolutely positioned inside the slide, ensure they stay
+     within the visible area by nudging them inward a bit. */
+  .pet-carousel-arrow.left { left: 12px; }
+  .pet-carousel-arrow.right { right: 12px; }
+}
+
+/* Right sidebar carousel (desktop only) */
+/* Uses a duplicated inner list and a CSS animation to create an infinite
+   vertical marquee of images from the site's imgs/ folder. */
+@media (min-width: 900px) {
+  :root { --rightbar-width: 220px; }
+
+  #right-sidebar-carousel {
+    position: fixed;
+    right: 0;
+    top: var(--sidenav-top, 0px);
+    width: var(--rightbar-width);
+    height: calc(100vh - var(--sidenav-top, 0px));
+    background: var(--brand-purple, #663399);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 9999;
+  }
+
+  #right-sidebar-carousel .rsc-track {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 8px;
+    /* will be animated */
+  }
+
+  #right-sidebar-carousel .rsc-item {
+    width: calc(var(--rightbar-width) - 32px);
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #right-sidebar-carousel .rsc-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    display: block;
+    object-fit: cover;
+  }
+
+  /* animate the track by translating up by 50% (we duplicate the items in JS)
+     duration is intentionally long to make the scroll gentle. */
+  @keyframes rsc-scroll {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-50%); }
+  }
+
+  /* Apply animation to the track container */
+  #right-sidebar-carousel .rsc-track.animating {
+    animation: rsc-scroll linear infinite;
+    animation-duration: 28s; /* adjust speed as desired */
+  }
+}
+
 .box:hover {
   /* Subtle elevation on hover instead of a heavy purple fill */
   box-shadow: 0 6px 18px rgba(102,51,153,0.06);
@@ -1176,11 +1408,22 @@ h2 {
 
 /* Layout for the about-me box: desktop shows image left, details right; mobile stacks */
 #about-me {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
   gap: 1.5rem;
   padding: 1rem;
+}
+
+/* Right column container */
+#about-me .right-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+#about-me .about-description {
+  grid-column: 2;
 }
 
 #about-me .about-me-blurb {
@@ -1191,8 +1434,7 @@ h2 {
 /* Mobile: center image above details and tighten spacing */
 @media (max-width: 900px) {
   #about-me {
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: 1fr;
     padding: 0.6rem;
   }
   #about-me .about-me-blurb {
@@ -1201,6 +1443,68 @@ h2 {
   .profile-picture img {
     width: 130px;
     height: 130px;
+  }
+}
+
+/* About header row: Experience | About Me | Animals */
+.about-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* keep the title centered */
+  gap: 2rem; /* a bit more breathing room between columns */
+}
+.about-title { flex: 0 0 auto; }
+.about-title h3 { margin: 0; text-align: center; }
+.meta-left, .meta-right { flex: 1 1 0; font-weight: 700; }
+.meta-left { text-align: left; }
+.meta-right { text-align: right; }
+
+/* Color only the label text purple; make the value (description) black */
+.meta-left .meta-label,
+.meta-right .meta-label {
+  color: var(--brand-purple);
+}
+.meta-left .meta-value,
+.meta-right .meta-value {
+  color: #000;
+  font-weight: 400;
+}
+
+@media (max-width: 900px) {
+  .about-header-row { justify-content: center; gap: 0.8rem; }
+  .meta-left, .meta-right { text-align: center; flex: 0 0 auto; }
+}
+
+/* Mobile-specific: stack the header items for narrow screens for better readability */
+@media (max-width: 700px) {
+  .about-header-row {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0; /* small vertical padding for breathing room */
+  }
+  .meta-left, .meta-right {
+    text-align: center;
+    width: 100%;
+    display: block;
+    font-size: 0.98rem;
+  }
+  .about-title { order: 0; margin: 0.2rem 0; }
+  /* keep label and value inline but allow wrapping; label purple, value black */
+  .meta-left .meta-label,
+  .meta-right .meta-label { display: inline-block; margin-right: 0.35rem; }
+  .meta-left .meta-value,
+  .meta-right .meta-value { display: inline-block; }
+  /* slightly increase the spacing between header and description on mobile */
+  #about-me .about-description { margin-top: 0.6rem; }
+}
+
+/* Desktop: slightly larger profile/about description for readability */
+@media (min-width: 900px) {
+  #about-me .about-description p {
+    font-size: 1.125rem; /* larger than mobile */
+    line-height: 1.75;
   }
 }
 
