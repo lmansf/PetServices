@@ -43,7 +43,7 @@
    and keep a compact size (padding controls visual width). */
 .book-today-container .nav-btn {
   display: inline-block;
-  width: auto !important;
+  width: auto;
   min-width: 0;
   padding: 0.5rem 1.2rem;
 }
@@ -303,7 +303,7 @@
 @media(max-width: 600px){
   .topnav a,
   .topnav .dropbtn {
-    color: #ffffff !important;
+    color: #ffffff;
   }
 }
 
@@ -596,12 +596,12 @@ img {vertical-align: middle;}
   .pet-carousel-container,
   .pet-carousel,
   .pet-slide {
-    width: 100% !important;
-    max-width: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    transform: none !important;
-    position: relative !important;
+    width: 100%;
+    max-width: 100%;
+    left: 0;
+    right: 0;
+    transform: none;
+    position: relative;
   }
 
   /* Additional mobile adjustments to avoid clipping and allow room for
@@ -634,8 +634,8 @@ img {vertical-align: middle;}
     width: 2.2rem;
     height: 2.2rem;
     font-size: 1.1rem;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
+    top: 50%;
+    transform: translateY(-50%);
     box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   }
   .pet-carousel-arrow.left { left: 8px; }
@@ -784,12 +784,12 @@ img {vertical-align: middle;}
   /* Make dropdown menu items purple on the grey dropdown background so
      they remain readable on mobile (override the white color above). */
   .topnav .dropdown-content a {
-    color: var(--brand-purple) !important;
+    color: var(--brand-purple);
   }
   .topnav .dropdown-content a:hover,
   .topnav .dropdown-content a:focus {
     background: var(--brand-purple);
-    color: #fff !important;
+    color: #fff;
   }
 }
 
@@ -1007,7 +1007,7 @@ h2 {
   :root { --sidenav-width: 220px; }
 
   .topnav {
-    position: fixed !important;
+    position: fixed;
     /* Start the side-nav below the hero/header when available. The
        `--sidenav-top` variable is set via JS based on the hero height; if
        not set it falls back to 0. */
@@ -1230,6 +1230,47 @@ h2 {
     animation: rsc-scroll linear infinite;
     animation-duration: 28s; /* adjust speed as desired */
   }
+}
+
+/* Mobile: show Meet My Pets as stacked vertical tiles instead of a
+   horizontal carousel. Hides carousel controls and indicators on
+   narrow screens so the layout is simpler and avoids centering issues. */
+@media (max-width: 900px) {
+  .pet-carousel {
+    display: block;
+    overflow: visible;
+    padding: 0 12px; /* small page padding preserved */
+    box-sizing: border-box;
+  }
+
+  .pet-slide {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: auto;
+    box-sizing: border-box;
+    margin: 0 0 1rem 0;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    scroll-snap-align: none;
+  }
+
+  /* Inner card inset so rounded corners are visible and content doesn't
+     touch the viewport edge. */
+  .pet-slide .box {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.25rem 1rem;
+    border-radius: 12px;
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  /* Hide arrows and indicators on mobile when using vertical layout */
+  .pet-carousel-arrow { display: none; }
+  .pet-carousel-indicators { display: none; }
 }
 
 .box:hover {
@@ -2034,25 +2075,25 @@ grid-row: 5 / span 3;
   border: none;
 }
 .gold-photo {
-  background: #FFD700 !important;
-  color: #fff700 !important;
+  background: #FFD700;
+  color: #fff700;
 }
 .gold-quote {
-  color: #4B2E83 !important;
+  color: #4B2E83;
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 0.7rem;
 }
 .gold-btn {
-  background: #FFD700 !important;
-  color: #4B2E83 !important;
-  border: none !important;
+  background: #FFD700;
+  color: #4B2E83;
+  border: none;
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(255,215,0,0.10);
 }
 .gold-btn:hover, .gold-btn:focus {
-  background: #FFE066 !important;
-  color: #4B2E83 !important;
+  background: #FFE066;
+  color: #4B2E83;
 }
 
 /* === Force purple navbar everywhere (desktop + mobile) ===
@@ -2060,33 +2101,33 @@ grid-row: 5 / span 3;
    screen sizes. It is intentionally placed near the end so it wins
    over earlier, more specific rules where appropriate. */
 .topnav {
-  background-color: var(--brand-purple) !important;
+  background-color: var(--brand-purple);
 }
 .topnav a,
 .topnav .dropbtn {
-  color: #fff !important;
-  background-color: transparent !important;
+  color: #fff;
+  background-color: transparent;
 }
 .topnav .dropdown .dropdown-content {
-  background: #54297a !important; /* slightly darker purple for panel */
-  box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+  background: #54297a; /* slightly darker purple for panel */
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
 .topnav .dropdown .dropdown-content a {
-  color: #fff !important;
+  color: #fff;
 }
 .topnav .dropdown .dropdown-content a:hover,
 .topnav .dropdown .dropdown-content a:focus {
-  background: #FFD700 !important;
-  color: #4B2E83 !important;
+  background: #FFD700;
+  color: #4B2E83;
 }
 
 @media (min-width: 900px) {
   /* Ensure the desktop side-nav also uses the purple background */
   .topnav {
-    background-color: var(--brand-purple) !important;
+    background-color: var(--brand-purple);
   }
-  .topnav a, .topnav .dropbtn { color: #fff !important; }
-  .topnav .dropdown .dropdown-content { background: #54297a !important; }
+  .topnav a, .topnav .dropbtn { color: #fff; }
+  .topnav .dropdown .dropdown-content { background: #54297a; }
 }
 
 

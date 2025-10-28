@@ -8,7 +8,34 @@ document.addEventListener('DOMContentLoaded', function() {
   const dots = Array.from(document.querySelectorAll('.pet-dot'));
   let current = 0;
 
-  function showSlide(idx) {
+  // If we're on a narrow screen, disable the carousel behavior and
+  // instead show the slides stacked vertically (CSS handles layout).
+  try {
+    const isMobile = window.matchMedia('(max-width: 900px)').matches;
+    if (isMobile) {
+      // Ensure all slides are visible and mark them active so any
+      // styles that rely on .active still apply.
+      slides.forEach(s => {
+        s.classList.add('active');
+        s.style.position = '';
+        s.style.opacity = '';
+      });
+      // Hide controls that are not useful in stacked mode
+      if (leftArrow) leftArrow.style.display = 'none';
+      if (rightArrow) rightArrow.style.display = 'none';
+      dots.forEach(d => d.style.display = 'none');
+      // Nothing more to do for carousel behavior on mobile
+      return;
+    }
+  } catch (e) {
+    // if matchMedia is not supported, continue with carousel behavior
+  }
+
+  // Show a slide by index. options.center controls whether to center/scroll
+  // the active slide into view (default true). Passing center:false avoids
+  // triggering additional scrolling when the carousel was already scrolled
+  // by arrow logic.
+  function showSlide(idx, options = { center: true }) {
     slides.forEach((slide, i) => {
       slide.classList.toggle('active', i === idx);
     });
@@ -16,14 +43,92 @@ document.addEventListener('DOMContentLoaded', function() {
       dot.classList.toggle('active', i === idx);
     });
     current = idx;
+
+    if (options.center) {
+      try {
+        const mq = window.matchMedia('(max-width: 900px)');
+        if (mq.matches && carousel && slides[idx]) {
+          // center using a computed scrollLeft for consistent behavior
+          centerSlide(idx, true);
+        }
+      } catch (e) {
+        // ignore if scrollIntoView options unsupported
+      }
+    }
   }
 
-  leftArrow.addEventListener('click', () => {
-    showSlide((current - 1 + slides.length) % slides.length);
-  });
-  rightArrow.addEventListener('click', () => {
-    showSlide((current + 1) % slides.length);
-  });
+  // Helper: on mobile, scroll the carousel by a number of slides; on
+  // desktop fallback to showSlide which toggles classes.
+  function scrollBySlide(steps) {
+    const mq = window.matchMedia('(max-width: 900px)');
+    if (!mq.matches || !carousel) {
+      // Desktop: update current via showSlide
+      showSlide((current + steps + slides.length) % slides.length);
+      return;
+    }
+
+    // Compute gap between slides (fallback to 12px)
+    const cs = getComputedStyle(carousel);
+    const gap = parseFloat(cs.gap || cs.columnGap || '12') || 12;
+    const slideRect = slides[0].getBoundingClientRect();
+    const slideWidth = slideRect.width;
+    const delta = (slideWidth + gap) * steps;
+
+    // Perform the scroll and then update the active index based on the
+    // slide closest to the center of the carousel after the scroll.
+    carousel.scrollBy({ left: delta, behavior: 'smooth' });
+
+    // After the smooth scroll completes (approx), determine nearest slide
+    // to center and update classes without triggering another scroll.
+    setTimeout(() => {
+      updateCurrentFromScroll();
+    }, 380);
+  }
+
+  function updateCurrentFromScroll() {
+    try {
+      const carouselRect = carousel.getBoundingClientRect();
+      const centerX = carouselRect.left + carouselRect.width / 2;
+      let bestIdx = 0;
+      let bestDist = Infinity;
+      slides.forEach((s, i) => {
+        const r = s.getBoundingClientRect();
+        const slideCenter = r.left + r.width / 2;
+        const dist = Math.abs(slideCenter - centerX);
+        if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+      });
+      // Update active classes but avoid centering again (we already scrolled)
+      showSlide(bestIdx, { center: false });
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Center a slide in the carousel by computing the proper scrollLeft.
+  function centerSlide(idx, smooth = true) {
+    try {
+      if (!carousel || !slides[idx]) return;
+      const mq = window.matchMedia('(max-width: 900px)');
+      if (!mq.matches) return;
+
+      const slide = slides[idx];
+      // offsetLeft is relative to the scroll container for direct children
+      const slideLeft = slide.offsetLeft;
+      const slideWidth = slide.offsetWidth;
+      const containerWidth = carousel.clientWidth;
+      const target = Math.max(0, slideLeft - (containerWidth - slideWidth) / 2);
+      if (smooth && 'scrollTo' in carousel) {
+        carousel.scrollTo({ left: target, behavior: 'smooth' });
+      } else if ('scrollLeft' in carousel) {
+        carousel.scrollLeft = target;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  leftArrow.addEventListener('click', () => scrollBySlide(-1));
+  rightArrow.addEventListener('click', () => scrollBySlide(1));
   dots.forEach((dot, i) => {
     dot.addEventListener('click', () => showSlide(i));
   });
@@ -46,6 +151,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initialize
   showSlide(0);
+  // Ensure first slide is centered on mobile after layout stabilizes
+  try {
+    const mqInit = window.matchMedia('(max-width: 900px)');
+    if (mqInit.matches) requestAnimationFrame(() => requestAnimationFrame(() => centerSlide(0, false)));
+  } catch (e) { /* ignore */ }
 });
 
 // Review carousel logic (previously inline in index.html)
