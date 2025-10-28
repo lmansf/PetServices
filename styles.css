@@ -998,8 +998,8 @@ h2 {
 }
 
 .box:hover {
-  background-color: var(--hover-purple);
-  color:#f2f2f2
+  /* Subtle elevation on hover instead of a heavy purple fill */
+  box-shadow: 0 6px 18px rgba(102,51,153,0.06);
 }
 
 
@@ -1024,18 +1024,44 @@ h2 {
 
 
 .box {
-  display: grid;
-  grid-template-columns: 1fr;
-  background-color: var(--brand-purple);
-  padding: 3px;
-  gap: 1px;
-  border-radius: 6px;
+  /* Make the box look like a light card with a subtle purple border */
+  display: block;
+  background: transparent;
+  border: 1px solid rgba(102,51,153,0.14);
+  border-radius: 10px;
+  margin-bottom: 1rem;
 }
-.box div {
+
+.box > div {
+  /* inner container (the visible card area) */
   background-color: #ffffff;
   color: #2D3748;
-  padding: 3px;
-  border-radius: 4px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.box .clicker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  box-sizing: border-box;
+  background: transparent; /* inner >div provides white background */
+}
+
+.box .clicker:hover {
+  background: var(--light-purple-bg);
+}
+
+.box .product-name {
+  text-align: center;
+  display: block;
+  margin: 0 0 0.4rem 0;
+  color: var(--brand-purple);
+  font-size: 1.4rem;
+  line-height: 1.05;
 }
 .product-description {
   margin-bottom: 5px;
@@ -1136,7 +1162,8 @@ grid-row: 1 /span 2;
   display: block;
   margin-left: auto;
   margin-right: auto;
-  width: 50%;
+  width: auto;
+  height: 50%;
   border:#663399 4px solid;
 }
 .profile-picture h3{
