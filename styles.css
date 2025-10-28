@@ -4,7 +4,7 @@
   padding: 0.5rem 0 0.5rem 0;
 }
 .product-name {
-  font-size: 2rem;
+  font-size: 3rem;
   font-weight: bold;
   font-family: 'Coustard', Georgia, serif;
   text-align: center;
@@ -1151,23 +1151,57 @@ h2 {
 } */
 
 .profile-picture{
-grid-column:1;
-grid-row: 1 /span 2;
-
+  /* Profile area: center contents by default; layout for #about-me will override on desktop */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.4rem;
 }
 
 .profile-picture img{
-  height: 150px;
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
   border-radius: 50%;
   display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: auto;
-  height: 50%;
-  border:#663399 4px solid;
+  margin: 0 auto;
+  border: 4px solid var(--brand-purple);
 }
 .profile-picture h3{
   text-align: center;
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Layout for the about-me box: desktop shows image left, details right; mobile stacks */
+#about-me {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+#about-me .about-me-blurb {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+/* Mobile: center image above details and tighten spacing */
+@media (max-width: 900px) {
+  #about-me {
+    flex-direction: column;
+    align-items: center;
+    padding: 0.6rem;
+  }
+  #about-me .about-me-blurb {
+    text-align: center;
+  }
+  .profile-picture img {
+    width: 130px;
+    height: 130px;
+  }
 }
 
 .about-me-blurb{
