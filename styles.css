@@ -1290,8 +1290,8 @@ grid-row: 5 / span 3;
   }
 }
 
-/* Stack service action buttons on smaller screens so Details sits under Book Today */
-@media (max-width: 700px) {
+/* Keep buttons side-by-side for most mobile widths; only stack on very small screens */
+@media (max-width: 380px) {
   .book-today-container {
     flex-direction: column;
     gap: 0.5rem;
