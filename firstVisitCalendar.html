@@ -72,6 +72,48 @@
 
       </div>
 
+      <div style="text-align:center;margin-top:1rem;">
+        <button id="continue-booking-btn" class="nav-btn book-today">Continue to booking</button>
+      </div>
+
+      <script>
+        // Read cookie helper (small, local) — looks for 'nextpage'
+        function readCookie(name) {
+          const pairs = document.cookie.split(';').map(s => s.trim()).filter(Boolean);
+          for (let p of pairs) {
+            const idx = p.indexOf('=');
+            if (idx === -1) continue;
+            const k = p.slice(0, idx);
+            const v = p.slice(idx + 1);
+            if (k === name) return decodeURIComponent(v);
+          }
+          return null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+          const btn = document.getElementById('continue-booking-btn');
+          if (!btn) return;
+
+          const next = readCookie('nextpage');
+          const mapping = {
+            'housesitting': 'houseSitting.html',
+            'dropins': 'dropIns.html',
+            'walking': 'walking.html'
+          };
+
+          // If we have a mapping, navigate there on click. Otherwise, disable button.
+          if (next && mapping[next]) {
+            btn.addEventListener('click', function() {
+              window.location.href = mapping[next];
+            });
+          } else {
+            // No known nextpage — change text to go back home
+            btn.textContent = 'Back to services';
+            btn.addEventListener('click', function() { window.location.href = 'index.html'; });
+          }
+        });
+      </script>
+
       
 
 

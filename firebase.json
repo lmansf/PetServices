@@ -1,6 +1,7 @@
 {
   "hosting": {
     "public": ".",
+    "predeploy": ["node scripts/generate-imgs.js"],
     "ignore": [
       "firebase.json",
       "**/.*",

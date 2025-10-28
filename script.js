@@ -269,8 +269,11 @@ window.addEventListener('scroll', updateSideNavTop, { passive: true });
 
 // Right sidebar carousel: inject a fixed right sidebar on desktop and populate
 // it with images from the imgs/ folder. Uses CSS animation for seamless scroll.
-(function createRightSidebarCarousel(){
-  const images = [
+ (function createRightSidebarCarousel(){
+  // Attempt to load a generated manifest `imgs.json` from the site root.
+  // If it isn't available (e.g., developer didn't run the generator), fall
+  // back to a small bundled set so the site still looks reasonable.
+  const FALLBACK_IMAGES = [
     'Fennway.webp',
     'original (13).webp',
     'original (25).webp',
@@ -283,104 +286,111 @@ window.addEventListener('scroll', updateSideNavTop, { passive: true });
 
   let sidebar = null;
 
+  // Load image list from /imgs.json (produced by build script). Returns a
+  // promise that resolves to an array of filenames (strings).
+  function loadImageManifest() {
+    return fetch('/imgs.json', { cache: 'no-cache' })
+      .then(resp => {
+        if (!resp.ok) throw new Error('no manifest');
+        return resp.json();
+      })
+      .then(list => Array.isArray(list) ? list.filter(Boolean) : FALLBACK_IMAGES)
+      .catch(() => {
+        // If fetching/parsing fails, try a relative path (useful on local dev)
+        return fetch('imgs.json', { cache: 'no-cache' })
+          .then(resp => resp.ok ? resp.json() : FALLBACK_IMAGES)
+          .then(list => Array.isArray(list) ? list.filter(Boolean) : FALLBACK_IMAGES)
+          .catch(() => FALLBACK_IMAGES);
+      });
+  }
+
   function build() {
     if (!isDesktop()) return remove();
     if (document.getElementById('right-sidebar-carousel')) return; // already exists
 
-    sidebar = document.createElement('aside');
-    sidebar.id = 'right-sidebar-carousel';
-    sidebar.setAttribute('aria-hidden', 'true');
+    // Acquire the image list then create the sidebar
+    loadImageManifest().then(images => {
+      // If no images, bail
+      if (!images || !images.length) return;
 
-    const track = document.createElement('div');
-    track.className = 'rsc-track';
+      sidebar = document.createElement('aside');
+      sidebar.id = 'right-sidebar-carousel';
+      sidebar.setAttribute('aria-hidden', 'true');
 
-    // Append images, then append same set again for seamless loop
-    images.forEach(src => {
-      const item = document.createElement('div');
-      item.className = 'rsc-item';
-      const img = document.createElement('img');
-      img.src = `imgs/${src}`;
-      img.alt = '';
-      item.appendChild(img);
-      track.appendChild(item);
-    });
-    // duplicate
-    images.forEach(src => {
-      const item = document.createElement('div');
-      item.className = 'rsc-item';
-      const img = document.createElement('img');
-      img.src = `imgs/${src}`;
-      img.alt = '';
-      item.appendChild(img);
-      track.appendChild(item);
-    });
+      const track = document.createElement('div');
+      track.className = 'rsc-track';
 
-    sidebar.appendChild(track);
-    document.body.appendChild(sidebar);
-
-    // Wait for images to load (with a short timeout fallback) so the track's
-    // height is stable before starting the CSS animation. This prevents the
-    // brief visual pause that happens when the animation begins before layout
-    // settles.
-    function waitForImages(imgs, timeout = 2500) {
-      const promises = imgs.map(img => {
-        return new Promise(resolve => {
-          if (img.complete && img.naturalWidth > 0) return resolve(true);
-          const onLoad = () => { cleanup(); resolve(true); };
-          const onErr = () => { cleanup(); resolve(false); };
-          const cleanup = () => { img.removeEventListener('load', onLoad); img.removeEventListener('error', onErr); };
-          img.addEventListener('load', onLoad);
-          img.addEventListener('error', onErr);
+      // Helper to append one copy of the images
+      function appendOneCopy(list) {
+        list.forEach(src => {
+          const item = document.createElement('div');
+          item.className = 'rsc-item';
+          const img = document.createElement('img');
+          img.src = `imgs/${src}`;
+          img.alt = '';
+          item.appendChild(img);
+          track.appendChild(item);
         });
-      });
-      // Race between all images and a timeout so we never wait forever
-      return Promise.race([
-        Promise.all(promises),
-        new Promise(resolve => setTimeout(resolve, timeout))
-      ]);
-    }
+      }
 
-    function computeAndSetDuration(trackEl, speedPxPerSec = 28) {
-      // The track contains two copies; we animate by translating -50% so the
-      // distance we travel equals half the track scrollHeight.
-      const totalPx = trackEl.scrollHeight / 2;
-      // Minimum duration to keep the motion gentle
-      const minDuration = 10; // seconds
-      const duration = Math.max(minDuration, Math.round((totalPx / speedPxPerSec) * 10) / 10);
-      trackEl.style.animationDuration = `${duration}s`;
-      return duration;
-    }
+      // Append images, then append same set again for seamless loop
+      appendOneCopy(images);
+      appendOneCopy(images);
 
-    const imgs = Array.from(track.querySelectorAll('img'));
-    waitForImages(imgs).then(() => {
-      // Ensure duration matches the rendered size, then start animation
-      computeAndSetDuration(track);
-      // small timeout to ensure browser laid out the height change
-      requestAnimationFrame(() => requestAnimationFrame(() => track.classList.add('animating')));
-    }).catch(() => {
-      // fallback: start the animation regardless after a short delay
-      setTimeout(() => track.classList.add('animating'), 600);
-    });
+      sidebar.appendChild(track);
+      document.body.appendChild(sidebar);
 
-    // Recompute duration on resize (track height may change). Throttle to avoid
-    // excessive recalculations.
-    let resizeTimeout = null;
-    window.addEventListener('resize', () => {
-      if (!track) return;
-      if (resizeTimeout) clearTimeout(resizeTimeout);
-      // Pause animation while recalculating to avoid visible speed jumps
-      track.classList.remove('animating');
-      resizeTimeout = setTimeout(() => {
+      // Wait for images to load (with a short timeout fallback) so the track's
+      // height is stable before starting the CSS animation.
+      function waitForImages(imgs, timeout = 2500) {
+        const promises = imgs.map(img => {
+          return new Promise(resolve => {
+            if (img.complete && img.naturalWidth > 0) return resolve(true);
+            const onLoad = () => { cleanup(); resolve(true); };
+            const onErr = () => { cleanup(); resolve(false); };
+            const cleanup = () => { img.removeEventListener('load', onLoad); img.removeEventListener('error', onErr); };
+            img.addEventListener('load', onLoad);
+            img.addEventListener('error', onErr);
+          });
+        });
+        return Promise.race([
+          Promise.all(promises),
+          new Promise(resolve => setTimeout(resolve, timeout))
+        ]);
+      }
+
+      function computeAndSetDuration(trackEl, speedPxPerSec = 28) {
+        const totalPx = trackEl.scrollHeight / 2;
+        const minDuration = 10; // seconds
+        const duration = Math.max(minDuration, Math.round((totalPx / speedPxPerSec) * 10) / 10);
+        trackEl.style.animationDuration = `${duration}s`;
+        return duration;
+      }
+
+      const imgs = Array.from(track.querySelectorAll('img'));
+      waitForImages(imgs).then(() => {
         computeAndSetDuration(track);
-        // restart the animation in the next frame
-        requestAnimationFrame(() => track.classList.add('animating'));
-      }, 180);
-    });
+        requestAnimationFrame(() => requestAnimationFrame(() => track.classList.add('animating')));
+      }).catch(() => setTimeout(() => track.classList.add('animating'), 600));
 
-    // keep sidebar top/height in sync with --sidenav-top
-    updateSidebarPosition();
-    window.addEventListener('resize', updateSidebarPosition);
-    window.addEventListener('scroll', updateSidebarPosition, { passive: true });
+      // Recompute duration on resize (track height may change). Throttle.
+      let resizeTimeout = null;
+      window.addEventListener('resize', () => {
+        if (!track) return;
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+        track.classList.remove('animating');
+        resizeTimeout = setTimeout(() => {
+          computeAndSetDuration(track);
+          requestAnimationFrame(() => track.classList.add('animating'));
+        }, 180);
+      });
+
+      updateSidebarPosition();
+      window.addEventListener('resize', updateSidebarPosition);
+      window.addEventListener('scroll', updateSidebarPosition, { passive: true });
+    }).catch(err => {
+      console.warn('Right sidebar carousel: failed to load images manifest', err);
+    });
   }
 
   function remove() {
@@ -394,7 +404,6 @@ window.addEventListener('scroll', updateSideNavTop, { passive: true });
     if (!el) return;
     const top = getComputedStyle(document.documentElement).getPropertyValue('--sidenav-top') || '0px';
     el.style.top = top.trim();
-    // height should account for --sidenav-top
     el.style.height = `calc(100vh - ${top.trim()})`;
   }
 
@@ -452,102 +461,132 @@ window.addEventListener('scroll', updateSideNavTop, { passive: true });
   });
 })();
 
-// Carousel image configuration
-const carouselImages = [
-    { src: "original (13).webp", alt: "Professional dog walking and pet care services" },
-    { src: "original (25).webp", alt: "Dog walking services in action" },
-    { src: "original (8).webp", alt: "Professional pet care and companionship" },
-    { src: "original (9).webp", alt: "Happy pets with professional care" }
-];
+// Main slideshow (reads /imgs.json). Provides thumbnails, captions, and simple filtering.
+let carouselItems = [];
+let fullCarouselItems = [];
+let mainSlideIndex = 0;
+let mainSlideInterval = null;
+const MAIN_SLIDE_DELAY = 4000; // ms
 
-// Auto-slideshow functionality (no manual controls)
-let slideIndex = 0;
-let slideInterval;
+function filenameToCaption(name) {
+  // Remove extension and common punctuation, then tidy spacing
+  const base = name.replace(/\.[^.]+$/, '');
+  return base.replace(/[\-_\(\)]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function loadMainManifest() {
+  const fallback = ['original (13).webp','original (25).webp','original (8).webp','original (9).webp'];
+  return fetch('/imgs.json', { cache: 'no-cache' })
+    .then(r => { if (!r.ok) throw new Error('no manifest'); return r.json(); })
+    .catch(() => fetch('imgs.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : fallback).catch(() => fallback))
+    .then(list => Array.isArray(list) ? list : fallback)
+    .then(list => list.map(fn => ({ src: fn, alt: filenameToCaption(fn), caption: filenameToCaption(fn) })));
+}
+
+function buildMainCarousel(items) {
+  const slidesContainer = document.querySelector('.slides-container');
+  const thumbs = document.querySelector('.carousel-thumbs');
+  const captionEl = document.querySelector('.carousel-caption');
+  if (!slidesContainer) return;
+
+  slidesContainer.innerHTML = '';
+  if (thumbs) thumbs.innerHTML = '';
+
+  items.forEach((item, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    slide.setAttribute('role','group');
+    slide.setAttribute('aria-roledescription','slide');
+    slide.setAttribute('aria-label', `${i+1} of ${items.length}`);
+    slide.style.display = i === 0 ? 'block' : 'none';
+
+    const img = document.createElement('img');
+    img.src = `imgs/${item.src}`;
+    img.alt = item.alt || '';
+    img.loading = 'lazy';
+    slide.appendChild(img);
+
+    slidesContainer.appendChild(slide);
+
+    if (thumbs) {
+      const t = document.createElement('button');
+      t.className = 'thumb';
+      t.type = 'button';
+      t.setAttribute('aria-label', `Show ${item.caption}`);
+      t.setAttribute('role','tab');
+      t.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      t.innerHTML = `<img src="imgs/${item.src}" alt="${item.alt || ''}" loading="lazy">`;
+      t.addEventListener('click', () => { showMainSlide(i); });
+      thumbs.appendChild(t);
+    }
+  });
+
+  if (captionEl) captionEl.textContent = items[0]?.caption || '';
+
+  // Attach prev/next handlers
+  const prev = document.querySelector('#main-carousel .carousel-arrow.prev');
+  const next = document.querySelector('#main-carousel .carousel-arrow.next');
+  if (prev) prev.onclick = () => { showMainSlide(mainSlideIndex - 1); };
+  if (next) next.onclick = () => { showMainSlide(mainSlideIndex + 1); };
+
+  // pause on hover
+  const stage = document.querySelector('#main-carousel .carousel-stage');
+  if (stage) {
+    stage.addEventListener('mouseenter', pauseMainAutoSlide);
+    stage.addEventListener('mouseleave', resumeMainAutoSlide);
+  }
+}
+
+function showMainSlide(n) {
+  const slides = Array.from(document.querySelectorAll('#main-carousel .slide'));
+  const thumbs = Array.from(document.querySelectorAll('#main-carousel .thumb'));
+  const captionEl = document.querySelector('.carousel-caption');
+  if (!slides.length) return;
+
+  if (n >= slides.length) n = 0;
+  if (n < 0) n = slides.length - 1;
+  mainSlideIndex = n;
+
+  slides.forEach((s, i) => { s.style.display = i === n ? 'block' : 'none'; });
+  thumbs.forEach((t, i) => { t.setAttribute('aria-selected', i === n ? 'true' : 'false'); t.classList.toggle('active', i === n); });
+  if (captionEl) captionEl.textContent = (carouselItems[n] && carouselItems[n].caption) || '';
+
+  // reset auto interval so users get the full interval after manual change
+  restartMainAutoSlide();
+}
+
+function startMainAutoSlide() {
+  if (mainSlideInterval) return;
+  mainSlideInterval = setInterval(() => { showMainSlide(mainSlideIndex + 1); }, MAIN_SLIDE_DELAY);
+}
+
+function pauseMainAutoSlide() { if (mainSlideInterval) clearInterval(mainSlideInterval); mainSlideInterval = null; }
+function resumeMainAutoSlide() { if (!mainSlideInterval) startMainAutoSlide(); }
+function restartMainAutoSlide() { pauseMainAutoSlide(); resumeMainAutoSlide(); }
+
+// Image filter removed: function intentionally left out. Filtering UI was removed from HTML.
 
 // Initialize slideshow when page loads
 document.addEventListener('DOMContentLoaded', function() {
-  // Test Firebase connection
-  if (typeof firebase !== 'undefined' && window.firebaseApp) {
-    console.log('✅ Firebase is connected successfully!');
-    console.log('Firebase App:', window.firebaseApp);
-    
-    // Test Analytics
-    if (window.analytics) {
-      console.log('✅ Firebase Analytics is working!');
-      // Log a test event
-      window.analytics.logEvent('page_view', {
-        page_title: document.title,
-        page_location: window.location.href
-      });
-    }
-  } else {
-    console.error('❌ Firebase is not loaded properly');
-  }
+  // Load manifest then build carousel
+  loadMainManifest().then(list => {
+    fullCarouselItems = list;
+    carouselItems = list.slice();
+    buildMainCarousel(carouselItems);
+    showMainSlide(0);
+    startMainAutoSlide();
 
-  // Initialize dynamic carousel
-  initializeCarousel();
-});
+    // Filter UI removed from markup; no wiring necessary.
 
-// Function to create carousel slides dynamically
-function createCarouselSlides() {
-    const slidesContainer = document.querySelector('.slides-container');
-    if (!slidesContainer) return;
-    
-    // Clear existing slides
-    slidesContainer.innerHTML = '';
-    
-    // Create slides from image array
-    carouselImages.forEach((image, index) => {
-        const slide = document.createElement('div');
-        slide.className = 'slide';
-        if (index === 0) slide.style.display = 'block';
-        else slide.style.display = 'none';
-        
-        slide.innerHTML = `
-            <img src="imgs/${image.src}" alt="${image.alt}">
-        `;
-        
-        slidesContainer.appendChild(slide);
+    // keyboard left/right
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') showMainSlide(mainSlideIndex - 1);
+      else if (e.key === 'ArrowRight') showMainSlide(mainSlideIndex + 1);
     });
-}
-
-// Show specific slide
-function showSlide(n) {
-  let slides = document.getElementsByClassName("slide");
-  
-  if (!slides.length) return;
-  
-  if (n >= slides.length) { slideIndex = 0; }
-  if (n < 0) { slideIndex = slides.length - 1; }
-  
-  // Hide all slides
-  for (let i = 0; i < slides.length; i++) {
-    slides[i].style.display = "none";
-  }
-  
-  // Show current slide
-  if (slides[slideIndex]) {
-    slides[slideIndex].style.display = "block";
-  }
-}
-
-// Auto-slide functionality
-function startAutoSlide() {
-  slideInterval = setInterval(function() {
-    slideIndex++;
-    if (slideIndex >= carouselImages.length) {
-      slideIndex = 0;
-    }
-    showSlide(slideIndex);
-  }, 4000); // Change slide every 4 seconds
-}
-
-// Initialize carousel
-function initializeCarousel() {
-    createCarouselSlides();
-    showSlide(slideIndex);
-    startAutoSlide();
-}
+  }).catch(err => {
+    console.warn('Main carousel: failed to load images', err);
+  });
+});
 
 // Enhanced accordion: only open the hidden-box when the Details trigger is clicked.
 // Prevent default link navigation (href="#") and avoid scrolling the product box to top.
@@ -636,6 +675,73 @@ document.addEventListener('DOMContentLoaded', function() {
       window.location.href = href;
     });
   });
+});
+
+// Attach cookie-setting to visible "Book Today" buttons on listing pages (index)
+// These buttons are often inside anchors and lack data-page attributes, so
+// infer the service from the surrounding .service-section/.product-name text.
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    function inferServiceKey(el) {
+      const section = el.closest('.service-section') || el.closest('.box') || el.closest('.content');
+      const nameEl = section ? section.querySelector('.product-name') : document.querySelector('.product-name');
+      const txt = nameEl ? nameEl.textContent.toLowerCase() : '';
+      if (!txt) return null;
+      if (txt.includes('house')) return 'housesitting';
+      if (txt.includes('drop')) return 'dropins';
+      if (txt.includes('dog') || txt.includes('walk')) return 'walking';
+      // Skip introductions/free-intro buttons
+      if (txt.includes('introduc') || txt.includes('intro')) return null;
+      return null;
+    }
+
+    // Select book-today buttons whether nested inside anchors or standalone
+    const bookButtons = Array.from(document.querySelectorAll('a .nav-btn.book-today, .nav-btn.book-today'));
+    bookButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        try {
+          const key = inferServiceKey(btn);
+          if (key) setCookie('nextpage', key);
+        } catch (err) {
+          // don't block navigation on errors
+          console.warn('set nextpage cookie failed', err);
+        }
+      });
+    });
+  } catch (err) {
+    console.warn('book-today cookie wiring failed', err);
+  }
+});
+
+// Add cookie-setting for Calendly/book interactions on service pages.
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    const path = (window.location.pathname || '').split('/').pop().toLowerCase();
+    const pageMap = {
+      'housesitting.html': 'housesitting',
+      'dropins.html': 'dropins',
+      'walking.html': 'walking'
+    };
+    const pageKey = pageMap[path];
+    if (!pageKey) return;
+
+    // When any direct link to calendly is clicked, set the nextpage cookie.
+    document.querySelectorAll('a[href*="calendly.com"]').forEach(a => {
+      a.addEventListener('click', () => {
+        try { setCookie('nextpage', pageKey); } catch (e) { /* ignore */ }
+      });
+    });
+
+    // For inline widgets, listen for a user interaction inside the widget container
+    // (click or mousedown) and set the cookie so the booking flow can read it.
+    document.querySelectorAll('.calendly-inline-widget').forEach(el => {
+      const handler = () => { try { setCookie('nextpage', pageKey); } catch (e) {} };
+      el.addEventListener('click', handler);
+      el.addEventListener('touchstart', handler, { passive: true });
+    });
+  } catch (err) {
+    console.warn('cookie wiring for calendly links failed', err);
+  }
 });
 document.addEventListener('DOMContentLoaded', function() {
   const dropdowns = document.querySelectorAll('.dropdown');
