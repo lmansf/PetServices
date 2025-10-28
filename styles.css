@@ -846,7 +846,10 @@ h2 {
 /* Style the top navigation bar */
 .topnav {
   overflow: visible; /* allow dropdowns to extend outside */
-  background-color: var(--brand-purple); /* match the site's brand purple for a cohesive header */
+  /* Use the neutral navbar background by default so the nav matches
+     the page chrome on mobile and desktop; accents (hover/active)
+     will use the brand purple. */
+  background-color: var(--nav-bg, #f4f4f7);
   position: relative; /* ensure absolute dropdowns are positioned relative to the nav */
   z-index: 10;
 }
@@ -855,7 +858,7 @@ h2 {
 .topnav a {
   float: left;
   display: block;
-  color: #f2f2f2;
+  color: var(--brand-purple);
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
@@ -885,7 +888,7 @@ h2 {
 .dropdown{position:relative; display:inline-block}
 .dropbtn{
   background-color:transparent;
-  color:#f2f2f2;
+  color:var(--brand-purple);
   padding:14px 16px;
   font-size:16px;
   border:none;
@@ -2005,25 +2008,22 @@ grid-row: 5 / span 3;
   }
 }
 
-/* Force white text for all nav elements on purple backgrounds */
-.topnav, .topnav * {
-  background-color: #663399 !important;
-  color: #fff !important;
+/* Force white text and purple header ONLY on small screens where the
+   top nav is rendered as a horizontal purple bar. On desktop the nav
+   is a left side-panel with its own light styling, so we scope these
+   overrides to narrow viewports to avoid conflicting with the side-nav. */
+/* Mobile-specific color tweaks: ensure the dropdown panel matches the
+   light site chrome while keeping brand accents for hover/active states. */
+.topnav .dropdown .dropdown-content {
+  background: var(--dropdown-bg);
 }
-.topnav a, .topnav .dropbtn, .topnav .dropdown-content a {
-  color: #fff !important;
-  background-color: #663399 !important;
+.topnav .dropdown .dropdown-content a {
+  color: var(--brand-purple);
 }
-.topnav .dropdown-content a {
-  background: #54297a !important;
-  color: #fff !important;
-}
-.topnav .dropdown-content a:hover, .topnav .dropdown-content a:focus {
-  background: #FFD700 !important;
-  color: #4B2E83 !important;
-}
-.topnav .dropbtn:focus, .topnav .dropbtn:active {
-  color: #fff !important;
+.topnav .dropdown .dropdown-content a:hover,
+.topnav .dropdown .dropdown-content a:focus {
+  background: var(--brand-purple);
+  color: #fff;
 }
 
 /* Gold special slide styles (single consolidated definition) */
@@ -2053,6 +2053,40 @@ grid-row: 5 / span 3;
 .gold-btn:hover, .gold-btn:focus {
   background: #FFE066 !important;
   color: #4B2E83 !important;
+}
+
+/* === Force purple navbar everywhere (desktop + mobile) ===
+   This block restores the purple header and readable dropdowns on all
+   screen sizes. It is intentionally placed near the end so it wins
+   over earlier, more specific rules where appropriate. */
+.topnav {
+  background-color: var(--brand-purple) !important;
+}
+.topnav a,
+.topnav .dropbtn {
+  color: #fff !important;
+  background-color: transparent !important;
+}
+.topnav .dropdown .dropdown-content {
+  background: #54297a !important; /* slightly darker purple for panel */
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+}
+.topnav .dropdown .dropdown-content a {
+  color: #fff !important;
+}
+.topnav .dropdown .dropdown-content a:hover,
+.topnav .dropdown .dropdown-content a:focus {
+  background: #FFD700 !important;
+  color: #4B2E83 !important;
+}
+
+@media (min-width: 900px) {
+  /* Ensure the desktop side-nav also uses the purple background */
+  .topnav {
+    background-color: var(--brand-purple) !important;
+  }
+  .topnav a, .topnav .dropbtn { color: #fff !important; }
+  .topnav .dropdown .dropdown-content { background: #54297a !important; }
 }
 
 
