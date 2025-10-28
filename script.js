@@ -214,11 +214,22 @@ function setCookie(name, value, days = 7) {
   document.cookie = `${name}=${value}; expires=${expires}; path=/`;
 }
 
+// Delete a cookie by name
+function deleteCookie(name) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+}
+
 // Add event listeners to navigation buttons on index.html
 document.addEventListener('DOMContentLoaded', function() {
   const navBtns = document.querySelectorAll('.nav-btn[data-page][data-href]');
   navBtns.forEach(btn => {
     btn.addEventListener('click', function() {
+      // Always remove any previous nextpage cookie before setting a new one
+      deleteCookie('nextpage');
+      // Optionally, also remove any legacy cookies if they exist
+      deleteCookie('dropins');
+      deleteCookie('walking');
+      deleteCookie('housesitting');
       const page = btn.getAttribute('data-page');
       const href = btn.getAttribute('data-href');
       setCookie('nextpage', page);
