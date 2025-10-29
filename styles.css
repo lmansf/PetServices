@@ -1,8 +1,4 @@
-/* Service section grouping for clarity */
-.service-section {
-  margin-bottom: 2.2rem;
-  padding: 0.5rem 0 0.5rem 0;
-}
+
 .product-name {
   font-size: 3rem;
   font-weight: bold;
@@ -310,8 +306,10 @@
 
 /* About Page Pet Carousel Image and Name Styling */
 .pet-slide .pet-pic {
-  width: 180px;
-  height: 180px;
+  /* expose a variable for consistent sizing with the decorative bone */
+  --pet-pic-size: 180px;
+  width: var(--pet-pic-size);
+  height: var(--pet-pic-size);
   object-fit: cover;
   border-radius: 50%;
   border: 4px solid var(--brand-purple, #663399);
@@ -320,6 +318,13 @@
   display: block;
   background: #fff;
 }
+
+/* Fresh, minimal decorative bone implementation
+   - Markup: wrap the circular image in a `.pet-bone` container.
+   - Asset: place `bone.webp` at the site root (served as `/bone.webp`).
+   - The pseudo-element lives inside `.pet-bone::before` so it's sized
+     relative to the image wrapper and easy to control. */
+/* Decorative bone removed — stripped for now. */
 .pet-slide .pet-name {
   color: #fff;
   background: var(--brand-purple, #663399);
@@ -462,6 +467,48 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Hero banner: no internal padding, full-bleed image. The image shows at
+   its full aspect ratio on desktop and only scales down on narrow viewports. */
+.hero-banner {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  box-sizing: border-box;
+  /* Give the hero a responsive height so the image can crop horizontally
+     as the viewport narrows. clamp(min, preferred, max) keeps the height
+     reasonable across devices. */
+  height: clamp(260px, 28vh, 420px);
+}
+.hero-banner img {
+  display: block;
+  width: 100%;
+  height: 100%;          /* fill the hero container so object-fit can crop */
+  object-fit: cover;     /* crop left/right responsively to always fill width */
+  object-position: center;
+}
+
+/* On very small screens, reduce the hero height further to keep the header
+   compact while still filling the width. */
+@media (max-width: 600px) {
+  .hero-banner {
+    height: clamp(160px, 26vh, 260px);
+  }
+}
+
+/* Reduce excess vertical spacing on narrow viewports (fix thin white band
+   above/below the purple nav shown on some phones). Tweak values if you
+   prefer slightly more/less spacing. */
+@media (max-width: 900px) {
+  .hero-banner { margin-bottom: 0; }
+  /* The site uses a fixed topnav on mobile; keep content pushed down only
+     as far as the nav height to avoid a large white gap. */
+  .content { padding-top: 52px; }
+  /* Remove the default h1 top margin which can produce an extra white bar */
+  .content > h1 { margin-top: 0.2rem; margin-bottom: 0.8rem; }
 }
 
 /* Ensure page content is pushed below the fixed navbar on all devices */
@@ -828,8 +875,11 @@ img {vertical-align: middle;}
 }
 
 body {
-  margin: 3px;
-  padding: 3px;
+  /* Remove default page inset so edge-to-edge hero images can reach
+     the viewport edges. Previously set to 3px which created a visible
+     white border around the hero banner. */
+  margin: 0;
+  padding: 0;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #ffffff;
   color: #2D3748;
@@ -837,6 +887,7 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Coustard', Georgia, serif;
   font-weight: 400;
+  text-align: center;
 }
 
 h2 {
