@@ -276,16 +276,16 @@
   transform: translateY(-2px) scale(1.03);
   outline: none;
 }
-/* Make the pet carousel card fill the width of the carousel */
+/* Make the pet carousel card fill the width of the carousel and match business card styling */
 .pet-slide .box {
-  /* use percentage-based sizing to avoid viewport-width clipping on small screens */
   width: 100%;
-  max-width: 100%;
-  margin: 0;
+  max-width: 900px;
+  margin: 0 auto;
   border-radius: 16px;
   box-sizing: border-box;
-  /* Softer/lighter purple for background to be less dominant */
+  /* Match business card styling */
   background: var(--pet-bg, #7e57a8);
+  box-shadow: 0 4px 20px rgba(102, 51, 153, 0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -351,10 +351,10 @@
 /* Pet Carousel Styles */
 .pet-carousel-container {
   position: relative;
-  /* use fluid percentage-based sizing to avoid viewport-width clipping issues */
+  /* Match business card width */
   width: 100%;
-  max-width: 100%;
-  margin: 2rem 0;
+  max-width: 900px;
+  margin: 2rem auto;
   background: transparent;
   overflow-x: hidden;
   box-sizing: border-box;
@@ -482,6 +482,8 @@
      as the viewport narrows. clamp(min, preferred, max) keeps the height
      reasonable across devices. */
   height: clamp(260px, 28vh, 420px);
+  position: relative;
+  z-index: 10001; /* Ensure hero banner is above sidebars */
 }
 .hero-banner img {
   display: block;
@@ -1059,23 +1061,24 @@ h2 {
 
   .topnav {
     position: fixed;
-    /* Start the side-nav below the hero/header when available. The
-       `--sidenav-top` variable is set via JS based on the hero height; if
-       not set it falls back to 0. */
-    top: var(--sidenav-top, 0);
+    /* Extend to top of viewport so it goes behind the hero banner */
+    top: 0;
     left: 0;
     bottom: 0;
     right: auto;
     width: var(--sidenav-width);
-    height: calc(100vh - var(--sidenav-top, 0px));
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    padding: 1.25rem 0.5rem;
+    padding-top: calc(clamp(260px, 28vh, 420px) * 1.05); /* Push content below hero banner (105% of hero height) */
+    padding-bottom: 1.25rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
     gap: 0.25rem;
     background-color: var(--nav-bg, #f4f4f7);
     box-shadow: 1px 0 6px rgba(0,0,0,0.06);
-    z-index: 10000;
+    z-index: 9999; /* Below hero banner (which is 10001) */
   }
 
   /* Nav links become full-width stack inside the side nav */
@@ -1136,12 +1139,12 @@ h2 {
   body::after {
     content: '';
     position: fixed;
-    top: var(--sidenav-top, 0);
+    top: 0; /* Extend to top of viewport so it goes behind the hero banner */
     right: 0;
     width: var(--rightbar-width);
-    height: calc(100vh - var(--sidenav-top, 0px));
+    height: 100vh;
     background: var(--brand-purple);
-    z-index: 0; /* place the right bar behind page content */
+    z-index: 9998; /* place the right bar behind page content and sidebars */
     box-shadow: -1px 0 6px rgba(0,0,0,0.06);
   }
 
@@ -1199,15 +1202,27 @@ h2 {
   }
 }
 
-/* Also allow the Meet My Pets carousel to span the full content column on desktop */
+/* Also allow the Meet My Pets carousel to match business card width on desktop */
 @media (min-width: 900px) {
-  .pet-carousel-container,
+  .pet-carousel-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 2rem auto;
+    box-sizing: border-box;
+  }
+  
   .pet-carousel,
-  .pet-slide,
+  .pet-slide {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
   .pet-slide .box {
     width: 100%;
-    max-width: none;
-    margin: 0;
+    max-width: 900px;
+    margin: 0 auto;
     box-sizing: border-box;
   }
 
@@ -1232,15 +1247,15 @@ h2 {
   #right-sidebar-carousel {
     position: fixed;
     right: 0;
-    top: var(--sidenav-top, 0px);
+    top: 0; /* Extend to top of viewport so it goes behind the hero banner */
     width: var(--rightbar-width);
-    height: calc(100vh - var(--sidenav-top, 0px));
+    height: 100vh;
     background: var(--brand-purple, #663399);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    z-index: 9999;
+    z-index: 9999; /* Below hero banner (which is 10001) */
   }
 
   #right-sidebar-carousel .rsc-track {
@@ -1309,14 +1324,14 @@ h2 {
   }
 
   /* Inner card inset so rounded corners are visible and content doesn't
-     touch the viewport edge. */
+     touch the viewport edge. Match business card mobile width. */
   .pet-slide .box {
     width: 100%;
-    max-width: 100%;
+    max-width: 95vw;
     padding: 1.25rem 1rem;
     border-radius: 12px;
     box-sizing: border-box;
-    margin: 0;
+    margin: 0 auto;
   }
 
   /* Hide arrows and indicators on mobile when using vertical layout */
@@ -1382,14 +1397,76 @@ h2 {
   background: var(--light-purple-bg);
 }
 
+/* Service header with price in top right */
+.service-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+  position: relative;
+}
+
 .box .product-name {
   text-align: center;
   display: block;
-  margin: 0 0 0.4rem 0;
+  margin: 0;
   color: var(--brand-purple);
   font-size: 1.4rem;
   line-height: 1.05;
+  flex: 1;
 }
+
+/* Position price absolutely on desktop to allow name to center */
+@media (min-width: 769px) {
+  .service-header {
+    justify-content: center;
+  }
+  
+  .service-price {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+}
+
+/* Price styling */
+.service-price {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--brand-purple);
+  white-space: nowrap;
+  text-align: right;
+  line-height: 1;
+}
+
+.service-price .price-unit {
+  font-size: 0.9rem;
+  font-weight: normal;
+  color: #666;
+  margin-left: 0.2rem;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .service-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .box .product-name {
+    text-align: left;
+    font-size: 1.2rem;
+  }
+  
+  .service-price {
+    text-align: right;
+    font-size: 1.4rem;
+  }
+}
+
 .product-description {
   margin-bottom: 5px;
   grid-column: 1 / span 2;
@@ -1472,140 +1549,135 @@ h2 {
   text-align: center;
 }
 
-/* #about-me{
-
-
-} */
-
-.profile-picture{
-  /* Profile area: center contents by default; layout for #about-me will override on desktop */
+/* Business Card Layout for About Page */
+.business-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(102, 51, 153, 0.12);
+  overflow: hidden;
+  max-width: 900px;
+  margin: 2rem auto;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.business-card-photo {
+  flex: 0 0 280px;
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 0.4rem;
+  justify-content: center;
+  background: linear-gradient(135deg, #e0d6f5 0%, #f8f6fc 100%);
+  padding: 2rem;
 }
 
-.profile-picture img{
-  width: 160px;
-  height: 160px;
-  object-fit: cover;
+.business-card-photo img {
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  display: block;
-  margin: 0 auto;
-  border: 4px solid var(--brand-purple);
-}
-.profile-picture h3{
-  text-align: center;
-  margin: 0;
-  font-size: 1rem;
+  object-fit: cover;
+  border: 5px solid var(--brand-purple);
+  box-shadow: 0 4px 16px rgba(102, 51, 153, 0.15);
 }
 
-/* Layout for the about-me box: desktop shows image left, details right; mobile stacks */
-#about-me {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: start;
-  gap: 1.5rem;
-  padding: 1rem;
-}
-
-/* Right column container */
-#about-me .right-content {
+.business-card-content {
+  flex: 1;
+  padding: 2.5rem 3rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 1.5rem;
 }
 
-#about-me .about-description {
-  grid-column: 2;
-}
-
-#about-me .about-me-blurb {
-  flex: 1 1 auto;
+.business-card-title {
+  color: var(--brand-purple);
+  font-family: 'Coustard', Georgia, serif;
+  font-size: 2.2rem;
+  margin: 0 0 0.5rem 0;
   text-align: left;
 }
 
-/* Mobile: center image above details and tighten spacing */
-@media (max-width: 900px) {
-  #about-me {
-    grid-template-columns: 1fr;
-    padding: 0.6rem;
-  }
-  #about-me .about-me-blurb {
-    text-align: center;
-  }
-  .profile-picture img {
-    width: 130px;
-    height: 130px;
-  }
+.business-card-section {
+  margin-bottom: 1rem;
 }
 
-/* About header row: Experience | About Me | Animals */
-.about-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: center; /* keep the title centered */
-  gap: 2rem; /* a bit more breathing room between columns */
-}
-.about-title { flex: 0 0 auto; }
-.about-title h3 { margin: 0; text-align: center; }
-.meta-left, .meta-right { flex: 1 1 0; font-weight: 700; }
-.meta-left { text-align: left; }
-.meta-right { text-align: right; }
-
-/* Color only the label text purple; make the value (description) black */
-.meta-left .meta-label,
-.meta-right .meta-label {
+.business-card-section h3 {
   color: var(--brand-purple);
-}
-.meta-left .meta-value,
-.meta-right .meta-value {
-  color: #000;
-  font-weight: 400;
-}
-
-@media (max-width: 900px) {
-  .about-header-row { justify-content: center; gap: 0.8rem; }
-  .meta-left, .meta-right { text-align: center; flex: 0 0 auto; }
+  font-family: 'Coustard', Georgia, serif;
+  font-size: 1.3rem;
+  margin: 0 0 0.75rem 0;
+  text-align: left;
 }
 
-/* Mobile-specific: stack the header items for narrow screens for better readability */
-@media (max-width: 700px) {
-  .about-header-row {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-    padding: 0.35rem 0; /* small vertical padding for breathing room */
-  }
-  .meta-left, .meta-right {
-    text-align: center;
-    width: 100%;
-    display: block;
-    font-size: 0.98rem;
-  }
-  .about-title { order: 0; margin: 0.2rem 0; }
-  /* keep label and value inline but allow wrapping; label purple, value black */
-  .meta-left .meta-label,
-  .meta-right .meta-label { display: inline-block; margin-right: 0.35rem; }
-  .meta-left .meta-value,
-  .meta-right .meta-value { display: inline-block; }
-  /* slightly increase the spacing between header and description on mobile */
-  #about-me .about-description { margin-top: 0.6rem; }
+.business-card-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-/* Desktop: slightly larger profile/about description for readability */
+.business-card-section ul li {
+  color: #2D3748;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  padding-left: 1.5rem;
+  position: relative;
+  margin-bottom: 0.4rem;
+}
+
+.business-card-section ul li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--brand-purple);
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* Desktop: Ensure business card maintains 900px width */
 @media (min-width: 900px) {
-  #about-me .about-description p {
-    font-size: 1.125rem; /* larger than mobile */
-    line-height: 1.75;
+  .business-card {
+    max-width: 900px !important;
+    width: 100%;
+    margin: 2rem auto;
   }
 }
 
-.about-me-blurb{
-grid-column: 1;
-grid-row: 3 / span 4;
+/* Mobile: Vertical business card layout */
+@media (max-width: 900px) {
+  .business-card {
+    flex-direction: column;
+    max-width: 95vw;
+    margin: 1.5rem auto;
+  }
+
+  .business-card-photo {
+    flex: 0 0 auto;
+    padding: 2.5rem 2rem 2rem 2rem;
+  }
+
+  .business-card-photo img {
+    width: 160px;
+    height: 160px;
+  }
+
+  .business-card-content {
+    padding: 2rem 1.5rem 2.5rem 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .business-card-title {
+    font-size: 1.8rem;
+    text-align: center;
+  }
+
+  .business-card-section h3 {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .business-card-section ul li {
+    font-size: 1rem;
+    text-align: left;
+  }
 }
 
 /* #about-pets{

@@ -27,36 +27,35 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
   </head>
   <body>
-  <div class="hero-banner" style="width:100%;max-width:100vw;overflow:hidden;margin-bottom:0.5rem;">
-      <img src="Amanda’s Pet Services HERO.svg" alt="Dog walking hero" style="width:100%;display:block;">
-    </div>
-    <div class="topnav">
-      <a href="index.html">Home</a>
-      <a href="About.html">About Me</a>
-      <div class="dropdown">
-        <button id="home-button" class="dropbtn" aria-haspopup="true" aria-controls="home-menu" aria-expanded="false">All Services ▾</button>
-        <div id="home-menu" class="dropdown-content" role="menu" aria-labelledby="home-button">
-          <a href="houseSitting.html" role="menuitem" tabindex="-1">House Sitting</a>
-          <a href="dropIns.html" role="menuitem" tabindex="-1">Drop-In Visits</a>
-          <a href="walking.html" role="menuitem" tabindex="-1">Dog Walking</a>
-        </div>
-      </div>
-    </div>
+    <div id="header-container"></div>
+    <div id="nav-container"></div>
 
     <div class="content">
-      <div class="box" id="about-me">
-        <div class="profile-picture">
-          <img id="profile-picture" src="imgs/original.webp" alt="Amanda smiling outdoors">
+      <div class="business-card">
+        <div class="business-card-photo">
+          <img src="original.webp" alt="Amanda smiling outdoors">
         </div>
 
-        <div class="right-content">
-          <div class="about-header-row">
-            <div class="about-title"><h3>Nice to Meet You!</h3></div>
-            <div class="meta-left"><span class="meta-label">Experience:</span> <span class="meta-value">Over 10 Years Fostering</span></div>
+        <div class="business-card-content">
+          <h1 class="business-card-title">Nice to Meet You!</h1>
+
+          <div class="business-card-section">
+            <h3>Fostering Experience</h3>
+            <ul>
+              <li>Over 10 Years Experience</li>
+              <li>House Breaking</li>
+              <li>Manners</li>
+              <li>Safe Animal Introductions</li>
+            </ul>
           </div>
 
-          <div class="about-description">
-            <p>I have fostered dogs in my home for a rescue for the past 10 years. Fostering requires me to get them ready to be adopted. Housebreaking, working on manners, and caring for older pets. I have fostered almost every breed and even have experience with a blind dog. I have also enjoyed being a pet sitter for cats as well.</p>
+          <div class="business-card-section">
+            <h3>Animal Experience</h3>
+            <ul>
+              <li>Dogs of all sizes and breeds</li>
+              <li>Dogs with medical challenges, including a blind dog</li>
+              <li>Cats</li>
+            </ul>
           </div>
         </div>
       </div>
