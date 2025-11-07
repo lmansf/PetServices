@@ -63,22 +63,23 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
   
-  if (reviewsContainer) {
-    // Load reviews HTML
-    fetch('reviews.html')
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to load reviews');
-        return response.text();
-      })
-      .then(html => {
-        reviewsContainer.innerHTML = html;
-        // Initialize the review carousel after the HTML is loaded
-        initReviewCarousel();
-      })
-      .catch(error => {
-        console.log('Failed to load reviews:', error);
-      });
-  }
+  // Reviews functionality temporarily disabled
+  // if (reviewsContainer) {
+  //   // Load reviews HTML
+  //   fetch('reviews.html')
+  //     .then(response => {
+  //       if (!response.ok) throw new Error('Failed to load reviews');
+  //       return response.text();
+  //     })
+  //     .then(html => {
+  //       reviewsContainer.innerHTML = html;
+  //       // Initialize the review carousel after the HTML is loaded
+  //       initReviewCarousel();
+  //     })
+  //     .catch(error => {
+  //       console.log('Failed to load reviews:', error);
+  //     });
+  // }
 });
 
 // Pet Carousel Logic for About.html
@@ -242,9 +243,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Review carousel logic (previously inline in index.html)
-// This runs on any page that includes the `.review-carousel-container` markup.
+// This runs on any page that includes the `.review-carousel` markup.
 function initReviewCarousel() {
-  const container = document.querySelector('.review-carousel-container');
+  const container = document.querySelector('.review-carousel');
   if (!container) return;
 
   const allReviews = Array.from(container.querySelectorAll('.review-block'));
@@ -270,49 +271,30 @@ function initReviewCarousel() {
     else r.style.display = '';
   });
 
-  // Generate dots dynamically
-  const indicators = container.querySelector('.review-carousel-indicators');
-  if (!indicators) return;
-  indicators.innerHTML = '';
-  const dots = [];
-  for (let i = 0; i < filteredReviews.length; i++) {
-    const dot = document.createElement('span');
-    dot.className = 'review-dot' + (i === 0 ? ' active' : '');
-    indicators.appendChild(dot);
-    dots.push(dot);
-  }
-
   let current = 0;
   function showReview(idx) {
     filteredReviews.forEach((r, i) => {
       r.classList.toggle('active', i === idx);
       r.style.display = i === idx ? '' : 'none';
     });
-    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
     current = idx;
   }
 
-  // Attach arrow listeners
-  filteredReviews.forEach((review, i) => {
-    const leftArrow = review.querySelector('.review-arrow.left');
-    const rightArrow = review.querySelector('.review-arrow.right');
-    if (leftArrow) leftArrow.addEventListener('click', e => { e.stopPropagation(); showReview((current - 1 + filteredReviews.length) % filteredReviews.length); });
-    if (rightArrow) rightArrow.addEventListener('click', e => { e.stopPropagation(); showReview((current + 1) % filteredReviews.length); });
-  });
-
-  dots.forEach((dot, i) => dot.addEventListener('click', () => showReview(i)));
-
-  // Optional: auto-advance every 7 seconds
-  let interval = setInterval(() => showReview((current + 1) % filteredReviews.length), 7000);
+  // Auto-advance every 5 seconds
+  let interval = setInterval(() => showReview((current + 1) % filteredReviews.length), 5000);
+  
+  // Pause on hover and resume when not hovering
   container.addEventListener('mouseenter', () => clearInterval(interval));
-  container.addEventListener('mouseleave', () => { interval = setInterval(() => showReview((current + 1) % filteredReviews.length), 7000); });
+  container.addEventListener('mouseleave', () => { 
+    interval = setInterval(() => showReview((current + 1) % filteredReviews.length), 5000); 
+  });
 
   showReview(0);
 }
 
 // Initialize review carousel on pages that already have it in the HTML (like index.html)
 document.addEventListener('DOMContentLoaded', function() {
-  const container = document.querySelector('.review-carousel-container');
+  const container = document.querySelector('.review-carousel');
   if (container) {
     initReviewCarousel();
   }
