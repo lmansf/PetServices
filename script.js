@@ -38,7 +38,12 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(error => {
         // Fallback to inline template
         console.log('Using inline header template');
-        headerContainer.innerHTML = HEADER_HTML;
+        try {
+          headerContainer.innerHTML = HEADER_HTML;
+        } catch (fallbackError) {
+          // If even the fallback fails, redirect to error page
+          window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical: Header failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
+        }
       });
   }
   
@@ -57,9 +62,14 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(error => {
         // Fallback to inline template
         console.log('Using inline nav template');
-        navContainer.innerHTML = NAV_HTML;
-        // Re-initialize dropdown functionality after nav is loaded
-        initializeDropdowns();
+        try {
+          navContainer.innerHTML = NAV_HTML;
+          // Re-initialize dropdown functionality after nav is loaded
+          initializeDropdowns();
+        } catch (fallbackError) {
+          // If even the fallback fails, redirect to error page
+          window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical: Navigation failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
+        }
       });
   }
   
@@ -743,7 +753,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const page = btn.getAttribute('data-page');
       const href = btn.getAttribute('data-href');
       setCookie('nextpage', page);
-      window.location.href = href;
+      try {
+        window.location.href = href;
+      } catch (error) {
+        window.location.href = `error.html?code=500&msg=${encodeURIComponent('Navigation failed')}&from=${encodeURIComponent(window.location.pathname)}`;
+      }
     });
   });
 });

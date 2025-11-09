@@ -82,12 +82,22 @@
           // If we have a mapping, navigate there on click. Otherwise, disable button.
           if (next && mapping[next]) {
             btn.addEventListener('click', function() {
-              window.location.href = mapping[next];
+              try {
+                window.location.href = mapping[next];
+              } catch (error) {
+                window.location.href = `error.html?code=500&msg=${encodeURIComponent('Navigation failed')}&from=${encodeURIComponent(window.location.pathname)}`;
+              }
             });
           } else {
             // No known nextpage — change text to go back home
             btn.textContent = 'Back to services';
-            btn.addEventListener('click', function() { window.location.href = 'index.html'; });
+            btn.addEventListener('click', function() {
+              try {
+                window.location.href = 'index.html';
+              } catch (error) {
+                window.location.href = `error.html?code=500&msg=${encodeURIComponent('Navigation failed')}&from=${encodeURIComponent(window.location.pathname)}`;
+              }
+            });
           }
         });
       </script>
