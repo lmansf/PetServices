@@ -34,11 +34,15 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .then(html => {
         headerContainer.innerHTML = html;
+        // Add error handling for hero banner redirect
+        setupHeroBannerErrorHandling();
       })
       .catch(error => {
         // Fallback to inline template
         console.log('Using inline header template');
         headerContainer.innerHTML = HEADER_HTML;
+        // Add error handling for hero banner redirect
+        setupHeroBannerErrorHandling();
       });
   }
   
@@ -916,4 +920,60 @@ function initializeDropdowns() {
 // Initialize dropdowns on page load
 document.addEventListener('DOMContentLoaded', function() {
   initializeDropdowns();
+});
+
+// Error handling for hero banner redirect
+function setupHeroBannerErrorHandling() {
+  const heroBanner = document.querySelector('.hero-banner a');
+  if (heroBanner) {
+    heroBanner.addEventListener('click', function(e) {
+      e.preventDefault();
+      const href = this.getAttribute('href');
+      try {
+        // Validate href exists and is a valid URL pattern
+        if (!href || href === '#') {
+          throw new Error('Invalid navigation target');
+        }
+        // Attempt to navigate to the target URL
+        window.location.href = href;
+      } catch (error) {
+        console.error('Error navigating from hero banner:', error);
+        // Redirect to error page if navigation fails
+        window.location.href = 'error.html';
+      }
+    });
+  }
+}
+
+// Error handling for Calendly links
+function setupCalendlyErrorHandling() {
+  const calendlyLinks = document.querySelectorAll('a[href*="calendly.com"]');
+  calendlyLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const href = this.getAttribute('href');
+      try {
+        // Validate the Calendly URL - must be a proper Calendly domain
+        if (!href) {
+          throw new Error('Missing URL');
+        }
+        const url = new URL(href);
+        // Check that the hostname ends with calendly.com (prevents subdomain attacks)
+        if (!url.hostname.endsWith('.calendly.com') && url.hostname !== 'calendly.com') {
+          throw new Error('Invalid Calendly URL');
+        }
+        // Try to open Calendly link
+        window.location.href = href;
+      } catch (error) {
+        console.error('Error loading Calendly:', error);
+        // Redirect to error page if navigation fails
+        window.location.href = 'error.html';
+      }
+    });
+  });
+}
+
+// Initialize error handling on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setupCalendlyErrorHandling();
 });
