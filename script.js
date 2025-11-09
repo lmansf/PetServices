@@ -34,11 +34,15 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .then(html => {
         headerContainer.innerHTML = html;
+        // Add error handling for hero banner redirect
+        setupHeroBannerErrorHandling();
       })
       .catch(error => {
         // Fallback to inline template
         console.log('Using inline header template');
         headerContainer.innerHTML = HEADER_HTML;
+        // Add error handling for hero banner redirect
+        setupHeroBannerErrorHandling();
       });
   }
   
@@ -916,4 +920,72 @@ function initializeDropdowns() {
 // Initialize dropdowns on page load
 document.addEventListener('DOMContentLoaded', function() {
   initializeDropdowns();
+});
+
+// Error handling for hero banner redirect
+function setupHeroBannerErrorHandling() {
+  const heroBanner = document.querySelector('.hero-banner a');
+  if (heroBanner) {
+    heroBanner.addEventListener('click', function(e) {
+      e.preventDefault();
+      const href = this.getAttribute('href');
+      try {
+        // Attempt to navigate to the target URL
+        // Check if the URL is accessible (for external URLs)
+        if (href && href.startsWith('http')) {
+          // For external links, try to load in a new context
+          fetch(href, { method: 'HEAD', mode: 'no-cors' })
+            .then(() => {
+              window.location.href = href;
+            })
+            .catch(() => {
+              // If fetch fails, try to navigate anyway (some sites block HEAD requests)
+              window.location.href = href;
+            });
+        } else {
+          // For internal links, just navigate
+          window.location.href = href || 'index.html';
+        }
+      } catch (error) {
+        console.error('Error navigating from hero banner:', error);
+        window.location.href = 'error.html';
+      }
+    });
+  }
+}
+
+// Error handling for Calendly links
+function setupCalendlyErrorHandling() {
+  const calendlyLinks = document.querySelectorAll('a[href*="calendly.com"]');
+  calendlyLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const href = this.getAttribute('href');
+      try {
+        // Try to open Calendly link
+        if (href) {
+          // Check if we can reach Calendly
+          fetch('https://calendly.com', { method: 'HEAD', mode: 'no-cors' })
+            .then(() => {
+              window.location.href = href;
+            })
+            .catch(() => {
+              // If Calendly is unreachable, redirect to error page
+              console.error('Calendly appears to be unreachable');
+              window.location.href = 'error.html';
+            });
+        } else {
+          throw new Error('Invalid Calendly URL');
+        }
+      } catch (error) {
+        console.error('Error loading Calendly:', error);
+        window.location.href = 'error.html';
+      }
+    });
+  });
+}
+
+// Initialize error handling on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setupCalendlyErrorHandling();
 });
