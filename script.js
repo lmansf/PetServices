@@ -633,7 +633,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const page = btn.getAttribute('data-page');
       const href = btn.getAttribute('data-href');
       setCookie('nextpage', page);
-      window.location.href = href;
+      try {
+        window.location.href = href;
+      } catch (error) {
+        window.location.href = `error.html?code=500&msg=${encodeURIComponent('Navigation failed')}&from=${encodeURIComponent(window.location.pathname)}`;
+      }
     });
   });
 });
