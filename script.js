@@ -953,8 +953,13 @@ function setupCalendlyErrorHandling() {
       e.preventDefault();
       const href = this.getAttribute('href');
       try {
-        // Validate the Calendly URL
-        if (!href || !href.includes('calendly.com')) {
+        // Validate the Calendly URL - must be a proper Calendly domain
+        if (!href) {
+          throw new Error('Missing URL');
+        }
+        const url = new URL(href);
+        // Check that the hostname ends with calendly.com (prevents subdomain attacks)
+        if (!url.hostname.endsWith('.calendly.com') && url.hostname !== 'calendly.com') {
           throw new Error('Invalid Calendly URL');
         }
         // Try to open Calendly link
