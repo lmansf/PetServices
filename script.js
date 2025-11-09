@@ -930,24 +930,15 @@ function setupHeroBannerErrorHandling() {
       e.preventDefault();
       const href = this.getAttribute('href');
       try {
-        // Attempt to navigate to the target URL
-        // Check if the URL is accessible (for external URLs)
-        if (href && href.startsWith('http')) {
-          // For external links, try to load in a new context
-          fetch(href, { method: 'HEAD', mode: 'no-cors' })
-            .then(() => {
-              window.location.href = href;
-            })
-            .catch(() => {
-              // If fetch fails, try to navigate anyway (some sites block HEAD requests)
-              window.location.href = href;
-            });
-        } else {
-          // For internal links, just navigate
-          window.location.href = href || 'index.html';
+        // Validate href exists and is a valid URL pattern
+        if (!href || href === '#') {
+          throw new Error('Invalid navigation target');
         }
+        // Attempt to navigate to the target URL
+        window.location.href = href;
       } catch (error) {
         console.error('Error navigating from hero banner:', error);
+        // Redirect to error page if navigation fails
         window.location.href = 'error.html';
       }
     });
@@ -962,23 +953,15 @@ function setupCalendlyErrorHandling() {
       e.preventDefault();
       const href = this.getAttribute('href');
       try {
-        // Try to open Calendly link
-        if (href) {
-          // Check if we can reach Calendly
-          fetch('https://calendly.com', { method: 'HEAD', mode: 'no-cors' })
-            .then(() => {
-              window.location.href = href;
-            })
-            .catch(() => {
-              // If Calendly is unreachable, redirect to error page
-              console.error('Calendly appears to be unreachable');
-              window.location.href = 'error.html';
-            });
-        } else {
+        // Validate the Calendly URL
+        if (!href || !href.includes('calendly.com')) {
           throw new Error('Invalid Calendly URL');
         }
+        // Try to open Calendly link
+        window.location.href = href;
       } catch (error) {
         console.error('Error loading Calendly:', error);
+        // Redirect to error page if navigation fails
         window.location.href = 'error.html';
       }
     });
