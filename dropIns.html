@@ -9,11 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="imgs/icons8-pet-16.png">
-    <!-- Calendly badge widget begin -->
-<link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
-<script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
-<script type="text/javascript">window.onload = function() { Calendly.initBadgeWidget({ url: 'https://calendly.com/lmansf96/30min?hide_gdpr_banner=1&text_color=ffffff&primary_color=663399', text: 'Schedule A Free Introduction!', color: '#663399', textColor: '#ffffff', branding: true }); }</script>
-<!-- Calendly badge widget end -->
+
     <!-- Firebase CDN Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
@@ -27,49 +23,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
   </head>
   <body>
-    <div class="hero-banner" style="width:100%;max-width:100vw;overflow:hidden;margin-bottom:1.5rem;">
-      <img src="imgs/original (25).webp" alt="Dog walking hero" style="width:100%;height:320px;object-fit:cover;object-position:center;display:block;">
-    </div>
-    <div class="topnav">
-      <a href="index.html">Home</a>
-      <a href="About.html">About Me</a>
-      <div class="dropdown">
-        <button id="home-button" class="dropbtn" aria-haspopup="true" aria-controls="home-menu" aria-expanded="false">All Services ▾</button>
-        <div id="home-menu" class="dropdown-content" role="menu" aria-labelledby="home-button">
-          <a href="houseSitting.html" role="menuitem" tabindex="-1">House Sitting</a>
-          <a href="dropIns.html" role="menuitem" tabindex="-1">Drop-In Visits</a>
-          <a href="walking.html" role="menuitem" tabindex="-1">Dog Walking</a>
-        </div>
-      </div>
-    </div>
+    <div id="header-container"></div>
+    <div id="nav-container"></div>
 
     <div class="content">
-      <div class="home-hero-row">
-        <div class="review-block">
-          <div class="review-photo">
-            <i class="fa-solid fa-cat"></i>
-          </div>
-          <div class="review-content">
-            <div class="review-quote"><i class="fa-solid fa-quote-left" style="color:#663399;margin-right:0.4rem;"></i>Jessica says: "Amanda's fantastic! I choose her anytime I need help with my cats."</div>
-            <div class="review-author">— Jessica</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="product-name"><i class="fa-solid fa-house-chimney" style="color: #663399; font-size: 1.5rem;"></i> Drop-In Visits</div>
+      <div class="product-name"><img src="https://img.icons8.com/?size=100&id=21613&format=png&color=663399" alt="Drop-In Visits" style="width: 2.3rem; height: 2.3rem; vertical-align: middle; margin-right: 0.5rem;"> Drop-In Visits</div>
 
       <div class="product-description">
         <div class="pricing">
-          <p>$20.00</p>
-        </div><em>(per visit)</em>
+          <p>$20.00<span class="price-unit">/visit</span></p>
+        </div>
       </div>
       <p>Need someone to check in on your pets while you're away? I have you covered</p>
 
-      <!-- Calendly inline widget begin -->
-      <div class="calendly-inline-widget" data-url="https://calendly.com/lmansf96/house-sitting-clone?primary_color=663399" style="min-width:320px;height:700px;"></div>
-      <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
-      <!-- Calendly inline widget end -->
+<a href="https://calendly.com/lmansf96/house-sitting-clone">Click here to go to Bookings</a>
 
     </div>
+
   </body>
 </html>

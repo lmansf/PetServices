@@ -1,0 +1,10 @@
+{
+  "name": "petservices-site",
+  "version": "1.0.0",
+  "description": "Build helper for PetServices static site",
+  "scripts": {
+    "generate-imgs": "node scripts/generate-imgs.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
