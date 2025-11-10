@@ -28,31 +28,22 @@
     
     <div class="content">
       
-        <div class="product-name"><i class="fa-solid fa-house-chimney" style="color: #663399; font-size: 1.5rem;"></i> Free Introduction</div>           
+        <div class="product-name"><i class="fa-solid fa-house-chimney" style="color: #663399; font-size: 1.5rem;"></i> First Time Here?</div>           
 
       <div class="flexbox">
         <div class="product-content">
           <div class="product-description">
-            <p><center>First time here? Schedule a FREE introduction with your furry friend to get started!</center>
-            </p>
-            <div style="text-align:center;margin-top:0.1rem;">
+            <div style="text-align:center;">
+              <button id="first-intro" class="nav-btn book-today" style="background-color: #FFD700; color:black;">
+                Schedule a FREE introduction with your furry friend to get started!
+              </button>
+            </div>
+            <div style="text-align:center;margin-top:0.5rem;">
               <button id="continue-booking-btn" class="nav-btn book-today">Or continue to booking</button>
             </div>
           </div>
-          <div class="calendly">
-
-
-<!-- Calendly inline widget begin -->
-<div class="calendly-inline-widget" data-url="https://calendly.com/lmansf96/30min?hide_event_type_details=1&hide_gdpr_banner=1&primary_color=663399" style="min-width:320px;height:700px;"></div>
-
-
-
-<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
-<!-- Calendly inline widget end -->
-
-
-  
-
+          <!-- Calendly widget removed -->
+        </div>
       </div>
       <script>
         // Read cookie helper (small, local) — looks for 'nextpage'
@@ -67,16 +58,27 @@
           }
           return null;
         }
-
+        
         document.addEventListener('DOMContentLoaded', function() {
+          const introBtn = document.getElementById('first-intro');
+          if (introBtn) {
+            introBtn.addEventListener('click', function() {
+              try {
+                window.location.href = 'https://calendly.com/lmansf96/30min';
+              } catch (error) {
+                window.location.href = `error.html?code=500&msg=${encodeURIComponent('Navigation failed')}&from=${encodeURIComponent(window.location.pathname)}`;
+              }
+            });
+          }
+
           const btn = document.getElementById('continue-booking-btn');
           if (!btn) return;
 
           const next = readCookie('nextpage');
           const mapping = {
-            'housesitting': 'houseSitting.html',
-            'dropins': 'dropIns.html',
-            'walking': 'walking.html'
+            'housesitting': 'https://calendly.com/lmansf96/pet-introduction-clone',
+            'dropins': 'https://calendly.com/lmansf96/house-sitting-clone',
+            'walking': 'https://calendly.com/lmansf96/drop-in-visits-clone'
           };
 
           // If we have a mapping, navigate there on click. Otherwise, disable button.
