@@ -73,23 +73,22 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
   
-  // Reviews functionality temporarily disabled
-  // if (reviewsContainer) {
-  //   // Load reviews HTML
-  //   fetch('reviews.html')
-  //     .then(response => {
-  //       if (!response.ok) throw new Error('Failed to load reviews');
-  //       return response.text();
-  //     })
-  //     .then(html => {
-  //       reviewsContainer.innerHTML = html;
-  //       // Initialize the review carousel after the HTML is loaded
-  //       initReviewCarousel();
-  //     })
-  //     .catch(error => {
-  //       console.log('Failed to load reviews:', error);
-  //     });
-  // }
+  if (reviewsContainer) {
+    // Load reviews HTML and initialize the carousel for footer
+    fetch('reviews.html')
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to load reviews');
+        return response.text();
+      })
+      .then(html => {
+        reviewsContainer.innerHTML = html;
+        // Initialize the review carousel after the HTML is loaded
+        initReviewCarousel();
+      })
+      .catch(error => {
+        console.log('Failed to load reviews:', error);
+      });
+  }
 });
 
 // Pet Carousel Logic for About.html
@@ -669,46 +668,53 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Enhanced accordion: only open the hidden-box when the Details trigger is clicked.
-// Prevent default link navigation (href="#") and avoid scrolling the product box to top.
+// Enhanced accordion: when Details is clicked, open the matching hidden-box
+// and smoothly center the whole service tile + details in the viewport.
 const detailTriggers = document.querySelectorAll('.details-link, .nav-btn.details');
 
 detailTriggers.forEach(trigger => {
   trigger.addEventListener('click', (e) => {
-    // Prevent anchor default behavior which can jump to top (href="#")
     e.preventDefault();
     e.stopPropagation();
 
-    // Find the hidden box that belongs to this trigger's parent .box
-    const parentBox = trigger.closest('.box');
-    if (!parentBox) return;
-    const hiddenBox = parentBox.nextElementSibling;
+    const parentSection = trigger.closest('.service-section') || trigger.closest('.box');
+    if (!parentSection) return;
+
+    // In the All Services layout, the hidden box is a sibling of .box
+    const hiddenBox = parentSection.querySelector('.hidden-box') || parentSection.nextElementSibling;
 
     if (hiddenBox && hiddenBox.classList.contains('hidden-box')) {
       const isCurrentlyOpen = hiddenBox.classList.contains('open');
 
-      // Close all hidden boxes first
-      document.querySelectorAll('.hidden-box').forEach(box => box.classList.remove('open'));
+      // Close all hidden boxes
+      document.querySelectorAll('.hidden-box.open').forEach(box => box.classList.remove('open'));
 
-      // If it wasn't open, open it (no scroll-to-top)
       if (!isCurrentlyOpen) {
         hiddenBox.classList.add('open');
 
-        // After a short delay, adjust scroll to center the calendly area (if present)
+        // After layout updates, scroll the entire service tile into a
+        // centered position so it's obvious something expanded.
         setTimeout(() => {
-          const calendlySection = hiddenBox.querySelector('.calendly');
-          if (calendlySection) {
-            calendlySection.scrollIntoView({ 
-              behavior: 'smooth', 
+          const target = parentSection.classList.contains('service-section') ? parentSection : hiddenBox;
+          try {
+            target.scrollIntoView({
+              behavior: 'smooth',
               block: 'center',
               inline: 'nearest'
+            });
+          } catch (_) {
+            // Fallback: simple scroll
+            const rect = target.getBoundingClientRect();
+            window.scrollTo({
+              top: window.scrollY + rect.top - (window.innerHeight * 0.25),
+              behavior: 'smooth'
             });
           }
         }, 150);
 
         // Analytics event
         if (window.analytics) {
-          const productName = parentBox.querySelector('.product-name')?.textContent || 'Unknown Product';
+          const productName = parentSection.querySelector('.product-name')?.textContent || 'Unknown Product';
           window.analytics.logEvent('product_view', {
             product_name: productName,
             interaction_type: 'expand_details'
