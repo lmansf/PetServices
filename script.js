@@ -14,12 +14,12 @@ const NAV_HTML = `<nav class="topnav account-nav">
     </button>
     <div class="account-menu" role="menu">
       <a href="About.html" role="menuitem">About Me</a>
-      <a href="index.html" role="menuitem" class="nav-services-link">Services</a>
+      <a href="index.html" role="menuitem" class="nav-services-link nav-highlightable nav-highlight">Services</a>
       <a href="profile.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Profile</a>
       <a href="firstform.html" role="menuitem" class="auth-hidden" data-auth="signed-in">First Form</a>
       <a href="feedback.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Feedback</a>
       <hr>
-      <button type="button" class="logout-button" role="menuitem">Log out</button>
+      <button type="button" class="logout-button nav-highlightable" role="menuitem">Log out</button>
     </div>
   </div>
 </nav>`;
@@ -243,18 +243,25 @@ function initializeAccountNav() {
   const button = dropdown.querySelector('.account-button');
   const menu = dropdown.querySelector('.account-menu');
   const accountLabel = dropdown.querySelector('.account-label');
-  const logoutButton = dropdown.querySelector('.logout-button');
+  const servicesLink = dropdown.querySelector('.nav-services-link');
+  const originalLogoutButton = dropdown.querySelector('.logout-button');
+  const highlightClass = 'nav-highlight';
   if (!button || !menu) return;
 
   // Display user email if logged in
-    const userEmail = sessionStorage.getItem('userEmail');
-    updateAccountLabel(accountLabel, userEmail);
+  const userEmail = sessionStorage.getItem('userEmail');
+  updateAccountLabel(accountLabel, userEmail);
 
-  if (logoutButton) {
-    logoutButton.replaceWith(logoutButton.cloneNode(true));
+  if (originalLogoutButton) {
+    originalLogoutButton.replaceWith(originalLogoutButton.cloneNode(true));
   }
 
   const updatedLogoutButton = dropdown.querySelector('.logout-button');
+  const updateNavHighlight = (signedIn) => {
+    if (servicesLink) servicesLink.classList.toggle(highlightClass, signedIn);
+    if (updatedLogoutButton) updatedLogoutButton.classList.toggle(highlightClass, !signedIn);
+  };
+
   if (updatedLogoutButton) {
     if (userEmail) {
       updatedLogoutButton.textContent = 'Log out';
@@ -275,6 +282,8 @@ function initializeAccountNav() {
       });
     }
   }
+
+  updateNavHighlight(Boolean(userEmail));
 
   function setOpen(isOpen) {
     dropdown.classList.toggle('open', isOpen);

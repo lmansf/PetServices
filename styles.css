@@ -100,7 +100,7 @@
   color: #ffffff;
 }
 
-.account-menu a.nav-services-link {
+.account-menu .nav-highlight {
   font-weight: 700;
   color: #2D3748;
   background: linear-gradient(90deg, #FFD700 0%, #FFE98A 100%);
@@ -108,8 +108,8 @@
   box-shadow: 0 6px 18px rgba(255, 215, 0, 0.35);
 }
 
-.account-menu a.nav-services-link:hover,
-.account-menu a.nav-services-link:focus {
+.account-menu .nav-highlight:hover,
+.account-menu .nav-highlight:focus {
   color: #2D3748;
   background: linear-gradient(90deg, #FFE98A 0%, #FFD700 100%);
   box-shadow: 0 8px 20px rgba(255, 215, 0, 0.45);
