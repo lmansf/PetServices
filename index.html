@@ -17,6 +17,14 @@
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
     
+    <!-- Authentication Check -->
+    <script>
+      // Redirect to sign-in if not logged in
+      if (!sessionStorage.getItem('userEmail')) {
+        window.location.href = 'signin.html';
+      }
+    </script>
+    
     <!-- Your custom scripts -->
     <script src="script.js" defer></script>
     <!-- Font Awesome Icons -->

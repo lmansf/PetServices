@@ -105,7 +105,24 @@ function initializeAccountNav() {
   if (!dropdown) return;
   const button = dropdown.querySelector('.account-button');
   const menu = dropdown.querySelector('.account-menu');
+  const accountLabel = dropdown.querySelector('.account-label');
+  const logoutButton = dropdown.querySelector('.logout-button');
   if (!button || !menu) return;
+
+  // Display user email if logged in
+  const userEmail = sessionStorage.getItem('userEmail');
+  if (userEmail && accountLabel) {
+    accountLabel.textContent = userEmail;
+  }
+
+  // Hook up logout button
+  if (logoutButton) {
+    logoutButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      sessionStorage.removeItem('userEmail');
+      window.location.href = 'signin.html';
+    });
+  }
 
   function setOpen(isOpen) {
     dropdown.classList.toggle('open', isOpen);

@@ -418,6 +418,223 @@ authApp.post('/signin', async (req, res) => {
   }
 });
 
+// Get user profile data
+exports.getUserProfile = functions.https.onCall(async (data, context) => {
+  try {
+    const { email } = data;
+
+    if (!email) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Email is required'
+      );
+    }
+
+    const accessToken = functions.config().dropbox?.access_token;
+    
+    if (!accessToken) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Dropbox access token not configured'
+      );
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // List all files in the form-submissions folder
+    const listResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: '/form-submissions',
+        recursive: false
+      })
+    });
+
+    if (!listResponse.ok) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        'No profile data found'
+      );
+    }
+
+    const folderContents = await listResponse.json();
+    
+    // Search through files to find matching email
+    for (const entry of folderContents.entries) {
+      if (entry['.tag'] === 'file' && entry.name.endsWith('.json')) {
+        // Download and check the file content
+        const downloadResponse = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Dropbox-API-Arg': JSON.stringify({
+              path: entry.path_lower
+            })
+          }
+        });
+        
+        if (downloadResponse.ok) {
+          const fileContent = await downloadResponse.text();
+          try {
+            const profileData = JSON.parse(fileContent);
+            const profileEmail = profileData.email ? profileData.email.toLowerCase().trim() : '';
+            
+            if (profileEmail === normalizedEmail) {
+              // Found the matching profile!
+              return profileData;
+            }
+          } catch (parseError) {
+            console.log('Could not parse file:', entry.name, parseError.message);
+            continue;
+          }
+        }
+      }
+    }
+
+    // If no profile found
+    throw new functions.https.HttpsError(
+      'not-found',
+      'No profile data found for this email'
+    );
+
+  } catch (error) {
+    console.error('Error in getUserProfile:', error);
+    
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+// Update user profile data
+exports.updateUserProfile = functions.https.onCall(async (data, context) => {
+  try {
+    const { email, updatedData } = data;
+
+    if (!email || !updatedData) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Email and updated data are required'
+      );
+    }
+
+    const accessToken = functions.config().dropbox?.access_token;
+    
+    if (!accessToken) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Dropbox access token not configured'
+      );
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // List all files in the form-submissions folder
+    const listResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: '/form-submissions',
+        recursive: false
+      })
+    });
+
+    if (!listResponse.ok) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        'No profile data found'
+      );
+    }
+
+    const folderContents = await listResponse.json();
+    
+    // Search through files to find matching email
+    for (const entry of folderContents.entries) {
+      if (entry['.tag'] === 'file' && entry.name.endsWith('.json')) {
+        // Download and check the file content
+        const downloadResponse = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Dropbox-API-Arg': JSON.stringify({
+              path: entry.path_lower
+            })
+          }
+        });
+        
+        if (downloadResponse.ok) {
+          const fileContent = await downloadResponse.text();
+          try {
+            const profileData = JSON.parse(fileContent);
+            const profileEmail = profileData.email ? profileData.email.toLowerCase().trim() : '';
+            
+            if (profileEmail === normalizedEmail) {
+              // Found the matching profile! Now update it
+              const mergedData = {
+                ...profileData,
+                ...updatedData,
+                lastUpdatedAt: new Date().toISOString()
+              };
+
+              // Upload updated data back to Dropbox
+              const uploadResponse = await fetch('https://content.dropboxapi.com/2/files/upload', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/octet-stream',
+                  'Dropbox-API-Arg': JSON.stringify({
+                    path: entry.path_lower,
+                    mode: 'overwrite'
+                  })
+                },
+                body: JSON.stringify(mergedData, null, 2)
+              });
+
+              if (!uploadResponse.ok) {
+                const errorText = await uploadResponse.text();
+                console.error('Dropbox upload error:', errorText);
+                throw new functions.https.HttpsError('internal', 'Failed to update profile');
+              }
+
+              return {
+                success: true,
+                message: 'Profile updated successfully'
+              };
+            }
+          } catch (parseError) {
+            console.log('Could not parse file:', entry.name, parseError.message);
+            continue;
+          }
+        }
+      }
+    }
+
+    // If no profile found
+    throw new functions.https.HttpsError(
+      'not-found',
+      'No profile data found for this email'
+    );
+
+  } catch (error) {
+    console.error('Error in updateUserProfile:', error);
+    
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
 // Export the Express app as a Firebase Function with CORS wrapper
 exports.auth = functions.https.onRequest((req, res) => {
   // Set CORS headers at the Firebase Function level

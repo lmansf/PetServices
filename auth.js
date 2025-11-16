@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMessage = document.getElementById('error-message');
     const successMessage = document.getElementById('success-message');
     const passwordRequirements = document.getElementById('password-requirements');
+    const signupFields = document.querySelectorAll('.signup-fields');
 
     // Toggle between sign in and sign up
     toggleLink.addEventListener('click', (e) => {
@@ -21,21 +22,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isSignUpMode) {
             authTitle.textContent = 'Sign Up';
-            submitButton.textContent = 'Sign Up';
+            submitButton.textContent = 'Create Account';
             toggleText.textContent = 'Already have an account?';
             toggleLink.textContent = 'Sign In';
             passwordRequirements.style.display = 'block';
+            signupFields.forEach(el => el.style.display = 'block');
+            
+            // Make sign-up fields required
+            ['first-name', 'last-name', 'phone', 'street-address', 'city', 'state', 'zip'].forEach(id => {
+                const field = document.getElementById(id);
+                if (field) field.required = true;
+            });
         } else {
             authTitle.textContent = 'Sign In';
             submitButton.textContent = 'Sign In';
             toggleText.textContent = "Don't have an account?";
             toggleLink.textContent = 'Sign Up';
             passwordRequirements.style.display = 'none';
+            signupFields.forEach(el => el.style.display = 'none');
+            
+            // Make sign-up fields not required
+            ['first-name', 'last-name', 'phone', 'street-address', 'city', 'state', 'zip'].forEach(id => {
+                const field = document.getElementById(id);
+                if (field) field.required = false;
+            });
         }
 
         // Clear messages and form
         hideMessages();
         form.reset();
+        // Clear pets container
+        const petsContainer = document.getElementById('pets-container');
+        if (petsContainer) petsContainer.innerHTML = '';
+        if (window.petCount) window.petCount = 0;
     });
 
     // Handle form submission
@@ -55,41 +74,119 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = true;
         submitButton.textContent = isSignUpMode ? 'Creating Account...' : 'Signing In...';
         hideMessages();
+        
+        // Hide discount warning
+        const discountWarning = document.getElementById('discount-warning');
+        if (discountWarning) discountWarning.style.display = 'none';
 
         try {
-            const endpoint = isSignUpMode ? '/signup' : '/signin';
-            const response = await fetch(`${AUTH_API_URL}${endpoint}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
+            if (isSignUpMode) {
+                // Sign-up mode: create account and submit profile data
+                
+                // First, create the auth account
+                const authResponse = await fetch(`${AUTH_API_URL}/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
 
-            const data = await response.json();
+                const authData = await authResponse.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Authentication failed');
+                if (!authResponse.ok) {
+                    throw new Error(authData.error || 'Authentication failed');
+                }
+
+                // Then, submit the profile data
+                const formData = {
+                    submittedAt: new Date().toISOString(),
+                    firstName: document.getElementById('first-name').value,
+                    lastName: document.getElementById('last-name').value,
+                    email: email,
+                    phone: document.getElementById('phone').value,
+                    address: {
+                        street: document.getElementById('street-address').value,
+                        apt: document.getElementById('apt-suite').value || '',
+                        city: document.getElementById('city').value,
+                        state: document.getElementById('state').value,
+                        zip: document.getElementById('zip').value
+                    },
+                    pets: [],
+                    additionalComments: document.getElementById('additional-comments').value || '',
+                    discountCode: document.getElementById('discount-code').value.trim()
+                };
+
+                // Collect pet information
+                if (window.petCount) {
+                    for (let i = 1; i <= window.petCount; i++) {
+                        const petNameInput = document.getElementById(`pet-name-${i}`);
+                        if (petNameInput && petNameInput.value) {
+                            formData.pets.push({
+                                name: petNameInput.value,
+                                type: document.getElementById(`pet-type-${i}`).value,
+                                breed: document.getElementById(`pet-breed-${i}`).value,
+                                description: document.getElementById(`pet-description-${i}`).value,
+                                medication: document.getElementById(`pet-medication-${i}`).value,
+                                careComments: document.getElementById(`pet-care-comments-${i}`).value
+                            });
+                        }
+                    }
+                }
+
+                // Submit profile data to Firebase Function
+                const submitForm = firebase.functions().httpsCallable('submitForm');
+                const profileResult = await submitForm(formData);
+
+                // Success
+                sessionStorage.setItem('userEmail', authData.email);
+                
+                // Show success modal
+                document.getElementById('success-modal').style.display = 'flex';
+                
+            } else {
+                // Sign-in mode: just authenticate
+                const response = await fetch(`${AUTH_API_URL}/signin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Authentication failed');
+                }
+
+                // Success
+                showSuccess(data.message);
+                sessionStorage.setItem('userEmail', data.email);
+
+                // Redirect after a short delay
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
             }
 
-            // Success
-            showSuccess(data.message);
-            form.reset();
-
-            // Store user session (you can enhance this with JWT tokens)
-            sessionStorage.setItem('userEmail', data.email);
-
-            // Redirect after a short delay
-            setTimeout(() => {
-                window.location.href = 'index.html'; // Redirect to home page
-            }, 1500);
-
         } catch (error) {
-            showError(error.message);
+            console.error('Error:', error);
+            
+            // Check for discount code error
+            if (error.code === 'functions/invalid-argument' && error.message && error.message.includes('discount')) {
+                if (discountWarning) {
+                    discountWarning.style.display = 'block';
+                }
+                document.getElementById('discount-code').value = '';
+                document.getElementById('discount-code').focus();
+            } else {
+                showError(error.message || 'An error occurred. Please try again.');
+            }
         } finally {
             // Re-enable button
             submitButton.disabled = false;
-            submitButton.textContent = isSignUpMode ? 'Sign Up' : 'Sign In';
+            submitButton.textContent = isSignUpMode ? 'Create Account' : 'Sign In';
         }
     });
 });

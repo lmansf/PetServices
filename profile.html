@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Amandas Pet Services</title>
+    <title>My Profile - Amanda's Pet Services</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Coustard:wght@400;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12,15 +12,437 @@
     
     <!-- Firebase CDN Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
+    
+    <!-- Authentication Check -->
+    <script>
+      // Redirect to sign-in if not logged in
+      if (!sessionStorage.getItem('userEmail')) {
+        window.location.href = 'signin.html';
+      }
+    </script>
     
     <!-- Your custom scripts -->
     <script src="script.js" defer></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    
+    <style>
+        .profile-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #663399 0%, #8A5AA8 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(102, 51, 153, 0.2);
+            text-align: center;
+        }
+
+        .profile-header h1 {
+            font-family: 'Coustard', Georgia, serif;
+            font-size: 2.5rem;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .profile-email {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .profile-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(102, 51, 153, 0.1);
+            border: 2px solid #e6ecf5;
+        }
+
+        .profile-section h2 {
+            font-family: 'Coustard', Georgia, serif;
+            color: #663399;
+            font-size: 1.8rem;
+            margin: 0 0 1.5rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #F5F2FF;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #F5F2FF;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        .edit-btn {
+            background: transparent;
+            border: 2px solid #663399;
+            color: #663399;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: 'Montserrat', Arial, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .edit-btn:hover {
+            background: #663399;
+            color: white;
+        }
+
+        .save-btn {
+            background: #663399;
+            border: 2px solid #663399;
+            color: white;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: 'Montserrat', Arial, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .save-btn:hover {
+            background: #54297a;
+            border-color: #54297a;
+        }
+
+        .cancel-btn {
+            background: transparent;
+            border: 2px solid #999;
+            color: #666;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: 'Montserrat', Arial, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cancel-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .edit-mode input,
+        .edit-mode select,
+        .edit-mode textarea {
+            padding: 10px;
+            border: 2px solid #e6ecf5;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .edit-mode input:focus,
+        .edit-mode select:focus,
+        .edit-mode textarea:focus {
+            outline: none;
+            border-color: #663399;
+            box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1);
+        }
+
+        .edit-mode textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .edit-mode .info-value {
+            padding: 0;
+        }
+
+        .add-pet-section-btn {
+            background: transparent;
+            border: 2px dashed #663399;
+            color: #663399;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Montserrat', Arial, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .add-pet-section-btn:hover {
+            background: #F5F2FF;
+            border-style: solid;
+        }
+
+        .remove-pet-card-btn {
+            background: transparent;
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .remove-pet-card-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #8A5AA8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .pet-card {
+            background: linear-gradient(135deg, #F5F2FF 0%, #FFF9E6 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid #e6ecf5;
+        }
+
+        .pet-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .pet-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(102, 51, 153, 0.1);
+        }
+
+        .pet-icon {
+            font-size: 2.5rem;
+            color: #663399;
+        }
+
+        .pet-photo-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+        }
+
+        .pet-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #663399;
+            background: #F5F2FF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pet-photo-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px dashed #663399;
+            background: #F5F2FF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #663399;
+            font-size: 2rem;
+        }
+
+        .pet-photo-upload-btn {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #663399;
+            color: white;
+            border: 3px solid white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .pet-photo-upload-btn:hover {
+            background: #54297a;
+            transform: scale(1.1);
+        }
+
+        .pet-photo-upload-input {
+            display: none;
+        }
+
+        .pet-name {
+            font-family: 'Coustard', Georgia, serif;
+            font-size: 1.5rem;
+            color: #663399;
+            margin: 0;
+        }
+
+        .pet-type-badge {
+            background: #663399;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .pet-details {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .pet-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .no-data {
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            padding: 2rem;
+            background: #f8fafd;
+            border-radius: 8px;
+        }
+
+        .comments-box {
+            background: #f8fafd;
+            border-radius: 8px;
+            padding: 1.25rem;
+            color: #333;
+            line-height: 1.6;
+            font-size: 1rem;
+            border-left: 4px solid #663399;
+        }
+
+        .edit-profile-btn {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Montserrat', Arial, sans-serif;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+
+        .edit-profile-btn:hover {
+            background: white;
+            color: #663399;
+        }
+
+        .loading-message {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem auto;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .profile-header h1 {
+                font-size: 2rem;
+            }
+
+            .profile-section {
+                padding: 1.5rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pet-header {
+                flex-wrap: wrap;
+            }
+
+            .pet-type-badge {
+                margin-left: 0;
+            }
+        }
+    </style>
   </head>
   <body>
     <div id="header-container"></div>
@@ -30,13 +452,588 @@
     <nav id="navbar"></nav>
     
     <main>
-        <div class="coming-soon-box">
-            <h1>Coming Soon!</h1>
-            <p>This page is currently under construction.</p>
+        <div id="profile-content" class="profile-container">
+            <div class="loading-message">
+                <i class="fas fa-spinner fa-spin"></i> Loading your profile...
+            </div>
         </div>
     </main>
     
     <script src="scripts/header.js"></script>
     <script src="/nav.html"></script>
+    
+    <script>
+        // Load user profile data
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userEmail = sessionStorage.getItem('userEmail');
+            
+            if (!userEmail) {
+                window.location.href = 'signin.html';
+                return;
+            }
+
+            try {
+                console.log('Attempting to load profile for:', userEmail);
+                
+                // Call Firebase Function to get user profile
+                const getUserProfile = firebase.functions().httpsCallable('getUserProfile');
+                const result = await getUserProfile({ email: userEmail });
+                
+                console.log('Profile data received:', result.data);
+                const profileData = result.data;
+                
+                // Render profile
+                renderProfile(profileData);
+                
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                console.error('Error details:', error.details);
+                
+                let errorMsg = 'Unable to load profile data.';
+                
+                if (error.code === 'not-found' || error.message?.includes('No profile data found')) {
+                    errorMsg = 'No profile data found. Please complete the sign-up form to create your profile.';
+                } else if (error.code === 'unauthenticated') {
+                    errorMsg = 'Please sign in again to view your profile.';
+                    setTimeout(() => {
+                        window.location.href = 'signin.html';
+                    }, 2000);
+                }
+                
+                document.getElementById('profile-content').innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${errorMsg}</p>
+                        <p style="margin-top: 1rem;"><a href="index.html" style="color: #663399; font-weight: 600;">Return to Home</a></p>
+                    </div>
+                `;
+            }
+        });
+
+        let profileData = null; // Store profile data globally for editing
+
+        function renderProfile(data) {
+            profileData = data; // Store for editing
+            const container = document.getElementById('profile-content');
+            
+            // Build profile HTML
+            let html = `
+                <div class="profile-header">
+                    <h1>${data.firstName || ''} ${data.lastName || ''}</h1>
+                    <div class="profile-email">
+                        <i class="fas fa-envelope"></i>
+                        <span>${data.email}</span>
+                    </div>
+                </div>
+            `;
+
+            // Pet Information - MOVED TO FIRST POSITION
+            html += `
+                <div class="profile-section" id="pets-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-paw"></i> My Pets</h2>
+                        <button class="edit-btn" onclick="editSection('pets')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                    <div id="pets-view">
+            `;
+
+            if (data.pets && data.pets.length > 0) {
+                data.pets.forEach((pet, index) => {
+                    const petIcon = pet.type === 'dog' ? 'fa-dog' : pet.type === 'cat' ? 'fa-cat' : 'fa-paw';
+                    const petPhoto = pet.photoUrl || '';
+                    
+                    html += `
+                        <div class="pet-card" data-pet-index="${index}">
+                            <div class="pet-header">
+                                <div class="pet-photo-container">
+                                    ${petPhoto ? 
+                                        `<img src="${petPhoto}" alt="${pet.name}" class="pet-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="pet-photo-placeholder" style="display:none;"><i class="fas ${petIcon}"></i></div>` 
+                                        : 
+                                        `<div class="pet-photo-placeholder"><i class="fas ${petIcon}"></i></div>`
+                                    }
+                                    <button class="pet-photo-upload-btn" onclick="uploadPetPhoto(${index})" title="Upload photo">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                    <input type="file" id="pet-photo-input-${index}" class="pet-photo-upload-input" accept="image/*" onchange="handlePetPhotoUpload(${index}, event)">
+                                </div>
+                                <h3 class="pet-name">${pet.name || `Pet ${index + 1}`}</h3>
+                                ${pet.type ? `<span class="pet-type-badge">${pet.type.charAt(0).toUpperCase() + pet.type.slice(1)}</span>` : ''}
+                            </div>
+                            <div class="pet-details">
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Breed</span>
+                                    <span class="info-value">${pet.breed || 'Not provided'}</span>
+                                </div>
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Description</span>
+                                    <span class="info-value">${pet.description || 'Not provided'}</span>
+                                </div>
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Medication</span>
+                                    <span class="info-value">${pet.medication || 'Not provided'}</span>
+                                </div>
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Care Comments</span>
+                                    <span class="info-value">${pet.careComments || 'Not provided'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<div class="no-data">No pet information on file.</div>`;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            // Contact Information
+            html += `
+                <div class="profile-section" id="contact-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-address-card"></i> Contact Information</h2>
+                        <button class="edit-btn" onclick="editSection('contact')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                    <div class="info-grid" id="contact-view">
+                        <div class="info-item">
+                            <span class="info-label">First Name</span>
+                            <span class="info-value">${data.firstName || 'Not provided'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Last Name</span>
+                            <span class="info-value">${data.lastName || 'Not provided'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Phone</span>
+                            <span class="info-value">${data.phone || 'Not provided'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">${data.email}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Address Information
+            if (data.address) {
+                const addr = data.address;
+                const fullAddress = [
+                    addr.street,
+                    addr.apt ? `Apt/Suite ${addr.apt}` : '',
+                    `${addr.city}, ${addr.state} ${addr.zip}`
+                ].filter(Boolean).join('<br>');
+
+                html += `
+                    <div class="profile-section" id="address-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-home"></i> Address</h2>
+                            <button class="edit-btn" onclick="editSection('address')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </div>
+                        <div class="info-grid" id="address-view">
+                            <div class="info-item">
+                                <span class="info-label">Street Address</span>
+                                <span class="info-value">${addr.street || 'Not provided'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Apartment/Suite</span>
+                                <span class="info-value">${addr.apt || 'Not provided'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">City</span>
+                                <span class="info-value">${addr.city || 'Not provided'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">State</span>
+                                <span class="info-value">${addr.state || 'Not provided'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">ZIP Code</span>
+                                <span class="info-value">${addr.zip || 'Not provided'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Additional Comments
+            html += `
+                <div class="profile-section" id="comments-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-comment-dots"></i> Additional Comments</h2>
+                        <button class="edit-btn" onclick="editSection('comments')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                    <div id="comments-view">
+                        <div class="comments-box">${data.additionalComments || 'No additional comments.'}</div>
+                    </div>
+                </div>
+            `;
+
+            // Discount Code (if applicable)
+            if (data.discountCode) {
+                html += `
+                    <div class="profile-section">
+                        <h2><i class="fas fa-tag"></i> Discount Code</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Applied Code</span>
+                                <span class="info-value">${data.discountCode}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function editSection(section) {
+            const sectionDiv = document.getElementById(`${section}-section`);
+            const viewDiv = document.getElementById(`${section}-view`);
+            
+            if (section === 'contact') {
+                viewDiv.innerHTML = `
+                    <div class="info-grid edit-mode">
+                        <div class="info-item">
+                            <span class="info-label">First Name</span>
+                            <span class="info-value"><input type="text" id="edit-firstName" value="${profileData.firstName || ''}"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Last Name</span>
+                            <span class="info-value"><input type="text" id="edit-lastName" value="${profileData.lastName || ''}"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Phone</span>
+                            <span class="info-value"><input type="tel" id="edit-phone" value="${profileData.phone || ''}"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">${profileData.email}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (section === 'address') {
+                const addr = profileData.address || {};
+                viewDiv.innerHTML = `
+                    <div class="info-grid edit-mode">
+                        <div class="info-item">
+                            <span class="info-label">Street Address</span>
+                            <span class="info-value"><input type="text" id="edit-street" value="${addr.street || ''}"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Apartment/Suite</span>
+                            <span class="info-value"><input type="text" id="edit-apt" value="${addr.apt || ''}"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">City</span>
+                            <span class="info-value"><input type="text" id="edit-city" value="${addr.city || ''}"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">State</span>
+                            <span class="info-value"><input type="text" id="edit-state" value="${addr.state || ''}"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">ZIP Code</span>
+                            <span class="info-value"><input type="text" id="edit-zip" value="${addr.zip || ''}"></span>
+                        </div>
+                    </div>
+                `;
+            } else if (section === 'pets') {
+                const pets = profileData.pets || [];
+                let html = '<div id="pets-edit-container">';
+                
+                pets.forEach((pet, index) => {
+                    const petIcon = pet.type === 'dog' ? 'fa-dog' : pet.type === 'cat' ? 'fa-cat' : 'fa-paw';
+                    const petPhoto = pet.photoUrl || '';
+                    
+                    html += `
+                        <div class="pet-card edit-mode" data-pet-index="${index}">
+                            <div class="pet-header">
+                                <div class="pet-photo-container">
+                                    ${petPhoto ? 
+                                        `<img src="${petPhoto}" alt="${pet.name}" class="pet-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="pet-photo-placeholder" style="display:none;"><i class="fas ${petIcon}"></i></div>` 
+                                        : 
+                                        `<div class="pet-photo-placeholder"><i class="fas ${petIcon}"></i></div>`
+                                    }
+                                    <button type="button" class="pet-photo-upload-btn" onclick="uploadPetPhoto(${index})" title="Upload photo">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                    <input type="file" id="pet-photo-input-${index}" class="pet-photo-upload-input" accept="image/*" onchange="handlePetPhotoUpload(${index}, event)">
+                                </div>
+                                <h3 class="pet-name">Pet ${index + 1}</h3>
+                                <button type="button" class="remove-pet-card-btn" onclick="removePetFromEdit(${index})">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            </div>
+                            <div class="pet-details">
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Pet Name</span>
+                                    <span class="info-value"><input type="text" id="edit-pet-name-${index}" value="${pet.name || ''}"></span>
+                                </div>
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Pet Type</span>
+                                    <span class="info-value">
+                                        <select id="edit-pet-type-${index}">
+                                            <option value="">Select...</option>
+                                            <option value="dog" ${pet.type === 'dog' ? 'selected' : ''}>Dog</option>
+                                            <option value="cat" ${pet.type === 'cat' ? 'selected' : ''}>Cat</option>
+                                        </select>
+                                    </span>
+                                </div>
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Breed</span>
+                                    <span class="info-value"><input type="text" id="edit-pet-breed-${index}" value="${pet.breed || ''}"></span>
+                                </div>
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Description</span>
+                                    <span class="info-value"><textarea id="edit-pet-description-${index}">${pet.description || ''}</textarea></span>
+                                </div>
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Medication</span>
+                                    <span class="info-value"><textarea id="edit-pet-medication-${index}">${pet.medication || ''}</textarea></span>
+                                </div>
+                                <div class="pet-detail-item">
+                                    <span class="info-label">Care Comments</span>
+                                    <span class="info-value"><textarea id="edit-pet-careComments-${index}">${pet.careComments || ''}</textarea></span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    </div>
+                    <button type="button" class="add-pet-section-btn" onclick="addNewPet()">
+                        <i class="fas fa-plus"></i> Add Another Pet
+                    </button>
+                `;
+                
+                viewDiv.innerHTML = html;
+            } else if (section === 'comments') {
+                viewDiv.innerHTML = `
+                    <div class="edit-mode">
+                        <textarea id="edit-comments" rows="5" style="width: 100%; padding: 1rem; border: 2px solid #e6ecf5; border-radius: 8px; font-family: 'Montserrat', sans-serif;">${profileData.additionalComments || ''}</textarea>
+                    </div>
+                `;
+            }
+            
+            // Update buttons
+            const headerDiv = sectionDiv.querySelector('.section-header');
+            headerDiv.innerHTML = `
+                <h2>${headerDiv.querySelector('h2').innerHTML}</h2>
+                <div>
+                    <button class="save-btn" onclick="saveSection('${section}')">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button class="cancel-btn" onclick="cancelEdit('${section}')">
+                        Cancel
+                    </button>
+                </div>
+            `;
+        }
+
+        function cancelEdit(section) {
+            renderProfile(profileData);
+        }
+
+        let newPetCounter = 1000; // Start high to avoid conflicts with existing indices
+
+        function addNewPet() {
+            const container = document.getElementById('pets-edit-container');
+            const index = newPetCounter++;
+            
+            const petCard = document.createElement('div');
+            petCard.className = 'pet-card edit-mode';
+            petCard.setAttribute('data-pet-index', index);
+            petCard.innerHTML = `
+                <div class="pet-header">
+                    <h3 class="pet-name">New Pet</h3>
+                    <button type="button" class="remove-pet-card-btn" onclick="removePetFromEdit(${index})">
+                        <i class="fas fa-times"></i> Remove
+                    </button>
+                </div>
+                <div class="pet-details">
+                    <div class="pet-detail-item">
+                        <span class="info-label">Pet Name</span>
+                        <span class="info-value"><input type="text" id="edit-pet-name-${index}" value=""></span>
+                    </div>
+                    <div class="pet-detail-item">
+                        <span class="info-label">Pet Type</span>
+                        <span class="info-value">
+                            <select id="edit-pet-type-${index}">
+                                <option value="">Select...</option>
+                                <option value="dog">Dog</option>
+                                <option value="cat">Cat</option>
+                            </select>
+                        </span>
+                    </div>
+                    <div class="pet-detail-item">
+                        <span class="info-label">Breed</span>
+                        <span class="info-value"><input type="text" id="edit-pet-breed-${index}" value=""></span>
+                    </div>
+                    <div class="pet-detail-item">
+                        <span class="info-label">Description</span>
+                        <span class="info-value"><textarea id="edit-pet-description-${index}"></textarea></span>
+                    </div>
+                    <div class="pet-detail-item">
+                        <span class="info-label">Medication</span>
+                        <span class="info-value"><textarea id="edit-pet-medication-${index}"></textarea></span>
+                    </div>
+                    <div class="pet-detail-item">
+                        <span class="info-label">Care Comments</span>
+                        <span class="info-value"><textarea id="edit-pet-careComments-${index}"></textarea></span>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(petCard);
+        }
+
+        function removePetFromEdit(index) {
+            const petCard = document.querySelector(`[data-pet-index="${index}"]`);
+            if (petCard) {
+                petCard.remove();
+            }
+        }
+
+        async function saveSection(section) {
+            try {
+                // Collect updated data
+                const updatedData = { ...profileData };
+                
+                if (section === 'contact') {
+                    updatedData.firstName = document.getElementById('edit-firstName').value;
+                    updatedData.lastName = document.getElementById('edit-lastName').value;
+                    updatedData.phone = document.getElementById('edit-phone').value;
+                } else if (section === 'address') {
+                    updatedData.address = {
+                        street: document.getElementById('edit-street').value,
+                        apt: document.getElementById('edit-apt').value,
+                        city: document.getElementById('edit-city').value,
+                        state: document.getElementById('edit-state').value,
+                        zip: document.getElementById('edit-zip').value
+                    };
+                } else if (section === 'pets') {
+                    const petCards = document.querySelectorAll('#pets-edit-container .pet-card');
+                    updatedData.pets = [];
+                    
+                    petCards.forEach((card, cardIndex) => {
+                        const index = card.getAttribute('data-pet-index');
+                        const name = document.getElementById(`edit-pet-name-${index}`)?.value || '';
+                        
+                        if (name.trim()) { // Only save pets with names
+                            // Preserve the photo URL if it exists
+                            const originalPet = profileData.pets && profileData.pets[index] ? profileData.pets[index] : {};
+                            
+                            updatedData.pets.push({
+                                name: name,
+                                type: document.getElementById(`edit-pet-type-${index}`)?.value || '',
+                                breed: document.getElementById(`edit-pet-breed-${index}`)?.value || '',
+                                description: document.getElementById(`edit-pet-description-${index}`)?.value || '',
+                                medication: document.getElementById(`edit-pet-medication-${index}`)?.value || '',
+                                careComments: document.getElementById(`edit-pet-careComments-${index}`)?.value || '',
+                                photoUrl: originalPet.photoUrl || '' // Preserve photo
+                            });
+                        }
+                    });
+                } else if (section === 'comments') {
+                    updatedData.additionalComments = document.getElementById('edit-comments').value;
+                }
+                
+                // Show saving state
+                const saveBtn = document.querySelector('.save-btn');
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                
+                // Call Firebase Function to update profile
+                const updateProfile = firebase.functions().httpsCallable('updateUserProfile');
+                await updateProfile({ 
+                    email: profileData.email,
+                    updatedData: updatedData
+                });
+                
+                // Update local data and re-render
+                profileData = updatedData;
+                renderProfile(profileData);
+                
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                alert('Failed to save changes. Please try again.');
+                const saveBtn = document.querySelector('.save-btn');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+            }
+        }
+
+        // Pet photo upload functions
+        function uploadPetPhoto(petIndex) {
+            document.getElementById(`pet-photo-input-${petIndex}`).click();
+        }
+
+        async function handlePetPhotoUpload(petIndex, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size must be less than 5MB');
+                return;
+            }
+
+            try {
+                // Convert image to base64
+                const base64Image = await fileToBase64(file);
+
+                // Update the pet's photo in profileData
+                if (!profileData.pets[petIndex]) {
+                    profileData.pets[petIndex] = {};
+                }
+                profileData.pets[petIndex].photoUrl = base64Image;
+
+                // Save to Dropbox
+                const updateProfile = firebase.functions().httpsCallable('updateUserProfile');
+                await updateProfile({ 
+                    email: profileData.email,
+                    updatedData: profileData
+                });
+
+                // Re-render to show the new photo
+                renderProfile(profileData);
+
+            } catch (error) {
+                console.error('Error uploading photo:', error);
+                alert('Failed to upload photo. Please try again.');
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
 </body>
 </html>
