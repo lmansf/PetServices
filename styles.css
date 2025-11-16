@@ -14,6 +14,21 @@
   overflow: visible;
 }
 
+@media (max-width: 768px) {
+  .topnav.account-nav {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    margin: 0.25rem auto 0.65rem;
+    width: fit-content;
+    max-width: calc(100% - 2rem);
+    display: flex;
+    justify-content: center;
+    transform: none;
+  }
+}
+
 .account-dropdown {
   position: relative;
 }
@@ -684,6 +699,12 @@
   
   .content > h3 {
     padding-left: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding-top: 1.5rem;
   }
 }
 
@@ -1470,11 +1491,50 @@ h2 {
   line-height: 1;
 }
 
-.service-price .price-unit {
+.service-price .price-unit,
+.pricing .price-unit {
   font-size: 0.9rem;
   font-weight: normal;
   color: #666;
   margin-left: 0.2rem;
+}
+
+.dogmom-price-active {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.dogmom-price-active .price-current,
+.dogmom-price-active .price-original {
+  display: block;
+}
+
+.dogmom-price-active .price-current .price-amount {
+  font-size: 1.8rem;
+  color: var(--brand-purple);
+}
+
+.dogmom-price-active .price-current .price-unit {
+  font-size: 0.9rem;
+}
+
+.dogmom-price-active .price-original {
+  color: #b7b7b7;
+  font-size: 1rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.dogmom-price-active .price-original .price-unit {
+  color: inherit;
+  font-size: 0.9rem;
+}
+
+.dogmom-price-active .price-original .price-amount {
+  color: inherit;
+  text-decoration: line-through;
+  font-size: 1rem;
 }
 
 /* Mobile responsive adjustments */

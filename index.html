@@ -62,7 +62,7 @@
           <div class="clicker">
             <div class="service-header">
               <div class="product-name"><i class="fa-solid fa-house-chimney" style="color: #663399; font-size: 1.5rem;"></i> House Sitting</div>
-              <div class="service-price">$50<span class="price-unit">/night</span></div>
+              <div class="service-price" data-price-base="50" data-price-unit="/night" data-price-precision="0">$50<span class="price-unit">/night</span></div>
             </div>
             <div class="book-today-container">
               <div class="book-action-group">
@@ -101,7 +101,7 @@
           <div class="clicker">
             <div class="service-header">
               <div class="product-name"><img src="https://img.icons8.com/?size=100&id=21613&format=png&color=663399" alt="Drop In Visits & Dog Walking" style="width: 1.75rem; height: 1.75rem; vertical-align: middle; margin-right: 0.4rem;"> Drop In Visits & Dog Walking</div>
-              <div class="service-price">$30<span class="price-unit">/visit</span></div>
+              <div class="service-price" data-price-base="30" data-price-unit="/visit" data-price-precision="0">$30<span class="price-unit">/visit</span></div>
             </div>
             <div class="book-today-container">
               <div class="book-action-group">
@@ -155,5 +155,83 @@
 
     </div>
 
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const hasDogMomBadge = () => {
+          try {
+            return (sessionStorage.getItem('loyaltyBadge') || '').toLowerCase() === 'dogmom';
+          } catch (err) {
+            return false;
+          }
+        };
+
+        const formatPrice = (amount, decimals) => {
+          const precision = Number.isInteger(decimals) ? Math.max(0, Math.min(4, decimals)) : (Number.isInteger(amount) ? 0 : 2);
+          return `$${amount.toFixed(precision)}`;
+        };
+
+        const buildLine = (className, amount, unitText, decimals) => {
+          const line = document.createElement('span');
+          line.className = className;
+
+          const amountSpan = document.createElement('span');
+          amountSpan.className = 'price-amount';
+          amountSpan.textContent = formatPrice(amount, decimals);
+          line.appendChild(amountSpan);
+
+          if (unitText) {
+            const unitSpan = document.createElement('span');
+            unitSpan.className = 'price-unit';
+            unitSpan.textContent = unitText;
+            line.appendChild(unitSpan);
+          }
+
+          return line;
+        };
+
+        const upgradePrices = () => {
+          if (!hasDogMomBadge()) return;
+          const defaultDiscount = 5;
+          document.querySelectorAll('[data-price-base]').forEach((node) => {
+            if (node.dataset.dogmomApplied === 'true') return;
+            const baseAttr = node.getAttribute('data-price-base');
+            const basePrice = typeof baseAttr === 'string' ? parseFloat(baseAttr) : NaN;
+            if (!Number.isFinite(basePrice)) return;
+
+            const precisionAttr = parseInt(node.getAttribute('data-price-precision') || '', 10);
+            const precision = Number.isInteger(precisionAttr)
+              ? Math.max(0, precisionAttr)
+              : (Number.isInteger(basePrice) ? 0 : 2);
+
+            const unitText = node.getAttribute('data-price-unit') || '';
+            const discountAttr = parseFloat(node.getAttribute('data-price-discount'));
+            const discountValue = Number.isFinite(discountAttr) ? discountAttr : defaultDiscount;
+            const discountedPrice = Math.max(0, basePrice - discountValue);
+
+            node.classList.add('dogmom-price-active');
+            node.dataset.dogmomApplied = 'true';
+            node.innerHTML = '';
+            node.appendChild(buildLine('price-current', discountedPrice, unitText, precision));
+            node.appendChild(buildLine('price-original', basePrice, unitText, precision));
+          });
+        };
+
+        const runPricing = () => {
+          try {
+            if (typeof window.applyDogMomPricing === 'function') {
+              window.applyDogMomPricing();
+            } else {
+              upgradePrices();
+            }
+          } catch (err) {
+            console.warn('dogMom pricing fell back to inline handler', err);
+            upgradePrices();
+          }
+        };
+
+        runPricing();
+        window.addEventListener('dogmom-badge-change', runPricing);
+      });
+    </script>
   </body>
 </html>

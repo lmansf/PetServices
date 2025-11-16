@@ -24,6 +24,22 @@ const NAV_HTML = `<nav class="topnav account-nav">
   </div>
 </nav>`;
 
+const DOGMOM_DISCOUNT = 5;
+let dogMomPricingWatcherId = null;
+let lastDogMomBadgeState = null;
+
+function dispatchDogMomBadgeChange() {
+  try {
+    window.dispatchEvent(new Event('dogmom-badge-change'));
+  } catch (err) {
+    // no-op if window unavailable
+  }
+}
+
+function initializeMobileNav() {
+  // Legacy mobile navigation hook; kept as no-op until new menu is reintroduced.
+}
+
 function isUserSignedIn() {
   return Boolean(sessionStorage.getItem('userEmail'));
 }
@@ -31,6 +47,84 @@ function isUserSignedIn() {
 function hasLoyaltyBadge() {
   const badge = sessionStorage.getItem('loyaltyBadge');
   return typeof badge === 'string' && badge.toLowerCase() === 'dogmom';
+}
+
+function formatPriceForDisplay(amount, decimals = 0) {
+  const precision = Number.isInteger(decimals) ? Math.max(0, decimals) : (Number.isInteger(amount) ? 0 : 2);
+  return `$${amount.toFixed(Math.min(4, precision))}`;
+}
+
+function createPriceLine(className, amount, unitText, decimals) {
+  const line = document.createElement('span');
+  line.className = className;
+
+  const amountSpan = document.createElement('span');
+  amountSpan.className = 'price-amount';
+  amountSpan.textContent = formatPriceForDisplay(amount, decimals);
+  line.appendChild(amountSpan);
+
+  if (unitText) {
+    const unitSpan = document.createElement('span');
+    unitSpan.className = 'price-unit';
+    unitSpan.textContent = unitText;
+    line.appendChild(unitSpan);
+  }
+
+  return line;
+}
+
+function applyDogMomPricing() {
+  if (!hasLoyaltyBadge()) return;
+
+  try {
+    document.querySelectorAll('[data-price-base]').forEach((node) => {
+      if (node.dataset.dogmomApplied === 'true') return;
+
+      const baseAttr = node.getAttribute('data-price-base');
+      const basePrice = typeof baseAttr === 'string' ? parseFloat(baseAttr) : NaN;
+      if (!Number.isFinite(basePrice)) return;
+
+      const precisionAttr = parseInt(node.getAttribute('data-price-precision') || '', 10);
+      const precision = Number.isInteger(precisionAttr)
+        ? Math.max(0, precisionAttr)
+        : (Number.isInteger(basePrice) ? 0 : 2);
+
+      const unitText = node.getAttribute('data-price-unit') || '';
+      const discountAttr = parseFloat(node.getAttribute('data-price-discount'));
+      const discountValue = Number.isFinite(discountAttr) ? discountAttr : DOGMOM_DISCOUNT;
+      const discountedPrice = Math.max(0, basePrice - discountValue);
+
+      node.classList.add('dogmom-price-active');
+      node.dataset.dogmomApplied = 'true';
+      node.innerHTML = '';
+      node.appendChild(createPriceLine('price-current', discountedPrice, unitText, precision));
+      node.appendChild(createPriceLine('price-original', basePrice, unitText, precision));
+    });
+  } catch (err) {
+    console.warn('dogMom pricing adjustment failed', err);
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.applyDogMomPricing = applyDogMomPricing;
+}
+
+function startDogMomPricingWatcher() {
+  if (dogMomPricingWatcherId) return;
+
+  const refreshPricing = () => {
+    const isDogMom = hasLoyaltyBadge();
+    const hasUnstyledPrice = document.querySelector('[data-price-base]:not([data-dogmom-applied="true"])');
+    if (isDogMom && (hasUnstyledPrice || lastDogMomBadgeState === false)) {
+      applyDogMomPricing();
+    }
+    lastDogMomBadgeState = isDogMom;
+  };
+
+  window.addEventListener('focus', refreshPricing, { passive: true });
+  window.addEventListener('dogmom-badge-change', refreshPricing);
+  dogMomPricingWatcherId = window.setInterval(refreshPricing, 2000);
+  refreshPricing();
 }
 
 function updateAccountLabel(accountLabel, userEmail) {
@@ -102,6 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeAccountNav();
         initializeMobileNav();
         applyAuthVisibility();
+        applyDogMomPricing();
       })
       .catch(error => {
         // Fallback to inline template
@@ -111,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
           initializeDropdowns();
           initializeAccountNav();
           applyAuthVisibility();
+          applyDogMomPricing();
         } catch (fallbackError) {
           // If even the fallback fails, redirect to error page
           window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical: Navigation failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
@@ -136,6 +232,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   applyAuthVisibility();
+  applyDogMomPricing();
+  startDogMomPricingWatcher();
 });
 
 // Account/email dropdown toggle
@@ -164,6 +262,7 @@ function initializeAccountNav() {
         e.preventDefault();
         sessionStorage.removeItem('userEmail');
         sessionStorage.removeItem('loyaltyBadge');
+        dispatchDogMomBadgeChange();
         window.location.href = 'signin.html';
       });
     } else {

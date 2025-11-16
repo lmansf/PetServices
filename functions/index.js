@@ -110,99 +110,31 @@ exports.submitForm = functions.https.onCall(async (data, context) => {
       }
     }
 
-    // Validate discount code if provided (only if non-empty after trimming)
-    let discountCodeValid = false;
-    const trimmedDiscountCode = data.discountCode ? data.discountCode.trim() : '';
-    
-    if (trimmedDiscountCode !== '') {
-      console.log('Checking discount code:', trimmedDiscountCode);
-      
-      // First, let's see what's at the root level to understand the folder structure
-      const listRootResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          path: '',
-          recursive: false
-        })
-      });
-      
-      if (listRootResponse.ok) {
-        const rootContents = await listRootResponse.json();
-        console.log('Root folder contents:', JSON.stringify(rootContents.entries.map(e => ({ name: e.name, tag: e['.tag'], path: e.path_lower }))));
-        
-        // Look for Discounts folder in root
-        const discountsFolder = rootContents.entries.find(e => 
-          e['.tag'] === 'folder' && e.name.toLowerCase() === 'discounts'
-        );
-        
-        if (discountsFolder) {
-          console.log('Found Discounts folder at:', discountsFolder.path_lower);
-          
-          // Now list contents of Discounts folder
-          const listDiscountsResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              path: discountsFolder.path_lower,
-              recursive: false
-            })
-          });
-          
-          if (listDiscountsResponse.ok) {
-            const folderContents = await listDiscountsResponse.json();
-            console.log('Discounts folder contents:', JSON.stringify(folderContents.entries.map(e => ({ name: e.name, tag: e['.tag'] }))));
-            
-            // Check if discount code matches any folder name (case-insensitive)
-            const matchingFolder = folderContents.entries.find(entry => 
-              entry['.tag'] === 'folder' && 
-              entry.name.toLowerCase() === trimmedDiscountCode.toLowerCase()
-            );
-            
-            if (matchingFolder) {
-              discountCodeValid = true;
-              console.log('Valid discount code found:', matchingFolder.name);
-            } else {
-              console.log('No matching folder found for discount code:', trimmedDiscountCode);
-            }
-          }
-        } else {
-          console.log('Discounts folder not found in root');
-        }
-      } else {
-        const errorData = await listRootResponse.text();
-        console.log('List root folder error:', errorData);
-      }
-      
-      // If discount code was provided but is invalid, throw error
-      if (!discountCodeValid) {
-        throw new functions.https.HttpsError(
-          'invalid-argument',
-          'Invalid discount code provided'
-        );
-      }
-    }
-
     // Add server timestamp and discount info
     const formData = {
       ...data,
       submittedAt: admin.firestore.Timestamp.now().toDate().toISOString(),
       serverProcessedAt: new Date().toISOString()
     };
-    
-    // Add discount code validation result to form data
-    if (discountCodeValid && trimmedDiscountCode !== '') {
-      formData[trimmedDiscountCode] = true;
+
+    const rawDiscountCode = data.discountCode || '';
+    const discountValidation = await validateDiscountCode(accessToken, rawDiscountCode);
+    const userProvidedCode = rawDiscountCode.trim();
+
+    if (userProvidedCode !== '' && !discountValidation.isValid) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Invalid discount code provided'
+      );
     }
-    
-    // Remove the discountCode field from final submission (we're using the named field instead)
-    delete formData.discountCode;
+
+    if (discountValidation.isValid) {
+      const canonicalName = discountValidation.canonicalName;
+      formData[canonicalName] = true;
+      formData.discountCode = canonicalName.toUpperCase();
+    } else {
+      delete formData.discountCode;
+    }
 
     // Create filename with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -330,6 +262,79 @@ async function throwDropboxAccessIssue(response, contextLabel) {
       context: contextLabel
     }
   );
+}
+
+async function validateDiscountCode(accessToken, code) {
+  const trimmedCode = (code || '').trim();
+  if (trimmedCode === '') {
+    return { isValid: false, canonicalName: '' };
+  }
+
+  console.log('Checking discount code:', trimmedCode);
+
+  const listRootResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      path: '',
+      recursive: false
+    })
+  });
+
+  if (listRootResponse.ok) {
+    const rootContents = await listRootResponse.json();
+    console.log('Root folder contents:', JSON.stringify(rootContents.entries.map(e => ({ name: e.name, tag: e['.tag'], path: e.path_lower }))));
+
+    const discountsFolder = rootContents.entries.find(e =>
+      e['.tag'] === 'folder' && e.name.toLowerCase() === 'discounts'
+    );
+
+    if (discountsFolder) {
+      console.log('Found Discounts folder at:', discountsFolder.path_lower);
+
+      const listDiscountsResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          path: discountsFolder.path_lower,
+          recursive: false
+        })
+      });
+
+      if (listDiscountsResponse.ok) {
+        const folderContents = await listDiscountsResponse.json();
+        console.log('Discounts folder contents:', JSON.stringify(folderContents.entries.map(e => ({ name: e.name, tag: e['.tag'] }))));
+
+        const matchingFolder = folderContents.entries.find(entry =>
+          entry['.tag'] === 'folder' &&
+          entry.name.toLowerCase() === trimmedCode.toLowerCase()
+        );
+
+        if (matchingFolder) {
+          console.log('Valid discount code found:', matchingFolder.name);
+          return { isValid: true, canonicalName: matchingFolder.name };
+        }
+
+        console.log('No matching folder found for discount code:', trimmedCode);
+      } else {
+        const errorData = await listDiscountsResponse.text().catch(() => '');
+        console.log('List discounts folder error:', errorData || listDiscountsResponse.statusText);
+      }
+    } else {
+      console.log('Discounts folder not found in root');
+    }
+  } else {
+    const errorData = await listRootResponse.text().catch(() => '');
+    console.log('List root folder error:', errorData || listRootResponse.statusText);
+  }
+
+  return { isValid: false, canonicalName: trimmedCode };
 }
 
 // Sign up endpoint
@@ -722,6 +727,149 @@ exports.updateUserProfile = functions.https.onCall(async (data, context) => {
       throw error;
     }
     
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+exports.applyLoyaltyPasscode = functions.https.onCall(async (data, context) => {
+  try {
+    const { email, passcode } = data || {};
+
+    if (!email || !passcode || !passcode.trim()) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Email and passcode are required'
+      );
+    }
+
+    const accessToken = functions.config().dropbox?.access_token;
+
+    if (!accessToken) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Dropbox access token not configured'
+      );
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const validation = await validateDiscountCode(accessToken, passcode);
+
+    if (!validation.isValid) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Invalid discount code provided'
+      );
+    }
+
+    const canonicalCode = validation.canonicalName;
+    const uppercaseCode = canonicalCode.toUpperCase();
+
+    const listResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: '/form-submissions',
+        recursive: false
+      })
+    });
+
+    if (!listResponse.ok) {
+      if (listResponse.status === 409) {
+        throw new functions.https.HttpsError('not-found', 'No profile data found');
+      }
+      await throwDropboxAccessIssue(listResponse, 'listing profile submissions for loyalty passcode update');
+      const errorText = await listResponse.text().catch(() => '');
+      console.error('Dropbox error while listing submissions for loyalty passcode update:', errorText || listResponse.statusText);
+      throw new functions.https.HttpsError('internal', 'Unable to load profile data for loyalty update');
+    }
+
+    const folderContents = await listResponse.json();
+
+    for (const entry of folderContents.entries) {
+      if (entry['.tag'] === 'file' && entry.name.endsWith('.json')) {
+        const downloadResponse = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Dropbox-API-Arg': JSON.stringify({
+              path: entry.path_lower
+            })
+          }
+        });
+
+        if (!downloadResponse.ok) {
+          if (downloadResponse.status === 409) {
+            continue;
+          }
+          await throwDropboxAccessIssue(downloadResponse, 'downloading profile submission for loyalty passcode update');
+          const errorText = await downloadResponse.text().catch(() => '');
+          console.error(`Dropbox download error for ${entry.name}:`, errorText || downloadResponse.statusText);
+          continue;
+        }
+
+        const fileContent = await downloadResponse.text();
+
+        try {
+          const profileData = JSON.parse(fileContent);
+          const profileEmail = profileData.email ? profileData.email.toLowerCase().trim() : '';
+
+          if (profileEmail === normalizedEmail) {
+            const mergedData = {
+              ...profileData,
+              discountCode: uppercaseCode,
+              lastUpdatedAt: new Date().toISOString()
+            };
+
+            mergedData[canonicalCode] = true;
+            mergedData[uppercaseCode] = true;
+
+            const uploadResponse = await fetch('https://content.dropboxapi.com/2/files/upload', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/octet-stream',
+                'Dropbox-API-Arg': JSON.stringify({
+                  path: entry.path_lower,
+                  mode: 'overwrite'
+                })
+              },
+              body: JSON.stringify(mergedData, null, 2)
+            });
+
+            if (!uploadResponse.ok) {
+              await throwDropboxAccessIssue(uploadResponse, 'saving loyalty passcode update');
+              const errorText = await uploadResponse.text().catch(() => '');
+              console.error('Dropbox upload error:', errorText || uploadResponse.statusText);
+              throw new functions.https.HttpsError('internal', 'Failed to update loyalty passcode');
+            }
+
+            return {
+              success: true,
+              discountCode: uppercaseCode
+            };
+          }
+        } catch (parseError) {
+          console.log('Could not parse file:', entry.name, parseError.message);
+          continue;
+        }
+      }
+    }
+
+    throw new functions.https.HttpsError(
+      'not-found',
+      'No profile data found for this email'
+    );
+
+  } catch (error) {
+    console.error('Error in applyLoyaltyPasscode:', error);
+
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+
     throw new functions.https.HttpsError('internal', error.message);
   }
 });

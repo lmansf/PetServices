@@ -486,9 +486,93 @@
             text-align: center;
         }
 
+        .loyalty-passcode-form {
+            margin-top: 1rem;
+            background: #fdf6dd;
+            border: 2px dashed rgba(255, 215, 0, 0.6);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .loyalty-passcode-form label {
+            font-size: 0.95rem;
+            color: #6a5200;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05rem;
+        }
+
+        .passcode-input-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .passcode-input-row input {
+            flex: 1;
+            padding: 0.85rem 1rem;
+            border: 2px solid #e6ecf5;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .passcode-input-row input:focus {
+            border-color: #663399;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1);
+        }
+
+        .loyalty-passcode-btn {
+            background: #663399;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.85rem 1.25rem;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .loyalty-passcode-btn:hover:not(:disabled) {
+            background: #54297a;
+            transform: translateY(-1px);
+        }
+
+        .loyalty-passcode-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .passcode-helper {
+            margin: 0.75rem 0 0;
+            font-size: 0.9rem;
+            color: #6a5200;
+        }
+
+        .discount-warning {
+            color: #666;
+            font-weight: 500;
+            margin-top: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 0.95rem;
+            border-left: 3px solid #999;
+        }
+
         @media (max-width: 768px) {
             .profile-header h1 {
                 font-size: 2rem;
+            }
+
+            .passcode-input-row {
+                flex-direction: column;
             }
 
             .profile-section {
@@ -575,8 +659,8 @@
                 `;
             }
         });
-
-        let profileData = null; // Store profile data globally for editing
+    let profileData = null; // Store profile data globally for editing
+    const LOYALTY_CODE_KEY = 'dogmom';
 
         function renderProfile(data) {
             profileData = data; // Store for editing
@@ -686,6 +770,21 @@
                             ${loyaltyFooterText}
                         </div>
                     </div>
+                    ${hasLoyaltyCode ? '' : `
+                        <div class="loyalty-passcode-form" id="loyalty-passcode-form">
+                            <label for="loyalty-passcode-input">Add your loyalty passcode</label>
+                            <div class="passcode-input-row">
+                                <input type="text" id="loyalty-passcode-input" placeholder="Enter passcode" maxlength="48" autocomplete="one-time-code">
+                                <button type="button" id="loyalty-passcode-button" class="loyalty-passcode-btn">
+                                    <i class="fas fa-unlock"></i> Unlock perks
+                                </button>
+                            </div>
+                            <div id="loyalty-passcode-warning" class="discount-warning" style="display: none;">
+                                No special code applied. Check that the code you entered is correct.
+                            </div>
+                            <p class="passcode-helper">You'll find this passcode on Amanda's welcome card or referral invite.</p>
+                        </div>
+                    `}
                 </div>
             `;
 
@@ -793,6 +892,7 @@
             }
 
             container.innerHTML = html;
+            setupLoyaltyPasscodeForm(hasLoyaltyCode);
         }
 
         function editSection(section) {
@@ -1071,6 +1171,90 @@
                 const saveBtn = document.querySelector('.save-btn');
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+            }
+        }
+
+        function dispatchLoyaltyBadgeUpdate() {
+            try {
+                window.dispatchEvent(new Event('dogmom-badge-change'));
+            } catch (err) {
+                // Swallow errors when running outside the browser context
+            }
+        }
+
+        function setLocalLoyaltyBadge(code) {
+            if (!code) return;
+            const normalized = code.trim().toLowerCase();
+            if (normalized === LOYALTY_CODE_KEY) {
+                sessionStorage.setItem('loyaltyBadge', 'dogMom');
+                dispatchLoyaltyBadgeUpdate();
+            }
+        }
+
+        function setupLoyaltyPasscodeForm(hasLoyaltyCode) {
+            if (hasLoyaltyCode) return;
+            const input = document.getElementById('loyalty-passcode-input');
+            const button = document.getElementById('loyalty-passcode-button');
+            const warning = document.getElementById('loyalty-passcode-warning');
+
+            if (!input || !button) return;
+
+            if (warning) {
+                warning.style.display = 'none';
+            }
+
+            input.addEventListener('input', () => {
+                if (warning) {
+                    warning.style.display = 'none';
+                }
+            });
+
+            button.addEventListener('click', () => {
+                handleLoyaltyPasscodeSubmit({ input, button, warning });
+            });
+        }
+
+        async function handleLoyaltyPasscodeSubmit({ input, button, warning }) {
+            const passcode = input.value.trim();
+            if (!passcode) {
+                if (warning) {
+                    warning.style.display = 'block';
+                }
+                input.focus();
+                return;
+            }
+
+            const originalButtonLabel = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+
+            try {
+                const applyPasscode = firebase.functions().httpsCallable('applyLoyaltyPasscode');
+                const result = await applyPasscode({ email: profileData.email, passcode });
+                const canonicalCode = (result?.data?.discountCode || passcode).trim();
+                const displayCode = canonicalCode.toUpperCase();
+
+                profileData.discountCode = displayCode;
+                profileData[canonicalCode] = true;
+                profileData[displayCode] = true;
+                setLocalLoyaltyBadge(canonicalCode);
+
+                renderProfile(profileData);
+            } catch (error) {
+                console.error('Error applying loyalty passcode:', error);
+                const message = String(error?.message || '');
+                if (error?.code === 'functions/invalid-argument' && message.toLowerCase().includes('discount')) {
+                    if (warning) {
+                        warning.style.display = 'block';
+                    }
+                    input.value = '';
+                    input.focus();
+                } else {
+                    alert('Unable to apply your passcode right now. Please try again shortly.');
+                }
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalButtonLabel;
             }
         }
 

@@ -3,6 +3,14 @@ let isSignUpMode = false;
 const LOYALTY_CODE = 'dogmom';
 const LOYALTY_BADGE_KEY = 'loyaltyBadge';
 
+function notifyLoyaltyBadgeChange() {
+    try {
+        window.dispatchEvent(new Event('dogmom-badge-change'));
+    } catch (err) {
+        // Safe to ignore if window unavailable
+    }
+}
+
 // Get Firebase Cloud Function URL
 const AUTH_API_URL = 'https://us-central1-amandaspetservices-55506.cloudfunctions.net/auth';
 
@@ -25,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         guestButton.addEventListener('click', () => {
             sessionStorage.removeItem('userEmail');
             sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+            notifyLoyaltyBadgeChange();
             window.location.href = 'index.html';
         });
     }
@@ -98,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const setBadgeFromCode = (code) => {
         if (!code) {
             sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+            notifyLoyaltyBadgeChange();
             return false;
         }
         const normalized = code.trim().toLowerCase();
@@ -107,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             sessionStorage.removeItem(LOYALTY_BADGE_KEY);
         }
+        notifyLoyaltyBadgeChange();
         return hasBadge;
     };
 
@@ -127,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 sessionStorage.removeItem(LOYALTY_BADGE_KEY);
             }
+            notifyLoyaltyBadgeChange();
         } catch (err) {
             console.warn('Unable to sync loyalty badge', err);
         }
