@@ -28,6 +28,27 @@ function isUserSignedIn() {
   return Boolean(sessionStorage.getItem('userEmail'));
 }
 
+function hasLoyaltyBadge() {
+  const badge = sessionStorage.getItem('loyaltyBadge');
+  return typeof badge === 'string' && badge.toLowerCase() === 'dogmom';
+}
+
+function updateAccountLabel(accountLabel, userEmail) {
+  if (!accountLabel) return;
+  const labelText = userEmail || 'Guest';
+  accountLabel.textContent = '';
+
+  if (userEmail && hasLoyaltyBadge()) {
+    const icon = document.createElement('span');
+    icon.className = 'loyalty-badge-icon';
+    icon.textContent = '👑';
+    icon.setAttribute('aria-hidden', 'true');
+    accountLabel.appendChild(icon);
+  }
+
+  accountLabel.appendChild(document.createTextNode(labelText));
+}
+
 function applyAuthVisibility() {
   const signedIn = isUserSignedIn();
   document.querySelectorAll('[data-auth="signed-in"]').forEach((el) => {
@@ -128,10 +149,8 @@ function initializeAccountNav() {
   if (!button || !menu) return;
 
   // Display user email if logged in
-  const userEmail = sessionStorage.getItem('userEmail');
-  if (accountLabel) {
-    accountLabel.textContent = userEmail || 'Guest';
-  }
+    const userEmail = sessionStorage.getItem('userEmail');
+    updateAccountLabel(accountLabel, userEmail);
 
   if (logoutButton) {
     logoutButton.replaceWith(logoutButton.cloneNode(true));
@@ -144,6 +163,7 @@ function initializeAccountNav() {
       updatedLogoutButton.addEventListener('click', (e) => {
         e.preventDefault();
         sessionStorage.removeItem('userEmail');
+        sessionStorage.removeItem('loyaltyBadge');
         window.location.href = 'signin.html';
       });
     } else {

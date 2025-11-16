@@ -421,6 +421,71 @@
             text-align: center;
         }
 
+        .loyalty-section {
+            margin-top: -0.5rem;
+        }
+
+        .loyalty-card {
+            background: linear-gradient(135deg, #FFF7D6 0%, #FFF1B8 100%);
+            border: 2px solid #FFD700;
+            border-radius: 18px;
+            padding: 1.75rem;
+            box-shadow: 0 12px 28px rgba(255, 215, 0, 0.35);
+            color: #6a5200;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .loyalty-card.inactive {
+            border-style: dashed;
+            box-shadow: none;
+            opacity: 0.95;
+        }
+
+        .loyalty-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .loyalty-card-icon {
+            font-size: 2.75rem;
+            line-height: 1;
+        }
+
+        .loyalty-status {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #8a6a00;
+        }
+
+        .loyalty-message {
+            margin: 0.15rem 0 0;
+            font-size: 0.95rem;
+            color: #6a5200;
+        }
+
+        .loyalty-code-display {
+            font-family: 'Coustard', Georgia, serif;
+            font-size: 2rem;
+            letter-spacing: 0.3rem;
+            text-transform: uppercase;
+            color: #5c4300;
+            text-align: center;
+            padding: 0.85rem 1rem;
+            background: rgba(255, 255, 255, 0.65);
+            border-radius: 14px;
+            border: 2px dashed rgba(255, 215, 0, 0.7);
+        }
+
+        .loyalty-card-footer {
+            font-size: 0.95rem;
+            color: #6a5200;
+            text-align: center;
+        }
+
         @media (max-width: 768px) {
             .profile-header h1 {
                 font-size: 2rem;
@@ -458,9 +523,6 @@
             </div>
         </div>
     </main>
-    
-    <script src="scripts/header.js"></script>
-    <script src="/nav.html"></script>
     
     <script>
         // Load user profile data
@@ -500,6 +562,8 @@
                     setTimeout(() => {
                         window.location.href = 'signin.html';
                     }, 2000);
+                } else if (error.code === 'failed-precondition' && (error.details?.code === 'DROPBOX_TOKEN_EXPIRED' || error.details?.code === 'DROPBOX_AUTH_ERROR')) {
+                    errorMsg = 'We are refreshing secure storage right now. Please try again in a minute.';
                 }
                 
                 document.getElementById('profile-content').innerHTML = `
@@ -517,6 +581,17 @@
         function renderProfile(data) {
             profileData = data; // Store for editing
             const container = document.getElementById('profile-content');
+            const trimmedDiscountCode = (data.discountCode || '').trim();
+            const loyaltyBadge = sessionStorage.getItem('loyaltyBadge');
+            const loyaltyCodeDisplay = trimmedDiscountCode ? trimmedDiscountCode.toUpperCase() : (loyaltyBadge === 'dogMom' ? 'DOGMOM' : '');
+            const hasLoyaltyCode = Boolean(loyaltyCodeDisplay);
+            const loyaltyStatusText = hasLoyaltyCode ? 'VIP Loyalty Active' : 'No Loyalty Passcode Yet';
+            const loyaltyMessageText = hasLoyaltyCode
+                ? 'Your crown follows every booking — you are locked in for VIP perks.'
+                : 'Add your passcode to unlock crowns, early access, and preferred scheduling.';
+            const loyaltyFooterText = hasLoyaltyCode
+                ? 'Flash this passcode whenever you reach out so Amanda keeps your VIP rate.'
+                : 'Need a passcode? Ask Amanda on your next visit or drop her a quick note.';
             
             // Build profile HTML
             let html = `
@@ -590,6 +665,26 @@
             }
 
             html += `
+                    </div>
+                </div>
+                <div class="profile-section loyalty-section" id="loyalty-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-crown"></i> Loyalty Passcode</h2>
+                    </div>
+                    <div class="loyalty-card${hasLoyaltyCode ? '' : ' inactive'}">
+                        <div class="loyalty-card-header">
+                            <div class="loyalty-card-icon">👑</div>
+                            <div>
+                                <p class="loyalty-status">${loyaltyStatusText}</p>
+                                <p class="loyalty-message">${loyaltyMessageText}</p>
+                            </div>
+                        </div>
+                        <div class="loyalty-code-display">
+                            ${hasLoyaltyCode ? loyaltyCodeDisplay : 'NO PASSCODE'}
+                        </div>
+                        <div class="loyalty-card-footer">
+                            ${loyaltyFooterText}
+                        </div>
                     </div>
                 </div>
             `;

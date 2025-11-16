@@ -15,8 +15,13 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Initialize Analytics
-const analytics = firebase.analytics();
+// Initialize Analytics if available
+let analytics = null;
+if (typeof firebase.analytics === 'function') {
+  analytics = firebase.analytics();
+} else {
+  console.warn('Firebase Analytics is not available in this context.');
+}
 
 // Initialize Functions
 const functions = firebase.functions();

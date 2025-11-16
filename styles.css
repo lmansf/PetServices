@@ -34,6 +34,17 @@
   justify-content: center;
 }
 
+.account-button .account-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.loyalty-badge-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .account-button:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 2px;

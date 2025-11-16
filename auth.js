@@ -1,5 +1,7 @@
 // Auth.js - Client-side authentication logic
 let isSignUpMode = false;
+const LOYALTY_CODE = 'dogmom';
+const LOYALTY_BADGE_KEY = 'loyaltyBadge';
 
 // Get Firebase Cloud Function URL
 const AUTH_API_URL = 'https://us-central1-amandaspetservices-55506.cloudfunctions.net/auth';
@@ -15,11 +17,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordRequirements = document.getElementById('password-requirements');
     const signupFields = document.querySelectorAll('.signup-fields');
     const guestButton = document.getElementById('guest-button');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+    const confirmWarning = document.getElementById('confirm-warning');
 
     if (guestButton) {
         guestButton.addEventListener('click', () => {
             sessionStorage.removeItem('userEmail');
+            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
             window.location.href = 'index.html';
+        });
+    }
+
+    const syncConfirmWarning = () => {
+        if (!confirmPasswordInput || !confirmWarning) return;
+        if (!isSignUpMode) {
+            confirmWarning.style.display = 'none';
+            return;
+        }
+        const matches = confirmPasswordInput.value === (passwordInput?.value || '');
+        confirmWarning.style.display = matches ? 'none' : 'block';
+    };
+
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', syncConfirmWarning);
+    }
+
+    if (passwordInput && confirmPasswordInput) {
+        passwordInput.addEventListener('input', () => {
+            if (isSignUpMode) syncConfirmWarning();
         });
     }
 
@@ -41,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const field = document.getElementById(id);
                 if (field) field.required = true;
             });
+            if (confirmPasswordInput) confirmPasswordInput.required = true;
         } else {
             authTitle.textContent = 'Sign In';
             submitButton.textContent = 'Sign In';
@@ -54,16 +81,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 const field = document.getElementById(id);
                 if (field) field.required = false;
             });
+            if (confirmPasswordInput) confirmPasswordInput.required = false;
         }
 
         // Clear messages and form
         hideMessages();
         form.reset();
+        if (confirmWarning) confirmWarning.style.display = 'none';
         // Clear pets container
         const petsContainer = document.getElementById('pets-container');
         if (petsContainer) petsContainer.innerHTML = '';
         if (window.petCount) window.petCount = 0;
+        syncConfirmWarning();
     });
+
+    const setBadgeFromCode = (code) => {
+        if (!code) {
+            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+            return false;
+        }
+        const normalized = code.trim().toLowerCase();
+        const hasBadge = normalized === LOYALTY_CODE;
+        if (hasBadge) {
+            sessionStorage.setItem(LOYALTY_BADGE_KEY, 'dogMom');
+        } else {
+            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+        }
+        return hasBadge;
+    };
+
+    const syncBadgeFromProfile = async (email) => {
+        if (!email) {
+            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+            return;
+        }
+        try {
+            const profileFn = firebase.functions().httpsCallable('getUserProfile');
+            const result = await profileFn({ email });
+            const profile = result?.data ?? result;
+            const hasBadge = Object.keys(profile || {}).some(
+                key => key.toLowerCase() === LOYALTY_CODE && profile[key]
+            );
+            if (hasBadge) {
+                sessionStorage.setItem(LOYALTY_BADGE_KEY, 'dogMom');
+            } else {
+                sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+            }
+        } catch (err) {
+            console.warn('Unable to sync loyalty badge', err);
+        }
+    };
 
     // Handle form submission
     form.addEventListener('submit', async (e) => {
@@ -76,6 +143,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isSignUpMode && password.length < 8) {
             showError('Password must be at least 8 characters');
             return;
+        }
+
+        if (isSignUpMode) {
+            const confirmPassword = document.getElementById('confirm-password').value;
+            if (password !== confirmPassword) {
+                showError('Passwords must match');
+                const warning = document.getElementById('confirm-warning');
+                if (warning) warning.style.display = 'block';
+                return;
+            }
         }
 
         // Disable button and show loading state
@@ -100,10 +177,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ email, password })
                 });
 
-                const authData = await authResponse.json();
+                let authData = {};
+                try {
+                    authData = await authResponse.json();
+                } catch (err) {
+                    authData = {};
+                }
 
                 if (!authResponse.ok) {
-                    throw new Error(authData.error || 'Authentication failed');
+                    const requestError = new Error(authData.error || 'Authentication failed');
+                    if (authData.code) {
+                        requestError.code = authData.code;
+                    }
+                    throw requestError;
                 }
 
                 // Then, submit the profile data
@@ -148,6 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Success
                 sessionStorage.setItem('userEmail', authData.email);
+                const loyaltyInput = document.getElementById('discount-code');
+                setBadgeFromCode(loyaltyInput ? loyaltyInput.value : '');
                 
                 // Show success modal
                 document.getElementById('success-modal').style.display = 'flex';
@@ -162,15 +250,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ email, password })
                 });
 
-                const data = await response.json();
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (err) {
+                    data = {};
+                }
 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Authentication failed');
+                    const requestError = new Error(data.error || 'Authentication failed');
+                    if (data.code) {
+                        requestError.code = data.code;
+                    }
+                    throw requestError;
                 }
 
                 // Success
                 showSuccess(data.message);
                 sessionStorage.setItem('userEmail', data.email);
+                await syncBadgeFromProfile(data.email);
 
                 // Redirect after a short delay
                 setTimeout(() => {
@@ -180,9 +278,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Error:', error);
-            
-            // Check for discount code error
-            if (error.code === 'functions/invalid-argument' && error.message && error.message.includes('discount')) {
+
+            const dropboxErrors = ['DROPBOX_TOKEN_EXPIRED', 'DROPBOX_AUTH_ERROR'];
+
+            if (dropboxErrors.includes(error.code)) {
+                showError(error.message || 'Sign-ins are temporarily unavailable while we refresh secure storage. Please try again soon.');
+            } else if (error.code === 'functions/invalid-argument' && error.message && error.message.includes('discount')) {
                 if (discountWarning) {
                     discountWarning.style.display = 'block';
                 }
@@ -235,6 +336,7 @@ function checkAuth() {
 // Sign out function (can be called from other pages)
 function signOut() {
     sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem(LOYALTY_BADGE_KEY);
     window.location.href = 'signin.html';
 }
 
