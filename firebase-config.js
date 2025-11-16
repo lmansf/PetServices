@@ -18,9 +18,13 @@ firebase.initializeApp(firebaseConfig);
 // Initialize Analytics
 const analytics = firebase.analytics();
 
+// Initialize Functions
+const functions = firebase.functions();
+
 // Optional: Log that Firebase is initialized
 console.log("Firebase initialized successfully");
 
 // Export for use in other scripts if needed
 window.firebaseApp = firebase.app();
 window.analytics = analytics;
+window.functions = functions;
