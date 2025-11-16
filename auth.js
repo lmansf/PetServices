@@ -2,6 +2,7 @@
 let isSignUpMode = false;
 const LOYALTY_CODE = 'dogmom';
 const LOYALTY_BADGE_KEY = 'loyaltyBadge';
+const GUEST_MODE_KEY = 'guestExploring';
 
 function notifyLoyaltyBadgeChange() {
     try {
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         guestButton.addEventListener('click', () => {
             sessionStorage.removeItem('userEmail');
             sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+            sessionStorage.setItem(GUEST_MODE_KEY, 'true');
             notifyLoyaltyBadgeChange();
             window.location.href = 'index.html';
         });
@@ -246,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Success
                 sessionStorage.setItem('userEmail', authData.email);
+                sessionStorage.removeItem(GUEST_MODE_KEY);
                 const loyaltyInput = document.getElementById('discount-code');
                 setBadgeFromCode(loyaltyInput ? loyaltyInput.value : '');
                 
@@ -280,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Success
                 showSuccess(data.message);
                 sessionStorage.setItem('userEmail', data.email);
+                sessionStorage.removeItem(GUEST_MODE_KEY);
                 await syncBadgeFromProfile(data.email);
 
                 // Redirect after a short delay
@@ -349,6 +353,7 @@ function checkAuth() {
 function signOut() {
     sessionStorage.removeItem('userEmail');
     sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+    sessionStorage.removeItem(GUEST_MODE_KEY);
     window.location.href = 'signin.html';
 }
 

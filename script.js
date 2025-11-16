@@ -262,6 +262,7 @@ function initializeAccountNav() {
         e.preventDefault();
         sessionStorage.removeItem('userEmail');
         sessionStorage.removeItem('loyaltyBadge');
+        sessionStorage.removeItem('guestExploring');
         dispatchDogMomBadgeChange();
         window.location.href = 'signin.html';
       });
@@ -269,6 +270,7 @@ function initializeAccountNav() {
       updatedLogoutButton.textContent = 'Sign In';
       updatedLogoutButton.addEventListener('click', (e) => {
         e.preventDefault();
+        sessionStorage.removeItem('guestExploring');
         window.location.href = 'signin.html';
       });
     }

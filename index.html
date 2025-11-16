@@ -9,6 +9,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="imgs/icons8-pet-16.png">
+    <script>
+      (function ensureSignInLanding() {
+        const GUEST_FLAG = 'guestExploring';
+        try {
+          const isSignedIn = Boolean(sessionStorage.getItem('userEmail'));
+          const isGuestSession = sessionStorage.getItem(GUEST_FLAG) === 'true';
+          if (isSignedIn || isGuestSession) return;
+          sessionStorage.removeItem(GUEST_FLAG);
+        } catch (err) {
+          console.warn('Falling back to sign-in landing', err);
+        }
+        window.location.replace('signin.html');
+      })();
+    </script>
     
     <!-- Firebase CDN Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
