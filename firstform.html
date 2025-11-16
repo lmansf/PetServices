@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Amandas Pet Services</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Coustard:wght@400;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="imgs/icons8-pet-16.png">
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- Your custom scripts -->
+    <script src="script.js" defer></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+  </head>
+  <body>
+    <div id="header-container"></div>
+    <div id="first-time-form">
+        <h1>Welcome to Amanda's Pet Services!</h1>
+        <p>To get started, fill out the information below. This will help me provide the best care for your pets.</p>
+        
+        <form id="user-info-form">
+            <!-- Required Contact Information -->
+            <section class="form-section">
+                <h2>Contact Information <span class="required-indicator">*Required</span></h2>
+                
+                <div class="form-group">
+                    <label for="first-name">First Name: <span class="required">*</span></label>
+                    <input type="text" id="first-name" name="first-name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="last-name">Last Name: <span class="required">*</span></label>
+                    <input type="text" id="last-name" name="last-name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address: <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number: <span class="required">*</span></label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+            </section>
+
+            <!-- Required Address Information -->
+            <section class="form-section">
+                <h2>Address <span class="required-indicator">*Required</span></h2>
+                
+                <div class="form-group">
+                    <label for="street-address">Street Address: <span class="required">*</span></label>
+                    <input type="text" id="street-address" name="street-address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="apt-suite">Apartment/Suite (Optional):</label>
+                    <input type="text" id="apt-suite" name="apt-suite">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City: <span class="required">*</span></label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="state">State: <span class="required">*</span></label>
+                        <input type="text" id="state" name="state" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="zip">ZIP Code: <span class="required">*</span></label>
+                        <input type="text" id="zip" name="zip" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Optional Pet Information -->
+            <section class="form-section">
+                <h2>Pet Information <span class="optional-indicator">(Optional)</span></h2>
+                <p class="section-description">Add information about your pets below. You can add multiple pets if needed.</p>
+                
+                <div id="pets-container"></div>
+                
+                <button type="button" class="nav-btn add-pet-btn" onclick="addPetSection()">
+                    <i class="fas fa-plus"></i> Add Pet
+                </button>
+            </section>
+
+            <!-- Optional Additional Comments -->
+            <section class="form-section">
+                <h2>Additional Comments <span class="optional-indicator">(Optional)</span></h2>
+                
+                <div class="form-group">
+                    <label for="additional-comments">Is there anything else you'd like me to know?</label>
+                    <textarea id="additional-comments" name="additional-comments" rows="5" placeholder="Share any additional information, special requests, or concerns..."></textarea>
+                </div>
+            </section>
+
+            <button type="submit" class="nav-btn submit-btn">Submit Information</button>
+        </form>
+    </div>
+
+    <script>
+        let petCount = 0;
+
+        function addPetSection() {
+            petCount++;
+            const container = document.getElementById('pets-container');
+            
+            const petSection = document.createElement('div');
+            petSection.className = 'pet-section';
+            petSection.id = `pet-${petCount}`;
+            
+            petSection.innerHTML = `
+                <div class="pet-header">
+                    <h3>Pet #${petCount}</h3>
+                    <button type="button" class="remove-pet-btn" onclick="removePetSection(${petCount})">
+                        <i class="fas fa-times"></i> Remove
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-name-${petCount}">Pet Name:</label>
+                    <input type="text" id="pet-name-${petCount}" name="pet-name-${petCount}">
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-type-${petCount}">Pet Type:</label>
+                    <select id="pet-type-${petCount}" name="pet-type-${petCount}">
+                        <option value="">Select...</option>
+                        <option value="dog">Dog</option>
+                        <option value="cat">Cat</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-breed-${petCount}">Breed:</label>
+                    <input type="text" id="pet-breed-${petCount}" name="pet-breed-${petCount}" placeholder="e.g., Golden Retriever, Mixed Breed">
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-description-${petCount}">Description:</label>
+                    <textarea id="pet-description-${petCount}" name="pet-description-${petCount}" rows="3" placeholder="Age, weight, personality traits, energy level, etc."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-medication-${petCount}">Medication Information:</label>
+                    <textarea id="pet-medication-${petCount}" name="pet-medication-${petCount}" rows="3" placeholder="List any medications, dosages, and administration instructions..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-care-comments-${petCount}">Care Comments:</label>
+                    <textarea id="pet-care-comments-${petCount}" name="pet-care-comments-${petCount}" rows="3" placeholder="Special care instructions, behavioral notes, likes/dislikes, feeding schedule, etc."></textarea>
+                </div>
+            `;
+            
+            container.appendChild(petSection);
+        }
+
+        function removePetSection(petId) {
+            const petSection = document.getElementById(`pet-${petId}`);
+            if (petSection) {
+                petSection.remove();
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('user-info-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Collect form data
+            const formData = {
+                firstName: document.getElementById('first-name').value,
+                lastName: document.getElementById('last-name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: {
+                    street: document.getElementById('street-address').value,
+                    apt: document.getElementById('apt-suite').value,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value,
+                    zip: document.getElementById('zip').value
+                },
+                pets: [],
+                additionalComments: document.getElementById('additional-comments').value
+            };
+
+            // Collect pet information
+            for (let i = 1; i <= petCount; i++) {
+                const petNameInput = document.getElementById(`pet-name-${i}`);
+                if (petNameInput && petNameInput.value) {
+                    formData.pets.push({
+                        name: petNameInput.value,
+                        type: document.getElementById(`pet-type-${i}`).value,
+                        breed: document.getElementById(`pet-breed-${i}`).value,
+                        description: document.getElementById(`pet-description-${i}`).value,
+                        medication: document.getElementById(`pet-medication-${i}`).value,
+                        careComments: document.getElementById(`pet-care-comments-${i}`).value
+                    });
+                }
+            }
+
+            console.log('Form Data:', formData);
+            
+            // Here you would typically send this data to your backend/Firebase
+            alert('Thank you for submitting your information! We will be in touch soon.');
+            
+            // Optionally redirect or reset form
+            // this.reset();
+        });
+    </script>
+
+    <style>
+        #first-time-form {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        #first-time-form > h1 {
+            text-align: center;
+            color: var(--text-gray, #2D3748);
+            margin-bottom: 0.5rem;
+            font-family: 'Coustard', Georgia, serif;
+            font-size: 2.5rem;
+        }
+
+        #first-time-form > p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+
+        .form-section {
+            background: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(102, 51, 153, 0.12);
+        }
+
+        .form-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--brand-purple, #663399);
+            font-size: 1.5rem;
+            font-family: 'Coustard', Georgia, serif;
+        }
+
+        .required-indicator {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            font-weight: normal;
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+
+        .optional-indicator {
+            color: #8A5AA8;
+            font-size: 0.9rem;
+            font-weight: normal;
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+
+        .section-description {
+            color: #666;
+            margin-bottom: 1.5rem;
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-gray, #2D3748);
+            font-weight: 500;
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e6ecf5;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--brand-purple, #663399);
+            box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pet-section {
+            background: var(--light-purple-bg, #F5F2FF);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid #e6ecf5;
+        }
+
+        .pet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .pet-header h3 {
+            margin: 0;
+            color: var(--brand-purple, #663399);
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+
+        .add-pet-btn,
+        .remove-pet-btn {
+            cursor: pointer;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-weight: 600;
+        }
+
+        .add-pet-btn {
+            background: var(--brand-purple, #663399);
+            color: #fff;
+            border: none;
+            border-radius: 2rem;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(102,51,153,0.10);
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+
+        .add-pet-btn:hover {
+            background: #54297a;
+            box-shadow: 0 4px 16px rgba(102,51,153,0.18);
+            transform: translateY(-2px) scale(1.03);
+        }
+
+        .remove-pet-btn {
+            background: transparent;
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .remove-pet-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .submit-btn {
+            background: var(--brand-purple, #663399);
+            color: #fff;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 2rem;
+            padding: 1rem 2rem;
+            margin-top: 1rem;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102,51,153,0.10);
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+
+        .submit-btn:hover {
+            background: #54297a;
+            box-shadow: 0 4px 16px rgba(102,51,153,0.18);
+            transform: translateY(-2px) scale(1.03);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+    </style>
+    </div>
+  </body>
