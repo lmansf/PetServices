@@ -7,7 +7,7 @@
   justify-content: flex-end;
   align-items: center;
   position: absolute;
-  top: 30%;
+  top: 10%;
   right: 1rem;
   z-index: 10002;
   border-radius: 9px;
@@ -597,6 +597,41 @@
 /* Ensure page content is pushed below the fixed navbar on all devices */
 .content {
   padding-top: 64px; /* matches nav height + comfortable spacing; adjust if needed */
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-bottom: 3rem;
+  background-color: #ffffff;
+  /* Add subtle shadow to create depth on desktop */
+  box-shadow: 0 0 40px rgba(102, 51, 153, 0.06);
+  min-height: 100vh;
+}
+
+/* Better spacing for main heading in constrained layout */
+.content > h1 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.content > h3 {
+  padding-left: 0;
+  padding-right: 0;
+  text-align: left;
+}
+
+/* Remove box-shadow on mobile for seamless look */
+@media (max-width: 899px) {
+  .content {
+    box-shadow: none;
+    background-color: transparent;
+  }
+  
+  .content > h3 {
+    padding-left: 20px;
+  }
 }
 
 html{
@@ -964,8 +999,34 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #ffffff;
+  /* Subtle gradient background for desktop side margins */
+  background: linear-gradient(135deg, #f8f9fc 0%, #f0f2f8 100%);
   color: #2D3748;
+  /* Add subtle decorative pattern to background (only visible in margins on desktop) */
+  position: relative;
+}
+
+/* Add decorative paw print pattern to body background on desktop only */
+@media (min-width: 900px) {
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.03;
+    z-index: -1;
+    background-image: 
+      radial-gradient(circle at 20% 20%, rgba(102, 51, 153, 0.4) 2px, transparent 2px),
+      radial-gradient(circle at 22% 18%, rgba(102, 51, 153, 0.3) 1.5px, transparent 1.5px),
+      radial-gradient(circle at 18% 18%, rgba(102, 51, 153, 0.3) 1.5px, transparent 1.5px),
+      radial-gradient(circle at 20% 16%, rgba(102, 51, 153, 0.3) 1.5px, transparent 1.5px),
+      radial-gradient(circle at 22% 16%, rgba(102, 51, 153, 0.3) 1.5px, transparent 1.5px);
+    background-size: 200px 200px;
+    background-position: 0 0, 10px 10px;
+    pointer-events: none;
+  }
 }
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Coustard', Georgia, serif;
@@ -1140,8 +1201,8 @@ h2 {
   /* Content padding - no sidebar offset needed */
   .content {
     padding-top: 1rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
   /* Remove sidebar width constraints */
