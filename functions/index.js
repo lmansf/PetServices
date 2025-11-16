@@ -21,12 +21,99 @@ exports.submitForm = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Add server timestamp
+    // Validate discount code if provided (only if non-empty after trimming)
+    let discountCodeValid = false;
+    const trimmedDiscountCode = data.discountCode ? data.discountCode.trim() : '';
+    
+    if (trimmedDiscountCode !== '') {
+      console.log('Checking discount code:', trimmedDiscountCode);
+      
+      // First, let's see what's at the root level to understand the folder structure
+      const listRootResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          path: '',
+          recursive: false
+        })
+      });
+      
+      if (listRootResponse.ok) {
+        const rootContents = await listRootResponse.json();
+        console.log('Root folder contents:', JSON.stringify(rootContents.entries.map(e => ({ name: e.name, tag: e['.tag'], path: e.path_lower }))));
+        
+        // Look for Discounts folder in root
+        const discountsFolder = rootContents.entries.find(e => 
+          e['.tag'] === 'folder' && e.name.toLowerCase() === 'discounts'
+        );
+        
+        if (discountsFolder) {
+          console.log('Found Discounts folder at:', discountsFolder.path_lower);
+          
+          // Now list contents of Discounts folder
+          const listDiscountsResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              path: discountsFolder.path_lower,
+              recursive: false
+            })
+          });
+          
+          if (listDiscountsResponse.ok) {
+            const folderContents = await listDiscountsResponse.json();
+            console.log('Discounts folder contents:', JSON.stringify(folderContents.entries.map(e => ({ name: e.name, tag: e['.tag'] }))));
+            
+            // Check if discount code matches any folder name (case-insensitive)
+            const matchingFolder = folderContents.entries.find(entry => 
+              entry['.tag'] === 'folder' && 
+              entry.name.toLowerCase() === trimmedDiscountCode.toLowerCase()
+            );
+            
+            if (matchingFolder) {
+              discountCodeValid = true;
+              console.log('Valid discount code found:', matchingFolder.name);
+            } else {
+              console.log('No matching folder found for discount code:', trimmedDiscountCode);
+            }
+          }
+        } else {
+          console.log('Discounts folder not found in root');
+        }
+      } else {
+        const errorData = await listRootResponse.text();
+        console.log('List root folder error:', errorData);
+      }
+      
+      // If discount code was provided but is invalid, throw error
+      if (!discountCodeValid) {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'Invalid discount code provided'
+        );
+      }
+    }
+
+    // Add server timestamp and discount info
     const formData = {
       ...data,
       submittedAt: admin.firestore.Timestamp.now().toDate().toISOString(),
       serverProcessedAt: new Date().toISOString()
     };
+    
+    // Add discount code validation result to form data
+    if (discountCodeValid && trimmedDiscountCode !== '') {
+      formData[trimmedDiscountCode] = true;
+    }
+    
+    // Remove the discountCode field from final submission (we're using the named field instead)
+    delete formData.discountCode;
 
     // Create filename with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');

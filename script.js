@@ -15,6 +15,7 @@ const NAV_HTML = `<nav class="topnav account-nav">
     <div class="account-menu" role="menu">
       <a href="index.html" role="menuitem">Services</a>
       <a href="profile.html" role="menuitem">Profile</a>
+      <a href="firstform.html" role="menuitem">First Form</a>
       <a href="About.html" role="menuitem">About Me</a>
       <a href="feedback.html" role="menuitem">Feedback</a>
       <hr>
@@ -760,7 +761,9 @@ detailTriggers.forEach(trigger => {
 // card slide out for first appointments
 document.addEventListener('DOMContentLoaded', function() {
     const card = document.getElementById('myCard');
-    card.classList.add('slide-in');
+    if (card) {
+        card.classList.add('slide-in');
+    }
 });
 
 // callout removed — no positioning needed

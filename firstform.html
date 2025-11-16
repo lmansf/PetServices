@@ -30,6 +30,20 @@
         <p>To get started, fill out the information below. This will help me provide the best care for your pets.</p>
         
         <form id="user-info-form">
+            <!-- Discount Code Section -->
+            <section class="form-section discount-section">
+                <h2>Discount Code <span class="optional-indicator">(Optional)</span></h2>
+                <p class="section-description">Have a promotional code? Enter it here to receive your discount.</p>
+                
+                <div class="form-group">
+                    <label for="discount-code">Discount Code:</label>
+                    <input type="text" id="discount-code" name="discount-code" placeholder="Enter your discount code">
+                    <div id="discount-warning" class="discount-warning" style="display: none;">
+                        No discount applied. Check that the code you entered is correct.
+                    </div>
+                </div>
+            </section>
+
             <!-- Required Contact Information -->
             <section class="form-section">
                 <h2>Contact Information <span class="required-indicator">*Required</span></h2>
@@ -217,7 +231,8 @@
                     zip: document.getElementById('zip').value
                 },
                 pets: [],
-                additionalComments: document.getElementById('additional-comments').value
+                additionalComments: document.getElementById('additional-comments').value,
+                discountCode: document.getElementById('discount-code').value.trim()
             };
 
             // Collect pet information
@@ -247,8 +262,29 @@
                 this.reset();
                 document.getElementById('pets-container').innerHTML = '';
                 petCount = 0;
+                
+                // Hide discount warning on successful submission
+                const discountWarning = document.getElementById('discount-warning');
+                if (discountWarning) {
+                    discountWarning.style.display = 'none';
+                }
             } catch (error) {
                 let errorMessage = 'There was an error submitting your form. Please try again or contact us directly.';
+                
+                // Check if it's a discount code validation error
+                if (error.code === 'functions/invalid-argument' && error.message && error.message.includes('discount')) {
+                    // Show discount warning
+                    const discountWarning = document.getElementById('discount-warning');
+                    if (discountWarning) {
+                        discountWarning.style.display = 'block';
+                    }
+                    document.getElementById('discount-code').value = '';
+                    document.getElementById('discount-code').focus();
+                    
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                    return; // Don't show generic error
+                }
                 
                 // Provide more specific error messages
                 if (error.code === 'failed-precondition') {
@@ -466,6 +502,23 @@
         textarea {
             resize: vertical;
             min-height: 80px;
+        }
+
+        .discount-section {
+            background: linear-gradient(135deg, #F5F2FF 0%, #FFF9E6 100%);
+            border: 2px solid #FFD700;
+        }
+
+        .discount-warning {
+            color: #666;
+            font-weight: 500;
+            margin-top: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 0.95rem;
+            border-left: 3px solid #999;
         }
     </style>
     </div>
