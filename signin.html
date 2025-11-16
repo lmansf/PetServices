@@ -100,6 +100,29 @@
             transform: none;
         }
 
+        .guest-entry {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            color: #4A4A4A;
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+
+        .guest-button {
+            background: transparent;
+            color: var(--brand-purple, #663399);
+            border: 2px solid var(--brand-purple, #663399);
+            box-shadow: none;
+        }
+
+        .guest-button:hover {
+            background: rgba(102, 51, 153, 0.08);
+            color: #54297a;
+            transform: translateY(-1px);
+        }
+
         .error-message {
             padding: 12px;
             background: #ffebee;
@@ -357,6 +380,11 @@
 
     <div class="auth-container">
         <h1 id="auth-title">Sign In</h1>
+
+        <div class="guest-entry">
+            <span>Just browsing?</span>
+            <button type="button" id="guest-button" class="auth-button guest-button">Explore as a guest</button>
+        </div>
         
         <div id="error-message" class="error-message"></div>
         <div id="success-message" class="success-message"></div>

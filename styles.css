@@ -56,13 +56,13 @@
 .account-menu a,
 .account-menu .logout-button {
   display: block;
-  width: 100%;
-  text-align: left;
+  width: calc(100% - 0.8rem);
+  text-align: center;
   padding: 0.52rem 1.35rem;
   border: none;
   background: transparent;
   font-size: 1.09rem;
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   cursor: pointer;
   font-family: 'Montserrat', sans-serif;
@@ -72,6 +72,21 @@
 .account-menu .logout-button:hover {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
+}
+
+.account-menu a.nav-services-link {
+  font-weight: 700;
+  color: #2D3748;
+  background: linear-gradient(90deg, #FFD700 0%, #FFE98A 100%);
+  border: 2px solid rgba(255, 215, 0, 0.9);
+  box-shadow: 0 6px 18px rgba(255, 215, 0, 0.35);
+}
+
+.account-menu a.nav-services-link:hover,
+.account-menu a.nav-services-link:focus {
+  color: #2D3748;
+  background: linear-gradient(90deg, #FFE98A 0%, #FFD700 100%);
+  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.45);
 }
 
 .account-menu hr {
@@ -124,6 +139,17 @@
   flex-direction: row;
 }
 
+.book-action-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.book-action {
+  display: flex;
+  text-decoration: none;
+}
+
 /* Ensure buttons inside the container don't expand to full width
    and keep a compact size (padding controls visual width). */
 .book-today-container .nav-btn {
@@ -143,6 +169,22 @@
 .nav-btn.details:hover, .nav-btn.details:focus {
   background: var(--light-purple-bg);
   color: var(--brand-purple);
+}
+
+.alt-book-cta {
+  background: white;
+  color: var(--brand-purple);
+  border: 2px solid var(--brand-purple);
+  box-shadow: none;
+}
+
+.alt-book-cta:hover {
+  background: var(--light-purple-bg);
+  color: #54297a;
+}
+
+.auth-hidden {
+  display: none !important;
 }
 /* Gold box link for first visit */
 .gold-box-link {

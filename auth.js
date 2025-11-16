@@ -14,6 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const successMessage = document.getElementById('success-message');
     const passwordRequirements = document.getElementById('password-requirements');
     const signupFields = document.querySelectorAll('.signup-fields');
+    const guestButton = document.getElementById('guest-button');
+
+    if (guestButton) {
+        guestButton.addEventListener('click', () => {
+            sessionStorage.removeItem('userEmail');
+            window.location.href = 'index.html';
+        });
+    }
 
     // Toggle between sign in and sign up
     toggleLink.addEventListener('click', (e) => {

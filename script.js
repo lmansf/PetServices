@@ -7,22 +7,36 @@ const HEADER_HTML = `<div class="hero-banner" style="width:100%;max-width:100vw;
 const NAV_HTML = `<nav class="topnav account-nav">
   <div class="account-dropdown">
     <button class="account-button" type="button" aria-haspopup="true" aria-expanded="false">
-      <span class="account-label">Account</span>
+      <span class="account-label">Guest</span>
       <span class="account-caret">
         <i class="fa fa-caret-down" aria-hidden="true"></i>
       </span>
     </button>
     <div class="account-menu" role="menu">
-      <a href="index.html" role="menuitem">Services</a>
-      <a href="profile.html" role="menuitem">Profile</a>
-      <a href="firstform.html" role="menuitem">First Form</a>
       <a href="About.html" role="menuitem">About Me</a>
-      <a href="feedback.html" role="menuitem">Feedback</a>
+      <a href="index.html" role="menuitem" class="nav-services-link">Services</a>
+      <a href="profile.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Profile</a>
+      <a href="firstform.html" role="menuitem" class="auth-hidden" data-auth="signed-in">First Form</a>
+      <a href="feedback.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Feedback</a>
       <hr>
       <button type="button" class="logout-button" role="menuitem">Log out</button>
     </div>
   </div>
 </nav>`;
+
+function isUserSignedIn() {
+  return Boolean(sessionStorage.getItem('userEmail'));
+}
+
+function applyAuthVisibility() {
+  const signedIn = isUserSignedIn();
+  document.querySelectorAll('[data-auth="signed-in"]').forEach((el) => {
+    el.classList.toggle('auth-hidden', !signedIn);
+  });
+  document.querySelectorAll('[data-auth="signed-out"]').forEach((el) => {
+    el.classList.toggle('auth-hidden', signedIn);
+  });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
   // Try to load from external files first (works with http:// and https://)
@@ -66,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeDropdowns();
         initializeAccountNav();
         initializeMobileNav();
+        applyAuthVisibility();
       })
       .catch(error => {
         // Fallback to inline template
@@ -74,6 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
           navContainer.innerHTML = NAV_HTML;
           initializeDropdowns();
           initializeAccountNav();
+          applyAuthVisibility();
         } catch (fallbackError) {
           // If even the fallback fails, redirect to error page
           window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical: Navigation failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
@@ -97,6 +113,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Failed to load reviews:', error);
       });
   }
+
+  applyAuthVisibility();
 });
 
 // Account/email dropdown toggle
@@ -111,17 +129,30 @@ function initializeAccountNav() {
 
   // Display user email if logged in
   const userEmail = sessionStorage.getItem('userEmail');
-  if (userEmail && accountLabel) {
-    accountLabel.textContent = userEmail;
+  if (accountLabel) {
+    accountLabel.textContent = userEmail || 'Guest';
   }
 
-  // Hook up logout button
   if (logoutButton) {
-    logoutButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      sessionStorage.removeItem('userEmail');
-      window.location.href = 'signin.html';
-    });
+    logoutButton.replaceWith(logoutButton.cloneNode(true));
+  }
+
+  const updatedLogoutButton = dropdown.querySelector('.logout-button');
+  if (updatedLogoutButton) {
+    if (userEmail) {
+      updatedLogoutButton.textContent = 'Log out';
+      updatedLogoutButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        sessionStorage.removeItem('userEmail');
+        window.location.href = 'signin.html';
+      });
+    } else {
+      updatedLogoutButton.textContent = 'Sign In';
+      updatedLogoutButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'signin.html';
+      });
+    }
   }
 
   function setOpen(isOpen) {

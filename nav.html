@@ -3,18 +3,18 @@
   <div class="account-dropdown">
     <button class="account-button" type="button" aria-haspopup="true" aria-expanded="false">
       <!-- Placeholder label; will be replaced with user email -->
-      <span class="account-label">Account</span>
+      <span class="account-label">Guest</span>
       <span class="account-caret">
         <i class="fa fa-caret-down" aria-hidden="true"></i>
       </span>
     </button>
 
     <div class="account-menu" role="menu">
-      <a href="index.html" role="menuitem">Services</a>
-      <a href="profile.html" role="menuitem">Profile</a>
-      <a href="firstform.html" role="menuitem">First Form</a>
       <a href="About.html" role="menuitem">About Me</a>
-      <a href="feedback.html" role="menuitem">Feedback</a>
+      <a href="index.html" role="menuitem" class="nav-services-link">Services</a>
+      <a href="profile.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Profile</a>
+      <a href="firstform.html" role="menuitem" class="auth-hidden" data-auth="signed-in">First Form</a>
+      <a href="feedback.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Feedback</a>
       <hr>
       <button type="button" class="logout-button" role="menuitem">Log out</button>
     </div>
