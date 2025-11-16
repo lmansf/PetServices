@@ -1,12 +1,21 @@
-<div class="topnav">
-  <a href="About.html">About Me</a>
-  <a href="feedback.html">Feedback</a>
-  <div class="dropdown">
-    <button id="home-button" class="dropbtn" aria-haspopup="true" aria-controls="home-menu" aria-expanded="false">All Services ▾</button>
-    <div id="home-menu" class="dropdown-content" role="menu" aria-labelledby="home-button">
-      <a href="houseSitting.html" role="menuitem" tabindex="-1">House Sitting</a>
-      <a href="dropIns.html" role="menuitem" tabindex="-1">Drop-In Visits</a>
-      <a href="walking.html" role="menuitem" tabindex="-1">Dog Walking</a>
+<nav class="topnav account-nav">
+  <!-- Account / email dropdown trigger -->
+  <div class="account-dropdown">
+    <button class="account-button" type="button" aria-haspopup="true" aria-expanded="false">
+      <!-- Placeholder label; will be replaced with user email -->
+      <span class="account-label">Account</span>
+      <span class="account-caret">
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+      </span>
+    </button>
+
+    <div class="account-menu" role="menu">
+      <a href="index.html" role="menuitem">Services</a>
+      <a href="profile.html" role="menuitem">Profile</a>
+      <a href="About.html" role="menuitem">About Me</a>
+      <a href="feedback.html" role="menuitem">Feedback</a>
+      <hr>
+      <button type="button" class="logout-button" role="menuitem">Log out</button>
     </div>
   </div>
-</div>
+</nav>

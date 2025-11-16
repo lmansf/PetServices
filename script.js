@@ -4,18 +4,24 @@ const HEADER_HTML = `<div class="hero-banner" style="width:100%;max-width:100vw;
   <img src="Amanda's Pet Services HERO.svg" alt="Dog walking hero" style="width:100%;display:block;">
 </div>`;
 
-const NAV_HTML = `<div class="topnav">
-  <a href="index.html">Home</a>
-  <a href="About.html">About Me</a>
-  <div class="dropdown">
-    <button id="home-button" class="dropbtn" aria-haspopup="true" aria-controls="home-menu" aria-expanded="false">All Services ▾</button>
-    <div id="home-menu" class="dropdown-content" role="menu" aria-labelledby="home-button">
-      <a href="houseSitting.html" role="menuitem" tabindex="-1">House Sitting</a>
-      <a href="dropIns.html" role="menuitem" tabindex="-1">Drop-In Visits</a>
-      <a href="walking.html" role="menuitem" tabindex="-1">Dog Walking</a>
+const NAV_HTML = `<nav class="topnav account-nav">
+  <div class="account-dropdown">
+    <button class="account-button" type="button" aria-haspopup="true" aria-expanded="false">
+      <span class="account-label">Account</span>
+      <span class="account-caret">
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+      </span>
+    </button>
+    <div class="account-menu" role="menu">
+      <a href="index.html" role="menuitem">Services</a>
+      <a href="profile.html" role="menuitem">Profile</a>
+      <a href="About.html" role="menuitem">About Me</a>
+      <a href="feedback.html" role="menuitem">Feedback</a>
+      <hr>
+      <button type="button" class="logout-button" role="menuitem">Log out</button>
     </div>
   </div>
-</div>`;
+</nav>`;
 
 document.addEventListener('DOMContentLoaded', function() {
   // Try to load from external files first (works with http:// and https://)
@@ -56,16 +62,17 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .then(html => {
         navContainer.innerHTML = html;
-        // Re-initialize dropdown functionality after nav is loaded
         initializeDropdowns();
+        initializeAccountNav();
+        initializeMobileNav();
       })
       .catch(error => {
         // Fallback to inline template
         console.log('Using inline nav template');
         try {
           navContainer.innerHTML = NAV_HTML;
-          // Re-initialize dropdown functionality after nav is loaded
           initializeDropdowns();
+          initializeAccountNav();
         } catch (fallbackError) {
           // If even the fallback fails, redirect to error page
           window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical: Navigation failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
@@ -90,6 +97,32 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 });
+
+// Account/email dropdown toggle
+function initializeAccountNav() {
+  const dropdown = document.querySelector('.account-dropdown');
+  if (!dropdown) return;
+  const button = dropdown.querySelector('.account-button');
+  const menu = dropdown.querySelector('.account-menu');
+  if (!button || !menu) return;
+
+  function setOpen(isOpen) {
+    dropdown.classList.toggle('open', isOpen);
+    button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  }
+
+  button.addEventListener('click', () => {
+    const isOpen = !dropdown.classList.contains('open');
+    setOpen(isOpen);
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (evt) => {
+    if (!dropdown.contains(evt.target)) {
+      setOpen(false);
+    }
+  });
+}
 
 // Pet Carousel Logic for About.html
 document.addEventListener('DOMContentLoaded', function() {

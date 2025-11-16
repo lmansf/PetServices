@@ -1,4 +1,85 @@
 
+/* Account/email dropdown nav */
+.account-nav {
+  background-color: #f8f6fc;
+  padding: 0.4rem 1rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: absolute;
+  top: 0.4rem;
+  right: 1rem;
+  z-index: 20;
+  border-radius: 8px;
+}
+
+.account-dropdown {
+  position: relative;
+}
+
+.account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: white;
+  border-radius: 999px;
+  border: none;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.account-button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.account-menu {
+  position: absolute;
+  right: 0;
+  margin-top: 0.4rem;
+  background: #663399;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  min-width: 180px;
+  padding: 0.35rem 0;
+  display: none;
+  z-index: 1000;
+}
+
+.account-menu a,
+.account-menu .logout-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.45rem 1rem;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.account-menu a:hover,
+.account-menu .logout-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.account-menu hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  margin: 0.2rem 0.5rem 0.25rem;
+}
+
+.account-dropdown.open .account-menu {
+  display: block;
+}
+
 .product-name {
   font-size: 3rem;
   font-weight: bold;
