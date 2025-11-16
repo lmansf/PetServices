@@ -1,7 +1,7 @@
 
 /* Account/email dropdown nav - positioned in bottom right of hero banner */
 .topnav.account-nav {
-  background-color: #663399;
+  background-color: #7e57a8f5;
   padding: 0.46rem 1.15rem;
   display: flex;
   justify-content: flex-end;
@@ -26,10 +26,12 @@
   color: white;
   border-radius: 999px;
   border: none;
-  padding: 0.4rem 1.04rem;
+  padding: 0.4rem 1.35rem;
   font-size: 1.09rem;
   cursor: pointer;
   font-weight: 500;
+  min-width: 180px;
+  justify-content: center;
 }
 
 .account-button:focus-visible {
@@ -39,12 +41,13 @@
 
 .account-menu {
   position: absolute;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   margin-top: 0.46rem;
   background: #663399;
   border-radius: 13.8px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-  min-width: 207px;
+  width: 100%;
   padding: 0.4rem 0;
   display: none;
   z-index: 10003;
@@ -55,7 +58,7 @@
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.52rem 1.15rem;
+  padding: 0.52rem 1.35rem;
   border: none;
   background: transparent;
   font-size: 1.09rem;
