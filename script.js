@@ -24,6 +24,97 @@ const NAV_HTML = `<nav class="topnav account-nav">
   </div>
 </nav>`;
 
+const FRAGMENT_CACHE_KEY = 'aps-fragment-cache-v1';
+let fragmentCacheStore = (() => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(FRAGMENT_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (err) {
+    console.warn('fragment cache unavailable', err);
+    return {};
+  }
+})();
+
+function persistFragmentCache() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(FRAGMENT_CACHE_KEY, JSON.stringify(fragmentCacheStore));
+  } catch (err) {
+    console.warn('fragment cache persist failed', err);
+  }
+}
+
+function getCachedFragment(path) {
+  try {
+    return fragmentCacheStore?.[path]?.html || '';
+  } catch (err) {
+    return '';
+  }
+}
+
+function setCachedFragment(path, html) {
+  if (!html) return;
+  fragmentCacheStore[path] = { html, ts: Date.now() };
+  const keys = Object.keys(fragmentCacheStore);
+  if (keys.length > 8) {
+    keys
+      .sort((a, b) => (fragmentCacheStore[b].ts || 0) - (fragmentCacheStore[a].ts || 0))
+      .slice(8)
+      .forEach(key => delete fragmentCacheStore[key]);
+  }
+  persistFragmentCache();
+}
+
+function hydrateFragment(options) {
+  const {
+    url,
+    container,
+    fallbackHtml = '',
+    afterRender,
+    fatalOnFail = false
+  } = options || {};
+
+  if (!container || !url) return;
+
+  const applyHtml = (html) => {
+    if (typeof html !== 'string' || !html) return false;
+    container.innerHTML = html;
+    if (typeof afterRender === 'function') {
+      try { afterRender(); } catch (err) { console.warn('fragment afterRender failed', err); }
+    }
+    return true;
+  };
+
+  const cached = getCachedFragment(url);
+  if (cached) {
+    applyHtml(cached);
+  } else if (fallbackHtml) {
+    applyHtml(fallbackHtml);
+  }
+
+  fetch(url, { cache: 'no-cache' })
+    .then(response => {
+      if (!response.ok) throw new Error(`Failed to load ${url}`);
+      return response.text();
+    })
+    .then(html => {
+      setCachedFragment(url, html);
+      applyHtml(html);
+    })
+    .catch(err => {
+      console.warn('fragment fetch failed', url, err);
+      if (!cached && fallbackHtml) {
+        const success = applyHtml(fallbackHtml);
+        if (!success && fatalOnFail) {
+          window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical fragment failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
+        }
+      } else if (fatalOnFail && !container.innerHTML) {
+        window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical fragment failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
+      }
+    });
+}
+
 const DOGMOM_DISCOUNT = 5;
 let dogMomPricingWatcherId = null;
 let lastDogMomBadgeState = null;
@@ -162,73 +253,38 @@ document.addEventListener('DOMContentLoaded', function() {
   const reviewsContainer = document.getElementById('reviews-container');
   
   if (headerContainer) {
-    // Try fetch first
-    fetch('header.html')
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to load header');
-        return response.text();
-      })
-      .then(html => {
-        headerContainer.innerHTML = html;
-      })
-      .catch(error => {
-        // Fallback to inline template
-        console.log('Using inline header template');
-        try {
-          headerContainer.innerHTML = HEADER_HTML;
-        } catch (fallbackError) {
-          // If even the fallback fails, redirect to error page
-          window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical: Header failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
-        }
-      });
+    hydrateFragment({
+      url: 'header.html',
+      container: headerContainer,
+      fallbackHtml: HEADER_HTML,
+      fatalOnFail: true
+    });
   }
   
   if (navContainer) {
-    // Try fetch first
-    fetch('nav.html')
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to load nav');
-        return response.text();
-      })
-      .then(html => {
-        navContainer.innerHTML = html;
-        initializeDropdowns();
-        initializeAccountNav();
-        initializeMobileNav();
-        applyAuthVisibility();
-        applyDogMomPricing();
-      })
-      .catch(error => {
-        // Fallback to inline template
-        console.log('Using inline nav template');
-        try {
-          navContainer.innerHTML = NAV_HTML;
-          initializeDropdowns();
-          initializeAccountNav();
-          applyAuthVisibility();
-          applyDogMomPricing();
-        } catch (fallbackError) {
-          // If even the fallback fails, redirect to error page
-          window.location.href = `error.html?code=500&msg=${encodeURIComponent('Critical: Navigation failed to load')}&from=${encodeURIComponent(window.location.pathname)}`;
-        }
-      });
+    const afterNavRender = () => {
+      initializeDropdowns();
+      initializeAccountNav();
+      initializeMobileNav();
+      applyAuthVisibility();
+      applyDogMomPricing();
+    };
+
+    hydrateFragment({
+      url: 'nav.html',
+      container: navContainer,
+      fallbackHtml: NAV_HTML,
+      afterRender: afterNavRender,
+      fatalOnFail: true
+    });
   }
   
   if (reviewsContainer) {
-    // Load reviews HTML and initialize the carousel for footer
-    fetch('reviews.html')
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to load reviews');
-        return response.text();
-      })
-      .then(html => {
-        reviewsContainer.innerHTML = html;
-        // Initialize the review carousel after the HTML is loaded
-        initReviewCarousel();
-      })
-      .catch(error => {
-        console.log('Failed to load reviews:', error);
-      });
+    hydrateFragment({
+      url: 'reviews.html',
+      container: reviewsContainer,
+      afterRender: () => initReviewCarousel()
+    });
   }
 
   applyAuthVisibility();
@@ -791,118 +847,7 @@ detailTriggers.forEach(trigger => {
     }
   });
 });
-// card slide out for first appointments
-document.addEventListener('DOMContentLoaded', function() {
-    const card = document.getElementById('myCard');
-    if (card) {
-        card.classList.add('slide-in');
-    }
-});
-
-// callout removed — no positioning needed
-
 // Enhanced dropdown behavior: click/touch + hover on desktop + keyboard navigation and ARIA
-
-// Set a cookie with a given name and value
-function setCookie(name, value, days = 7) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/`;
-}
-
-// Delete a cookie by name
-function deleteCookie(name) {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-}
-
-// Add event listeners to navigation buttons on index.html
-document.addEventListener('DOMContentLoaded', function() {
-  const navBtns = document.querySelectorAll('.nav-btn[data-page][data-href]');
-  navBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-      // Always remove any previous nextpage cookie before setting a new one
-      deleteCookie('nextpage');
-      // Optionally, also remove any legacy cookies if they exist
-      deleteCookie('dropins');
-      deleteCookie('walking');
-      deleteCookie('housesitting');
-      const page = btn.getAttribute('data-page');
-      const href = btn.getAttribute('data-href');
-      setCookie('nextpage', page);
-      try {
-        window.location.href = href;
-      } catch (error) {
-        window.location.href = `error.html?code=500&msg=${encodeURIComponent('Navigation failed')}&from=${encodeURIComponent(window.location.pathname)}`;
-      }
-    });
-  });
-});
-
-// Attach cookie-setting to visible "Book Today" buttons on listing pages (index)
-// These buttons are often inside anchors and lack data-page attributes, so
-// infer the service from the surrounding .service-section/.product-name text.
-document.addEventListener('DOMContentLoaded', function() {
-  try {
-    function inferServiceKey(el) {
-      const section = el.closest('.service-section') || el.closest('.box') || el.closest('.content');
-      const nameEl = section ? section.querySelector('.product-name') : document.querySelector('.product-name');
-      const txt = nameEl ? nameEl.textContent.toLowerCase() : '';
-      if (!txt) return null;
-      if (txt.includes('house')) return 'housesitting';
-      if (txt.includes('drop')) return 'dropins';
-      if (txt.includes('dog') || txt.includes('walk')) return 'walking';
-      // Skip introductions/free-intro buttons
-      if (txt.includes('introduc') || txt.includes('intro')) return null;
-      return null;
-    }
-
-    // Select book-today buttons whether nested inside anchors or standalone
-    const bookButtons = Array.from(document.querySelectorAll('a .nav-btn.book-today, .nav-btn.book-today'));
-    bookButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        try {
-          const key = inferServiceKey(btn);
-          if (key) setCookie('nextpage', key);
-        } catch (err) {
-          // don't block navigation on errors
-          console.warn('set nextpage cookie failed', err);
-        }
-      });
-    });
-  } catch (err) {
-    console.warn('book-today cookie wiring failed', err);
-  }
-});
-
-// Add cookie-setting for Calendly/book interactions on service pages.
-document.addEventListener('DOMContentLoaded', function() {
-  try {
-    const path = (window.location.pathname || '').split('/').pop().toLowerCase();
-    const pageMap = {
-      'housesitting.html': 'housesitting',
-      'dropins.html': 'dropins',
-      'walking.html': 'walking'
-    };
-    const pageKey = pageMap[path];
-    if (!pageKey) return;
-
-    // When any direct link to calendly is clicked, set the nextpage cookie.
-    document.querySelectorAll('a[href*="calendly.com"]').forEach(a => {
-      a.addEventListener('click', () => {
-        try { setCookie('nextpage', pageKey); } catch (e) { /* ignore */ }
-      });
-    });
-
-    // For inline widgets, listen for a user interaction inside the widget container
-    // (click or mousedown) and set the cookie so the booking flow can read it.
-    document.querySelectorAll('.calendly-inline-widget').forEach(el => {
-      const handler = () => { try { setCookie('nextpage', pageKey); } catch (e) {} };
-      el.addEventListener('click', handler);
-      el.addEventListener('touchstart', handler, { passive: true });
-    });
-  } catch (err) {
-    console.warn('cookie wiring for calendly links failed', err);
-  }
-});
 function initializeDropdowns() {
   const dropdowns = document.querySelectorAll('.dropdown');
 
