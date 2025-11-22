@@ -613,6 +613,8 @@
                 } catch (err) {
                     console.warn('Unable to persist guest mode', err);
                 }
+                const guestNextPath = `${window.location.pathname || 'profile.html'}${window.location.search || ''}`;
+                const signInUrl = `signin.html?next=${encodeURIComponent(guestNextPath)}`;
                 document.getElementById('profile-content').innerHTML = `
                     <div class="profile-header">
                         <h1>Guest Mode</h1>
@@ -623,7 +625,10 @@
                     </div>
                     <div class="profile-section">
                         <p>We are rebuilding secure sign-in with Google so you can manage your profile directly. For now, feel free to browse the site as a guest and contact Amanda to update your details or book services.</p>
-                        <p style="margin-top:1rem;"><a href="index.html" class="nav-btn book-today" style="text-decoration:none;">Return to Services</a></p>
+                        <div class="guest-actions" style="margin-top:1rem;display:flex;flex-direction:column;gap:0.75rem;max-width:320px;">
+                            <a href="${signInUrl}" class="nav-btn book-today" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">Sign in to manage your profile</a>
+                            <a href="index.html" class="nav-btn book-today" style="text-decoration:none;background:#fff;color:#663399;border:2px solid #663399;">Return to Services</a>
+                        </div>
                     </div>
                 `;
                 return;

@@ -19,19 +19,39 @@ const NAV_HTML = `<nav class="topnav account-nav">
       <a href="firstform.html" role="menuitem" class="auth-hidden" data-auth="signed-in">First Form</a>
       <a href="feedback.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Feedback</a>
       <hr>
-      <button type="button" class="logout-button nav-highlightable" role="menuitem">Guest Mode</button>
+      <button type="button" class="logout-button nav-highlightable" role="menuitem">Sign In</button>
     </div>
   </div>
 </nav>`;
 
-(function ensureGuestMode() {
+(function enforceSignInGate() {
   if (typeof window === 'undefined') return;
   try {
-    if (!sessionStorage.getItem('userEmail')) {
-      sessionStorage.setItem('guestExploring', 'true');
+    const path = (window.location.pathname || '').toLowerCase();
+    const bypassPaths = ['/signin.html', '/signin', '/error.html'];
+    if (bypassPaths.some(suffix => path.endsWith(suffix))) {
+      return;
     }
+
+    const signedIn = Boolean(sessionStorage.getItem('userEmail'));
+    const guestMode = sessionStorage.getItem('guestExploring') === 'true';
+    if (signedIn || guestMode) {
+      return;
+    }
+
+    const redirectBase = (() => {
+      try {
+        return new URL('signin.html', window.location.origin).toString();
+      } catch (err) {
+        return 'signin.html';
+      }
+    })();
+
+    const nextDest = encodeURIComponent(window.location.pathname + window.location.search);
+    const separator = redirectBase.includes('?') ? '&' : '?';
+    window.location.replace(`${redirectBase}${separator}next=${nextDest}`);
   } catch (err) {
-    console.warn('guest mode unavailable', err);
+    console.warn('sign-in enforcement failed', err);
   }
 })();
 
@@ -361,16 +381,20 @@ function initializeAccountNav() {
         sessionStorage.removeItem('loyaltyBadge');
         sessionStorage.removeItem('guestExploring');
         dispatchDogMomBadgeChange();
-        sessionStorage.setItem('guestExploring', 'true');
         window.location.href = 'index.html';
       });
     } else {
-      updatedLogoutButton.textContent = 'Guest Mode Active';
-      updatedLogoutButton.disabled = true;
-      updatedLogoutButton.setAttribute('aria-disabled', 'true');
-      updatedLogoutButton.classList.remove(highlightClass);
+      updatedLogoutButton.textContent = 'Sign in';
+      updatedLogoutButton.disabled = false;
+      updatedLogoutButton.removeAttribute('aria-disabled');
+      updatedLogoutButton.classList.add(highlightClass);
       updatedLogoutButton.addEventListener('click', (e) => {
         e.preventDefault();
+        const currentPath = (typeof window !== 'undefined')
+          ? `${window.location.pathname || '/'}${window.location.search || ''}`
+          : 'index.html';
+        const signInTarget = `signin.html?next=${encodeURIComponent(currentPath)}`;
+        window.location.href = signInTarget;
       });
     }
   }

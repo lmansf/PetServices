@@ -3,474 +3,573 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - Pet Services</title>
+    <title>Sign In • Amanda's Pet Services</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Coustard:wght@400;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Coustard:wght@400;900&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    
+
     <!-- Firebase CDN Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
-    
+
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
-    
+
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
-    
+
     <style>
-        body {
-            background: linear-gradient(135deg, #F5F2FF 0%, #FFF9E6 100%);
-            font-family: 'Montserrat', Arial, sans-serif;
-            min-height: 100vh;
-            padding: 20px;
+        :root {
+            --brand-purple: #663399;
+            --brand-purple-dark: #4d2571;
+            --brand-cream: #FFF7EC;
+            --border-soft: #E6E1F5;
+            --text-base: #2F2A38;
+            --text-muted: #5F5A6B;
         }
 
-        .auth-container {
-            max-width: 900px;
-            margin: 50px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(102, 51, 153, 0.12);
-        }
-
-        .auth-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group label {
-            font-weight: 600;
-            color: #333;
-            font-family: 'Montserrat', Arial, sans-serif;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            padding: 12px;
-            border: 2px solid #e6ecf5;
-            border-radius: 8px;
-            font-size: 16px;
-            font-family: 'Montserrat', sans-serif;
+        * {
             box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--brand-purple, #663399);
-            box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1);
-        }
-
-        .auth-button {
-            padding: 12px;
-            background: var(--brand-purple, #663399);
-            color: white;
-            border: none;
-            border-radius: 2rem;
-            font-size: 16px;
-            font-weight: 600;
+        body {
+            margin: 0;
+            min-height: 100vh;
             font-family: 'Montserrat', Arial, sans-serif;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.1s;
-            box-shadow: 0 2px 8px rgba(102,51,153,0.10);
+            background: radial-gradient(circle at top, #FFF7EC 0%, #F5F2FF 35%, #EBF0FF 100%);
+            color: var(--text-base);
+            padding: clamp(1.5rem, 3vw, 3rem);
         }
 
-        .auth-button:hover {
-            background: #54297a;
-            box-shadow: 0 4px 16px rgba(102,51,153,0.18);
-            transform: translateY(-2px) scale(1.03);
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(circle at 10% 20%, rgba(102, 51, 153, 0.12), transparent 45%),
+                              radial-gradient(circle at 90% 10%, rgba(255, 203, 119, 0.15), transparent 40%);
+            z-index: -1;
         }
 
-        .auth-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
+        .auth-shell {
+            width: min(1200px, 100%);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(280px, 420px) minmax(320px, 520px);
+            gap: clamp(1.5rem, 3vw, 3rem);
+            align-items: stretch;
         }
 
-        .guest-entry {
+        .brand-panel {
+            background: linear-gradient(165deg, #2F1B4A, #462675);
+            border-radius: 28px;
+            padding: clamp(1.5rem, 3vw, 2.75rem);
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(35, 18, 53, 0.35);
+        }
+
+        .brand-panel::after {
+            content: '';
+            position: absolute;
+            inset: 15% -30% -20% 30%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.35) 0%, transparent 60%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .brand-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 1rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.15);
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .brand-panel h1 {
+            font-family: 'Coustard', Georgia, serif;
+            font-size: clamp(2.2rem, 4vw, 3rem);
+            margin: 1rem 0 0.75rem;
+        }
+
+        .brand-panel p {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .brand-highlights {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .brand-highlights li {
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 0.6rem;
+            font-weight: 600;
+        }
+
+        .brand-highlights i {
+            color: #FEC868;
+        }
+
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.13);
+            border-radius: 18px;
+            padding: 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(18, 6, 32, 0.25);
+        }
+
+        .testimonial-card strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-panel {
+            background: #fff;
+            border-radius: 28px;
+            padding: clamp(1.75rem, 3vw, 2.75rem);
+            box-shadow: 0 30px 60px rgba(18, 14, 32, 0.08);
+            border: 1px solid rgba(102, 51, 153, 0.08);
+        }
+
+        .form-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .eyebrow-text {
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        #auth-title {
+            font-family: 'Coustard', Georgia, serif;
+            font-size: clamp(1.9rem, 3vw, 2.35rem);
+            margin: 0.4rem 0;
+            color: var(--text-base);
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .alert-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .inline-alert {
+            display: none;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        #error-message.inline-alert {
+            background: #FFE6E6;
+            color: #9F1C1C;
+            border: 1px solid rgba(159, 28, 28, 0.25);
+        }
+
+        #success-message.inline-alert {
+            background: #E7F8EE;
+            color: #18723D;
+            border: 1px solid rgba(24, 114, 61, 0.2);
+        }
+
+        .provider-stack {
+            display: flex;
+            flex-direction: column;
             gap: 0.75rem;
-            margin-bottom: 1rem;
-            color: #4A4A4A;
-            font-family: 'Montserrat', Arial, sans-serif;
-        }
-
-        .guest-button {
-            background: transparent;
-            color: var(--brand-purple, #663399);
-            border: 2px solid var(--brand-purple, #663399);
-            box-shadow: none;
-
-            .credential-row {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                gap: 1rem;
-                align-items: flex-start;
-            }
-
-            .field-hint {
-                font-size: 0.85rem;
-                color: #4A5568;
-                margin-top: 0.35rem;
-            }
-
-            #confirm-password-group {
-                width: 100%;
-            }
-            color: #54297a;
-            transform: translateY(-1px);
-        }
-
-        .provider-options {
-            margin: 1.5rem 0 2.5rem;
-            padding: 1.5rem;
-            border-radius: 14px;
-            background: linear-gradient(135deg, rgba(102, 51, 153, 0.05), rgba(255, 249, 230, 0.8));
-            border: 2px dashed rgba(102, 51, 153, 0.15);
-        }
-
-        .provider-heading {
-            font-weight: 700;
-            color: #2D3748;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .provider-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .provider-button {
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.9rem 1.25rem;
             border-radius: 999px;
+            border: 1px solid #E6E1F5;
+            background: #fff;
             font-weight: 600;
-            border: 2px solid transparent;
-            padding: 0.85rem 1.25rem;
             cursor: pointer;
             transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            background: #fff;
-            color: #1F2933;
+            color: var(--text-base);
         }
 
-        .provider-button.is-busy,
-        .provider-button[aria-busy="true"] {
-            opacity: 0.7;
-            cursor: progress;
-            transform: none;
-            box-shadow: none;
-        }
-
+        .provider-button svg,
         .provider-button i {
             font-size: 1rem;
         }
 
         .provider-button:hover {
             transform: translateY(-1px);
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.15);
-            border-color: rgba(31, 41, 55, 0.15);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+            border-color: rgba(102, 51, 153, 0.25);
         }
 
-        .provider-button.provider-google {
-            border-color: rgba(234, 67, 53, 0.25);
+        .provider-button.is-busy,
+        .provider-button[aria-busy="true"] {
+            opacity: 0.7;
+            cursor: progress;
+            box-shadow: none;
+            transform: none;
         }
 
-        .provider-button.provider-twitter {
-            border-color: rgba(29, 155, 240, 0.25);
-        }
-
-        .provider-button.provider-facebook {
-            border-color: rgba(24, 119, 242, 0.25);
-        }
-
-        .provider-note {
-            font-size: 0.9rem;
-            color: #4A5568;
-            text-align: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .anonymous-note {
+        .divider {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E6E1F5;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--text-base);
+        }
+
+        input,
+        select,
+        textarea {
+            font: inherit;
+            border-radius: 14px;
+            border: 1px solid #DCD7EE;
+            padding: 0.85rem 1rem;
+            background: #FBFAFF;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--brand-purple);
+            box-shadow: 0 0 0 4px rgba(102, 51, 153, 0.12);
+            background: #fff;
+        }
+
+        textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .password-requirements {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .auth-button {
+            border: none;
+            border-radius: 18px;
+            background: var(--brand-purple);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 0.95rem 1rem;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 15px 30px rgba(102, 51, 153, 0.2);
+        }
+
+        .auth-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 35px rgba(102, 51, 153, 0.25);
+            background: var(--brand-purple-dark);
+        }
+
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .ghost-button {
+            border-radius: 18px;
+            border: 1px solid rgba(102, 51, 153, 0.25);
+            background: transparent;
+            color: var(--brand-purple);
+            font-weight: 600;
+            padding: 0.85rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .ghost-button:hover {
+            background: rgba(102, 51, 153, 0.08);
+        }
+
+        .guest-entry {
+            background: rgba(102, 51, 153, 0.05);
+            border: 1px solid rgba(102, 51, 153, 0.12);
+            border-radius: 18px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .guest-entry p {
+            margin: 0.15rem 0 0;
+            color: var(--text-muted);
             font-size: 0.9rem;
-            color: #4A5568;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 999px;
-            padding: 0.5rem 1rem;
-            width: fit-content;
-            margin: 0 auto;
-            border: 1px solid rgba(100, 116, 139, 0.2);
-        }
-
-        .error-message {
-            padding: 12px;
-            background: #ffebee;
-            color: #c62828;
-            border-radius: 5px;
-            display: none;
-        }
-
-        .success-message {
-            padding: 12px;
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-radius: 5px;
-            display: none;
         }
 
         .toggle-auth {
+            margin-top: 1.5rem;
             text-align: center;
-            margin-top: 20px;
-            color: #666;
+            color: var(--text-muted);
         }
 
         .toggle-auth a {
-            color: var(--brand-purple, #663399);
-            text-decoration: none;
+            color: var(--brand-purple);
             font-weight: 600;
+            text-decoration: none;
         }
 
         .toggle-auth a:hover {
             text-decoration: underline;
         }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            font-family: 'Coustard', Georgia, serif;
-            margin-bottom: 30px;
-        }
-
-        .password-requirements {
-            font-size: 12px;
-            color: #666;
-            display: none;
-        }
-
         .required {
-            color: #e74c3c;
+            color: #E45865;
         }
 
-        /* Sign-up additional fields */
         .signup-fields {
             display: none;
         }
 
-        .form-section {
-            background: var(--light-purple-bg, #F5F2FF);
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            border-radius: 12px;
-            border: 2px solid #e6ecf5;
-        }
-
-        .form-section h2 {
-            margin-top: 0;
-            margin-bottom: 1rem;
-            color: var(--brand-purple, #663399);
-            font-size: 1.3rem;
-            font-family: 'Coustard', Georgia, serif;
-        }
-
-        .optional-indicator {
-            color: #8A5AA8;
-            font-size: 0.9rem;
-            font-weight: normal;
-        }
-
-        .section-description {
-            color: #666;
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
+        .signup-box {
+            border: 1px solid #E6E1F5;
+            border-radius: 22px;
+            padding: 1.25rem;
+            background: #FCFBFF;
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
         }
 
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+        .signup-box h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .input-grid.two {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .input-grid.three {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .pet-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .pet-section {
-            background: white;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-radius: 12px;
-            border: 2px solid #e6ecf5;
+            border: 1px solid #E6E1F5;
+            border-radius: 18px;
+            padding: 1rem;
+            background: #fff;
         }
 
         .pet-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .pet-header h3 {
             margin: 0;
-            color: var(--brand-purple, #663399);
-            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 1rem;
+            color: var(--brand-purple);
         }
 
         .add-pet-btn {
-            cursor: pointer;
-            font-family: 'Montserrat', Arial, sans-serif;
+            align-self: flex-start;
+            margin-top: 0.5rem;
+            border: 1px dashed rgba(102, 51, 153, 0.4);
+            border-radius: 16px;
+            background: rgba(102, 51, 153, 0.05);
+            color: var(--brand-purple);
             font-weight: 600;
-            background: var(--brand-purple, #663399);
-            color: #fff;
-            border: none;
-            border-radius: 2rem;
-            padding: 0.75rem 2rem;
-            font-size: 1rem;
-            margin-top: 1rem;
-            box-shadow: 0 2px 8px rgba(102,51,153,0.10);
-            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            padding: 0.65rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
         }
 
         .add-pet-btn:hover {
-            background: #54297a;
-            box-shadow: 0 4px 16px rgba(102,51,153,0.18);
-            transform: translateY(-2px) scale(1.03);
+            background: rgba(102, 51, 153, 0.12);
         }
 
         .remove-pet-btn {
+            border-radius: 999px;
+            border: 1px solid rgba(228, 88, 101, 0.4);
             background: transparent;
-            border: 2px solid #e74c3c;
-            color: #e74c3c;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.9rem;
-            font-family: 'Montserrat', Arial, sans-serif;
+            color: #E45865;
+            padding: 0.4rem 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-        }
-
-        .remove-pet-btn:hover {
-            background: #e74c3c;
-            color: white;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
         }
 
         .discount-warning {
-            color: #666;
-            font-weight: 500;
-            margin-top: 0.5rem;
-            padding: 0.75rem 1rem;
-            background: #f5f5f5;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            border-left: 3px solid #999;
             display: none;
+            font-size: 0.9rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: 12px;
+            background: #FFF5F0;
+            color: #9F4A18;
+            border: 1px solid rgba(159, 74, 24, 0.2);
         }
 
         .special-code-group {
-            background: linear-gradient(135deg, #FFF7D6 0%, #FFF1B8 100%);
-            border: 2px solid #FFD700;
-            border-radius: 12px;
+            border: 1px solid rgba(254, 181, 67, 0.35);
+            background: linear-gradient(135deg, #FFF9EB, #FFF4D5);
+            border-radius: 20px;
             padding: 1rem;
-            box-shadow: 0 6px 16px rgba(255, 215, 0, 0.25);
         }
 
         .loyalty-icon {
-            margin-right: 0.35rem;
+            margin-right: 0.25rem;
+        }
+
+        .field-hint {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        #confirm-warning {
+            margin-top: 0.35rem;
         }
 
         /* Success Modal */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
+            inset: 0;
+            background: rgba(14, 10, 24, 0.7);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 10000;
+            z-index: 1000;
             backdrop-filter: blur(4px);
         }
 
         .modal-content {
-            background: white;
-            border-radius: 20px;
+            background: #fff;
+            border-radius: 24px;
             padding: 3rem 2.5rem;
-            max-width: 500px;
-            width: 90%;
+            max-width: 460px;
+            width: min(90%, 480px);
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 30px 65px rgba(14, 10, 24, 0.3);
         }
 
         .modal-icon {
-            font-size: 5rem;
-            color: #4CAF50;
-            margin-bottom: 1.5rem;
+            font-size: 4rem;
+            color: #26AB5F;
+            margin-bottom: 1rem;
         }
 
         .modal-title {
-            font-family: 'Coustard', serif;
-            font-size: 2rem;
-            font-weight: 900;
-            color: #2D3748;
-            margin: 0 0 1rem 0;
+            font-family: 'Coustard', Georgia, serif;
+            margin: 0.5rem 0;
         }
 
         .modal-message {
-            font-size: 1.1rem;
-            color: #4A5568;
-            line-height: 1.6;
-            margin: 0 0 2rem 0;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
         }
 
         .modal-btn {
-            font-size: 1.1rem;
-            font-weight: 600;
-            background: var(--brand-purple, #663399);
-            color: white;
             border: none;
-            padding: 1rem 3rem;
-            border-radius: 50px;
+            border-radius: 999px;
+            padding: 0.85rem 2.75rem;
+            background: var(--brand-purple);
+            color: #fff;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 14px rgba(102, 51, 153, 0.3);
         }
 
-        .modal-btn:hover {
-            background: #54297a;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 51, 153, 0.4);
+        @media (max-width: 980px) {
+            .auth-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .brand-panel {
+                order: 2;
+            }
+
+            .form-panel {
+                order: 1;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .form-panel,
+            .brand-panel {
+                border-radius: 20px;
+            }
+
+            .guest-entry {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
@@ -487,163 +586,149 @@
         </div>
     </div>
 
-    <div class="auth-container">
-        <h1 id="auth-title">Sign In</h1>
-
-        <div class="guest-entry">
-            <div>
-                <strong>Just browsing?</strong>
-                <p style="margin: 0; color: #4A5568; font-size: 0.95rem;">Guest mode lets you explore services, but you must sign in before filling out or updating your profile.</p>
+    <main class="auth-shell">
+        <section class="brand-panel">
+            <div class="brand-chip">
+                <i class="fa-solid fa-paw"></i>
+                Amanda's Pet Services
             </div>
-            <button type="button" id="guest-button" class="auth-button guest-button">Explore as a guest</button>
-        </div>
+            <h1>Happy walks, easier bookings.</h1>
+            <p>Sign in once to manage visits, share care notes, and get real-time updates from Amanda on every outing.</p>
+            <ul class="brand-highlights">
+                <li><i class="fa-solid fa-shield-dog"></i> Secure portal for every client</li>
+                <li><i class="fa-solid fa-calendar-check"></i> Faster rebooking and schedule tweaks</li>
+            </ul>
+        </section>
 
-        <div class="provider-options" aria-label="Sign in with a social provider">
-            <p class="provider-heading">Skip the password and sign in faster</p>
-            <div class="provider-buttons">
+        <section class="form-panel" aria-label="Sign in form">
+            <div class="form-header">
+                <p class="eyebrow-text">Client portal</p>
+                <h2 id="auth-title">Sign In</h2>
+                <p class="subtitle">Use Google for one-tap access or switch to email if you prefer passwords.</p>
+            </div>
+
+            <div class="guest-entry">
+                <div>
+                    <strong>Just browsing?</strong>
+                    <p>Guest mode lets you peek around, but you'll need an account to save preferences.</p>
+                </div>
+                <button type="button" id="guest-button" class="ghost-button">Explore as guest</button>
+            </div>
+
+            <div class="provider-stack" aria-label="Sign in with Google">
                 <button type="button" class="provider-button provider-google" data-provider-signin="google">
                     <i class="fa-brands fa-google"></i>
                     Continue with Google
                 </button>
-                <button type="button" class="provider-button provider-twitter" data-provider-signin="twitter">
-                    <i class="fa-brands fa-twitter"></i>
-                    Continue with Twitter
-                </button>
-                <button type="button" class="provider-button provider-facebook" data-provider-signin="facebook">
-                    <i class="fa-brands fa-facebook"></i>
-                    Continue with Facebook
-                </button>
-            </div>
-            <p class="provider-note">We will link your social account to your Amanda's Pet Services profile right after sign-in.</p>
-            <div class="anonymous-note">
-                <i class="fa-solid fa-user-ninja" aria-hidden="true"></i>
-                Guest browsing stays read-only until you sign in.
-            </div>
-        </div>
-        
-        <div id="error-message" class="error-message"></div>
-        <div id="success-message" class="success-message"></div>
-        
-        <form id="auth-form" class="auth-form">
-            <div class="signup-fields">
-                <!-- Contact Information -->
-                <div class="form-section">
-                    <h2>Contact Information</h2>
-                    
-                    <div class="form-group">
-                        <label for="first-name">First Name: <span class="required">*</span></label>
-                        <input type="text" id="first-name" name="first-name">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="last-name">Last Name: <span class="required">*</span></label>
-                        <input type="text" id="last-name" name="last-name">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="phone">Phone Number: <span class="required">*</span></label>
-                        <input type="tel" id="phone" name="phone">
-                    </div>
-                </div>
-
-                <!-- Address -->
-                <div class="form-section">
-                    <h2>Address</h2>
-                    
-                    <div class="form-group">
-                        <label for="street-address">Street Address: <span class="required">*</span></label>
-                        <input type="text" id="street-address" name="street-address">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="apt-suite">Apartment/Suite (Optional):</label>
-                        <input type="text" id="apt-suite" name="apt-suite">
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="city">City: <span class="required">*</span></label>
-                            <input type="text" id="city" name="city">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="state">State: <span class="required">*</span></label>
-                            <input type="text" id="state" name="state">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="zip">ZIP Code: <span class="required">*</span></label>
-                            <input type="text" id="zip" name="zip">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pet Information -->
-                <div class="form-section">
-                    <h2>Pet Information <span class="optional-indicator">(Optional)</span></h2>
-                    <p class="section-description">Add information about your pets below. You can add multiple pets if needed.</p>
-                    
-                    <div id="pets-container"></div>
-                    
-                    <button type="button" class="add-pet-btn" onclick="addPetSection()">
-                        <i class="fas fa-plus"></i> Add Pet
-                    </button>
-                </div>
-
-                <!-- Additional Comments -->
-                <div class="form-section">
-                    <h2>Additional Comments <span class="optional-indicator">(Optional)</span></h2>
-                    
-                    <div class="form-group">
-                        <label for="additional-comments">Is there anything else you'd like me to know?</label>
-                        <textarea id="additional-comments" name="additional-comments" rows="5" placeholder="Share any additional information, special requests, or concerns..."></textarea>
-                    </div>
-                </div>
             </div>
 
-            <div class="credential-row">
+            <div class="divider">or use email</div>
+
+            <div class="alert-stack">
+                <div id="error-message" class="inline-alert"></div>
+                <div id="success-message" class="inline-alert"></div>
+            </div>
+
+            <form id="auth-form" class="auth-form">
                 <div class="form-group">
                     <label for="email">Email <span class="required">*</span></label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com">
                 </div>
 
-                <div class="form-group signup-fields special-code-group">
-                    <label for="discount-code"><span class="loyalty-icon">👑</span> Loyalty Passcode <span class="optional-indicator">(Optional)</span></label>
-                    <input type="text" id="discount-code" name="discount-code" placeholder="Enter your loyalty passcode">
-                    <div class="field-hint">Unlock perks with your referral, VIP, or promo passcode.</div>
-                    <div id="discount-warning" class="discount-warning">
-                        No loyalty passcode applied. Double-check and try again.
+                <div class="form-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" required placeholder="••••••••">
+                    <span id="password-requirements" class="password-requirements">Password must be at least 8 characters</span>
+                </div>
+
+                <div class="form-group signup-fields" id="confirm-password-group">
+                    <label for="confirm-password">Confirm password <span class="required">*</span></label>
+                    <input type="password" id="confirm-password" name="confirm-password" placeholder="Repeat your password">
+                    <div id="confirm-warning" class="discount-warning">Passwords must match.</div>
+                </div>
+
+                <div class="signup-fields">
+                    <div class="signup-box">
+                        <div>
+                            <h3>Tell us about your family</h3>
+                            <p class="subtitle" style="font-size:0.9rem;">We only ask for this when creating a new account.</p>
+                        </div>
+
+                        <div class="input-grid two">
+                            <div class="form-group">
+                                <label for="first-name">First name <span class="required">*</span></label>
+                                <input type="text" id="first-name" name="first-name" placeholder="Amanda">
+                            </div>
+                            <div class="form-group">
+                                <label for="last-name">Last name <span class="required">*</span></label>
+                                <input type="text" id="last-name" name="last-name" placeholder="Perez">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Mobile number <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="street-address">Street address <span class="required">*</span></label>
+                            <input type="text" id="street-address" name="street-address" placeholder="1234 Tanner Way">
+                        </div>
+
+                        <div class="input-grid two">
+                            <div class="form-group">
+                                <label for="apt-suite">Apartment/Suite (optional)</label>
+                                <input type="text" id="apt-suite" name="apt-suite" placeholder="Unit B">
+                            </div>
+                            <div class="form-group">
+                                <label for="city">City <span class="required">*</span></label>
+                                <input type="text" id="city" name="city">
+                            </div>
+                        </div>
+
+                        <div class="input-grid three">
+                            <div class="form-group">
+                                <label for="state">State <span class="required">*</span></label>
+                                <input type="text" id="state" name="state" placeholder="WA">
+                            </div>
+                            <div class="form-group">
+                                <label for="zip">ZIP code <span class="required">*</span></label>
+                                <input type="text" id="zip" name="zip" placeholder="98103">
+                            </div>
+                            <div class="form-group special-code-group">
+                                <label for="discount-code"><span class="loyalty-icon">👑</span> Loyalty passcode (optional)</label>
+                                <input type="text" id="discount-code" name="discount-code" placeholder="dogmom">
+                                <div class="field-hint">Unlock referral or VIP perks instantly.</div>
+                                <div id="discount-warning" class="discount-warning">No loyalty passcode applied. Double-check and try again.</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3>Pet notes (optional)</h3>
+                            <p class="subtitle" style="font-size:0.9rem;">Add details now or save them inside your profile later.</p>
+                        </div>
+
+                        <div id="pets-container" class="pet-stack"></div>
+                        <button type="button" class="add-pet-btn" onclick="addPetSection()">
+                            <i class="fas fa-plus"></i> Add a pet
+                        </button>
+
+                        <div class="form-group">
+                            <label for="additional-comments">Anything else?</label>
+                            <textarea id="additional-comments" name="additional-comments" placeholder="Feeding routines, favorite toys, medication notes..."></textarea>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Password -->
-            <div class="form-group">
-                <label for="password">Password <span class="required">*</span></label>
-                <input type="password" id="password" name="password" required>
-                <span id="password-requirements" class="password-requirements">
-                    Password must be at least 8 characters
-                </span>
-            </div>
 
-            <div class="form-group signup-fields" id="confirm-password-group">
-                <label for="confirm-password">Confirm Password <span class="required">*</span></label>
-                <input type="password" id="confirm-password" name="confirm-password">
-                <div id="confirm-warning" class="discount-warning" style="display: none;">
-                    Passwords must match.
-                </div>
+                <button type="submit" class="auth-button" id="submit-button">Sign In</button>
+            </form>
+
+            <div class="toggle-auth">
+                <span id="toggle-text">Don't have an account?</span>
+                <a href="#" id="toggle-link">Sign Up</a>
             </div>
-            
-            <button type="submit" class="auth-button" id="submit-button">
-                Sign In
-            </button>
-        </form>
-        
-        <div class="toggle-auth">
-            <span id="toggle-text">Don't have an account?</span>
-            <a href="#" id="toggle-link">Sign Up</a>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script src="auth.js"></script>
     <script>
@@ -652,11 +737,11 @@
         function addPetSection() {
             window.petCount++;
             const container = document.getElementById('pets-container');
-            
+
             const petSection = document.createElement('div');
             petSection.className = 'pet-section';
             petSection.id = `pet-${window.petCount}`;
-            
+
             petSection.innerHTML = `
                 <div class="pet-header">
                     <h3>Pet #${window.petCount}</h3>
@@ -666,12 +751,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="pet-name-${window.petCount}">Pet Name:</label>
+                    <label for="pet-name-${window.petCount}">Pet name</label>
                     <input type="text" id="pet-name-${window.petCount}" name="pet-name-${window.petCount}">
                 </div>
 
                 <div class="form-group">
-                    <label for="pet-type-${window.petCount}">Pet Type:</label>
+                    <label for="pet-type-${window.petCount}">Pet type</label>
                     <select id="pet-type-${window.petCount}" name="pet-type-${window.petCount}">
                         <option value="">Select...</option>
                         <option value="dog">Dog</option>
@@ -680,26 +765,26 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="pet-breed-${window.petCount}">Breed:</label>
-                    <input type="text" id="pet-breed-${window.petCount}" name="pet-breed-${window.petCount}" placeholder="e.g., Golden Retriever, Mixed Breed">
+                    <label for="pet-breed-${window.petCount}">Breed</label>
+                    <input type="text" id="pet-breed-${window.petCount}" name="pet-breed-${window.petCount}" placeholder="e.g., Golden Retriever">
                 </div>
 
                 <div class="form-group">
-                    <label for="pet-description-${window.petCount}">Description:</label>
+                    <label for="pet-description-${window.petCount}">Description</label>
                     <textarea id="pet-description-${window.petCount}" name="pet-description-${window.petCount}" rows="3" placeholder="Age, weight, personality traits, energy level, etc."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="pet-medication-${window.petCount}">Medication Information:</label>
-                    <textarea id="pet-medication-${window.petCount}" name="pet-medication-${window.petCount}" rows="3" placeholder="List any medications, dosages, and administration instructions..."></textarea>
+                    <label for="pet-medication-${window.petCount}">Medication information</label>
+                    <textarea id="pet-medication-${window.petCount}" name="pet-medication-${window.petCount}" rows="3" placeholder="Medications, dosages, instructions"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="pet-care-comments-${window.petCount}">Care Comments:</label>
-                    <textarea id="pet-care-comments-${window.petCount}" name="pet-care-comments-${window.petCount}" rows="3" placeholder="Special care instructions, behavioral notes, likes/dislikes, feeding schedule, etc."></textarea>
+                    <label for="pet-care-comments-${window.petCount}">Care comments</label>
+                    <textarea id="pet-care-comments-${window.petCount}" name="pet-care-comments-${window.petCount}" rows="3" placeholder="Special care instructions, likes/dislikes, feeding schedule, etc."></textarea>
                 </div>
             `;
-            
+
             container.appendChild(petSection);
         }
 
@@ -710,12 +795,11 @@
             }
         }
 
-        // Handle modal close
-        document.getElementById('modal-ok-btn').addEventListener('click', function() {
+        document.getElementById('modal-ok-btn').addEventListener('click', function () {
             window.location.href = 'index.html';
         });
 
-        document.getElementById('success-modal').addEventListener('click', function(e) {
+        document.getElementById('success-modal').addEventListener('click', function (e) {
             if (e.target.id === 'success-modal') {
                 window.location.href = 'index.html';
             }
