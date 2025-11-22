@@ -11,6 +11,7 @@
     
     <!-- Firebase CDN Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     
     <!-- Firebase Configuration -->
@@ -134,6 +135,94 @@
             }
             color: #54297a;
             transform: translateY(-1px);
+        }
+
+        .provider-options {
+            margin: 1.5rem 0 2.5rem;
+            padding: 1.5rem;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(102, 51, 153, 0.05), rgba(255, 249, 230, 0.8));
+            border: 2px dashed rgba(102, 51, 153, 0.15);
+        }
+
+        .provider-heading {
+            font-weight: 700;
+            color: #2D3748;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .provider-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .provider-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+            border: 2px solid transparent;
+            padding: 0.85rem 1.25rem;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            background: #fff;
+            color: #1F2933;
+        }
+
+        .provider-button.is-busy,
+        .provider-button[aria-busy="true"] {
+            opacity: 0.7;
+            cursor: progress;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .provider-button i {
+            font-size: 1rem;
+        }
+
+        .provider-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.15);
+            border-color: rgba(31, 41, 55, 0.15);
+        }
+
+        .provider-button.provider-google {
+            border-color: rgba(234, 67, 53, 0.25);
+        }
+
+        .provider-button.provider-twitter {
+            border-color: rgba(29, 155, 240, 0.25);
+        }
+
+        .provider-button.provider-facebook {
+            border-color: rgba(24, 119, 242, 0.25);
+        }
+
+        .provider-note {
+            font-size: 0.9rem;
+            color: #4A5568;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .anonymous-note {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #4A5568;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 999px;
+            padding: 0.5rem 1rem;
+            width: fit-content;
+            margin: 0 auto;
+            border: 1px solid rgba(100, 116, 139, 0.2);
         }
 
         .error-message {
@@ -402,8 +491,34 @@
         <h1 id="auth-title">Sign In</h1>
 
         <div class="guest-entry">
-            <span>Just browsing?</span>
+            <div>
+                <strong>Just browsing?</strong>
+                <p style="margin: 0; color: #4A5568; font-size: 0.95rem;">Guest mode lets you explore services, but you must sign in before filling out or updating your profile.</p>
+            </div>
             <button type="button" id="guest-button" class="auth-button guest-button">Explore as a guest</button>
+        </div>
+
+        <div class="provider-options" aria-label="Sign in with a social provider">
+            <p class="provider-heading">Skip the password and sign in faster</p>
+            <div class="provider-buttons">
+                <button type="button" class="provider-button provider-google" data-provider-signin="google">
+                    <i class="fa-brands fa-google"></i>
+                    Continue with Google
+                </button>
+                <button type="button" class="provider-button provider-twitter" data-provider-signin="twitter">
+                    <i class="fa-brands fa-twitter"></i>
+                    Continue with Twitter
+                </button>
+                <button type="button" class="provider-button provider-facebook" data-provider-signin="facebook">
+                    <i class="fa-brands fa-facebook"></i>
+                    Continue with Facebook
+                </button>
+            </div>
+            <p class="provider-note">We will link your social account to your Amanda's Pet Services profile right after sign-in.</p>
+            <div class="anonymous-note">
+                <i class="fa-solid fa-user-ninja" aria-hidden="true"></i>
+                Guest browsing stays read-only until you sign in.
+            </div>
         </div>
         
         <div id="error-message" class="error-message"></div>

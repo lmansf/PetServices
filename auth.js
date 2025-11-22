@@ -3,6 +3,12 @@ let isSignUpMode = false;
 const LOYALTY_CODE = 'dogmom';
 const LOYALTY_BADGE_KEY = 'loyaltyBadge';
 const GUEST_MODE_KEY = 'guestExploring';
+const LAST_PROVIDER_KEY = 'lastAuthProvider';
+const PROVIDER_LABELS = {
+    google: 'Google',
+    twitter: 'Twitter',
+    facebook: 'Facebook'
+};
 
 function notifyLoyaltyBadgeChange() {
     try {
@@ -32,12 +38,108 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (guestButton) {
         guestButton.addEventListener('click', () => {
-            sessionStorage.removeItem('userEmail');
-            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
-            sessionStorage.setItem(GUEST_MODE_KEY, 'true');
-            notifyLoyaltyBadgeChange();
-            window.location.href = 'index.html';
+            hideMessages();
+            beginAnonymousExplore();
         });
+    }
+
+    const providerButtons = document.querySelectorAll('[data-provider-signin]');
+    providerButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const providerKey = button.getAttribute('data-provider-signin');
+            startProviderSignIn(providerKey, button);
+        });
+    });
+
+    async function startProviderSignIn(providerKey, triggerButton) {
+        if (!providerKey) {
+            return;
+        }
+
+        hideMessages();
+        const label = formatProviderLabel(providerKey);
+        const authInstance = getFirebaseAuthInstance();
+
+        if (!authInstance) {
+            showError('Sign-in is temporarily unavailable. Please refresh and try again.');
+            return;
+        }
+
+        const provider = createAuthProvider(providerKey);
+        if (!provider) {
+            showError(`${label} sign-in is not configured yet. Please use email/password for now.`);
+            return;
+        }
+
+        setButtonBusy(triggerButton, true);
+
+        try {
+            const result = await authInstance.signInWithPopup(provider);
+            await handleFirebaseProviderResult(result?.user, providerKey);
+        } catch (error) {
+            handleProviderError(error, providerKey);
+        } finally {
+            setButtonBusy(triggerButton, false);
+        }
+    }
+
+    function createAuthProvider(providerKey) {
+        switch (providerKey) {
+            case 'google': {
+                const googleProvider = new firebase.auth.GoogleAuthProvider();
+                googleProvider.setCustomParameters({ prompt: 'select_account' });
+                return googleProvider;
+            }
+            case 'facebook':
+                return new firebase.auth.FacebookAuthProvider();
+            case 'twitter':
+                return new firebase.auth.TwitterAuthProvider();
+            default:
+                return null;
+        }
+    }
+
+    function setButtonBusy(button, isBusy) {
+        if (!button) return;
+        button.disabled = !!isBusy;
+        button.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+        button.classList.toggle('is-busy', !!isBusy);
+    }
+
+    async function handleFirebaseProviderResult(user, providerKey) {
+        if (!user) {
+            showError('Unable to finish sign-in. Please try again.');
+            return;
+        }
+
+        const email = extractUserEmail(user);
+        if (!email) {
+            showError(`${formatProviderLabel(providerKey)} did not return an email address. Please share your email with that provider or sign up with email/password.`);
+            try {
+                const authInstance = getFirebaseAuthInstance();
+                await authInstance?.signOut();
+            } catch (err) {
+                console.warn('Failed to sign out after missing email', err);
+            }
+            return;
+        }
+
+        sessionStorage.setItem('userEmail', email);
+        sessionStorage.removeItem(GUEST_MODE_KEY);
+        sessionStorage.setItem(LAST_PROVIDER_KEY, providerKey);
+
+        let profileStatus = { exists: false, autoCreated: false };
+        try {
+            profileStatus = await syncBadgeFromProfile(email);
+        } catch (err) {
+            console.warn('Unable to sync loyalty badge after provider sign-in', err);
+        }
+
+        showSuccess('Signed in successfully! Redirecting...');
+        setTimeout(() => {
+            const needsOnboarding = !profileStatus.exists || profileStatus.autoCreated;
+            window.location.href = needsOnboarding ? 'firstform.html' : 'index.html';
+        }, 1200);
     }
 
     const syncConfirmWarning = () => {
@@ -124,9 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const syncBadgeFromProfile = async (email) => {
+        const defaultStatus = { exists: false, autoCreated: false };
         if (!email) {
             sessionStorage.removeItem(LOYALTY_BADGE_KEY);
-            return;
+            notifyLoyaltyBadgeChange();
+            return defaultStatus;
         }
         try {
             const profileFn = firebase.functions().httpsCallable('getUserProfile');
@@ -141,8 +245,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.removeItem(LOYALTY_BADGE_KEY);
             }
             notifyLoyaltyBadgeChange();
+            return {
+                exists: !!profile,
+                autoCreated: !!profile?.providerAutoCreated
+            };
         } catch (err) {
             console.warn('Unable to sync loyalty badge', err);
+            return defaultStatus;
         }
     };
 
@@ -249,6 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Success
                 sessionStorage.setItem('userEmail', authData.email);
                 sessionStorage.removeItem(GUEST_MODE_KEY);
+                sessionStorage.setItem(LAST_PROVIDER_KEY, 'password-signup');
                 const loyaltyInput = document.getElementById('discount-code');
                 setBadgeFromCode(loyaltyInput ? loyaltyInput.value : '');
                 
@@ -284,6 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showSuccess(data.message);
                 sessionStorage.setItem('userEmail', data.email);
                 sessionStorage.removeItem(GUEST_MODE_KEY);
+                sessionStorage.setItem(LAST_PROVIDER_KEY, 'password');
                 await syncBadgeFromProfile(data.email);
 
                 // Redirect after a short delay
@@ -314,6 +425,10 @@ document.addEventListener('DOMContentLoaded', () => {
             submitButton.textContent = isSignUpMode ? 'Create Account' : 'Sign In';
         }
     });
+
+    if (window.authHelpers) {
+        window.authHelpers.startProviderSignIn = (providerKey) => startProviderSignIn(providerKey);
+    }
 });
 
 function showError(message) {
@@ -339,6 +454,86 @@ function hideMessages() {
     document.getElementById('success-message').style.display = 'none';
 }
 
+function beginAnonymousExplore() {
+    try {
+        hideMessages();
+    } catch (err) {
+        // ignore if DOM not ready
+    }
+    startAnonymousSession();
+}
+
+function startAnonymousSession() {
+    const authInstance = getFirebaseAuthInstance();
+    if (authInstance?.signInAnonymously) {
+        authInstance.signInAnonymously().catch((error) => {
+            console.warn('Anonymous Firebase sign-in failed', error);
+        });
+    }
+    setGuestSessionAndRedirect();
+}
+
+function setGuestSessionAndRedirect() {
+    sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+    sessionStorage.removeItem(LAST_PROVIDER_KEY);
+    sessionStorage.setItem(GUEST_MODE_KEY, 'true');
+    notifyLoyaltyBadgeChange();
+    window.location.href = 'index.html';
+}
+
+function formatProviderLabel(providerKey) {
+    return PROVIDER_LABELS[providerKey] || 'Social';
+}
+
+function extractUserEmail(user) {
+    if (!user) return '';
+    if (user.email) return user.email;
+    const providerEmail = (user.providerData || [])
+        .map((profile) => profile?.email)
+        .find(Boolean);
+    return providerEmail || '';
+}
+
+function getFirebaseAuthInstance() {
+    if (window.auth) {
+        return window.auth;
+    }
+    if (window.firebase && typeof window.firebase.auth === 'function') {
+        try {
+            return window.firebase.auth();
+        } catch (err) {
+            console.warn('Unable to initialize Firebase Auth instance', err);
+        }
+    }
+    return null;
+}
+
+function handleProviderError(error, providerKey) {
+    const label = formatProviderLabel(providerKey);
+    const code = error?.code || '';
+    console.error(`[auth] ${label} sign-in failed`, error);
+
+    if (code === 'auth/popup-closed-by-user') {
+        showError(`${label} sign-in was closed before we finished. Please try again.`);
+        return;
+    }
+    if (code === 'auth/cancelled-popup-request') {
+        showError(`Another ${label} window was already open. Please close other popups and try again.`);
+        return;
+    }
+    if (code === 'auth/account-exists-with-different-credential') {
+        showError(`${label} is linked to a different sign-in method. Sign in with your original provider, then link ${label} from your profile settings.`);
+        return;
+    }
+    if (code === 'auth/unauthorized-domain') {
+        showError('This domain is not authorized for OAuth with Firebase. Please contact support.');
+        return;
+    }
+
+    showError(error?.message || `Unable to sign in with ${label}. Please try again.`);
+}
+
 // Check if user is already logged in
 function checkAuth() {
     const userEmail = sessionStorage.getItem('userEmail');
@@ -354,6 +549,11 @@ function signOut() {
     sessionStorage.removeItem('userEmail');
     sessionStorage.removeItem(LOYALTY_BADGE_KEY);
     sessionStorage.removeItem(GUEST_MODE_KEY);
+    sessionStorage.removeItem(LAST_PROVIDER_KEY);
+    const authInstance = getFirebaseAuthInstance();
+    if (authInstance?.signOut) {
+        authInstance.signOut().catch((error) => console.warn('Firebase sign-out failed', error));
+    }
     window.location.href = 'signin.html';
 }
 
@@ -361,5 +561,9 @@ function signOut() {
 window.authHelpers = {
     checkAuth,
     signOut,
-    getUserEmail: () => sessionStorage.getItem('userEmail')
+    getUserEmail: () => sessionStorage.getItem('userEmail'),
+    beginAnonymousExplore,
+    startProviderSignIn: () => {
+        console.warn('Provider sign-in helpers are not ready yet.');
+    }
 };

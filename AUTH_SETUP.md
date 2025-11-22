@@ -1,5 +1,7 @@
 # Authentication Setup Guide
 
+> **Note:** The legacy email/password sign-in experience has been removed while we rebuild authentication with Google SSO. The steps below describe the previous implementation and are retained for reference only.
+
 ## Overview
 This authentication system uses:
 - **Express.js** for API endpoints

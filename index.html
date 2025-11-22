@@ -12,23 +12,10 @@
     <link rel="preload" href="header.html" as="fetch" type="text/html">
     <link rel="preload" href="nav.html" as="fetch" type="text/html">
     <link rel="preload" href="reviews.html" as="fetch" type="text/html">
-    <script>
-      (function ensureSignInLanding() {
-        const GUEST_FLAG = 'guestExploring';
-        try {
-          const isSignedIn = Boolean(sessionStorage.getItem('userEmail'));
-          const isGuestSession = sessionStorage.getItem(GUEST_FLAG) === 'true';
-          if (isSignedIn || isGuestSession) return;
-          sessionStorage.removeItem(GUEST_FLAG);
-        } catch (err) {
-          console.warn('Falling back to sign-in landing', err);
-        }
-        window.location.replace('signin.html');
-      })();
-    </script>
     
     <!-- Firebase CDN Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
     
     <!-- Firebase Configuration -->
@@ -57,11 +44,8 @@
             </div>
             <div class="book-today-container">
               <div class="book-action-group">
-                <a href="https://calendly.com/lmansf96/30min" class="book-action auth-hidden" data-auth="signed-in">
+                <a href="https://calendly.com/lmansf96/30min" class="book-action">
                   <button class="nav-btn book-today">Book Today</button>
-                </a>
-                <a href="signin.html" class="book-action" data-auth="signed-out">
-                  <button class="nav-btn book-today alt-book-cta">Sign In to Book</button>
                 </a>
               </div>
               <a href="#" class="details-link"><button class="nav-btn details">Details</button></a>
@@ -83,11 +67,8 @@
             </div>
             <div class="book-today-container">
               <div class="book-action-group">
-                <a href="https://calendly.com/lmansf96/pet-introduction-clone" class="book-action auth-hidden" data-auth="signed-in">
+                <a href="https://calendly.com/lmansf96/pet-introduction-clone" class="book-action">
                   <button class="nav-btn book-today">Book Today</button>
-                </a>
-                <a href="signin.html" class="book-action" data-auth="signed-out">
-                  <button class="nav-btn book-today alt-book-cta">Sign In to Book</button>
                 </a>
               </div>
               <a href="#" class="details-link"><button class="nav-btn details">Details</button></a>
@@ -122,11 +103,8 @@
             </div>
             <div class="book-today-container">
               <div class="book-action-group">
-                <a href="https://calendly.com/lmansf96/house-sitting-clone" class="book-action auth-hidden" data-auth="signed-in">
+                <a href="https://calendly.com/lmansf96/house-sitting-clone" class="book-action">
                   <button class="nav-btn book-today">Book Today</button>
-                </a>
-                <a href="signin.html" class="book-action" data-auth="signed-out">
-                  <button class="nav-btn book-today alt-book-cta">Sign In to Book</button>
                 </a>
               </div>
               <a href="#" class="details-link"><button class="nav-btn details">Details</button></a>

@@ -12,18 +12,12 @@
     
     <!-- Firebase CDN Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
     
-    <!-- Authentication Check -->
-    <script>
-      // Redirect to sign-in if not logged in
-      if (!sessionStorage.getItem('userEmail')) {
-        window.location.href = 'signin.html';
-      }
-    </script>
     
     <!-- Your custom scripts -->
     <script src="script.js" defer></script>
@@ -614,7 +608,24 @@
             const userEmail = sessionStorage.getItem('userEmail');
             
             if (!userEmail) {
-                window.location.href = 'signin.html';
+                try {
+                    sessionStorage.setItem('guestExploring', 'true');
+                } catch (err) {
+                    console.warn('Unable to persist guest mode', err);
+                }
+                document.getElementById('profile-content').innerHTML = `
+                    <div class="profile-header">
+                        <h1>Guest Mode</h1>
+                        <div class="profile-email">
+                            <i class="fas fa-user-secret"></i>
+                            <span>Signed-in experience coming soon</span>
+                        </div>
+                    </div>
+                    <div class="profile-section">
+                        <p>We are rebuilding secure sign-in with Google so you can manage your profile directly. For now, feel free to browse the site as a guest and contact Amanda to update your details or book services.</p>
+                        <p style="margin-top:1rem;"><a href="index.html" class="nav-btn book-today" style="text-decoration:none;">Return to Services</a></p>
+                    </div>
+                `;
                 return;
             }
 
@@ -642,10 +653,7 @@
                 if (error.code === 'not-found' || error.message?.includes('No profile data found')) {
                     errorMsg = 'No profile data found. Please complete the sign-up form to create your profile.';
                 } else if (error.code === 'unauthenticated') {
-                    errorMsg = 'Please sign in again to view your profile.';
-                    setTimeout(() => {
-                        window.location.href = 'signin.html';
-                    }, 2000);
+                    errorMsg = 'Your session has expired. Please refresh the page or try again once the new Google sign-in launches.';
                 } else if (error.code === 'failed-precondition' && (error.details?.code === 'DROPBOX_TOKEN_EXPIRED' || error.details?.code === 'DROPBOX_AUTH_ERROR')) {
                     errorMsg = 'We are refreshing secure storage right now. Please try again in a minute.';
                 }

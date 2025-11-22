@@ -26,6 +26,9 @@ if (typeof firebase.analytics === 'function') {
 // Initialize Functions
 const functions = firebase.functions();
 
+// Initialize Auth (includes anonymous capability)
+const auth = firebase.auth();
+
 // Optional: Log that Firebase is initialized
 console.log("Firebase initialized successfully");
 
@@ -33,3 +36,4 @@ console.log("Firebase initialized successfully");
 window.firebaseApp = firebase.app();
 window.analytics = analytics;
 window.functions = functions;
+window.auth = auth;

@@ -15,14 +15,25 @@ const NAV_HTML = `<nav class="topnav account-nav">
     <div class="account-menu" role="menu">
       <a href="About.html" role="menuitem">About Me</a>
       <a href="index.html" role="menuitem" class="nav-services-link nav-highlightable nav-highlight">Services</a>
-      <a href="profile.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Profile</a>
+      <a href="profile.html" role="menuitem">Profile</a>
       <a href="firstform.html" role="menuitem" class="auth-hidden" data-auth="signed-in">First Form</a>
       <a href="feedback.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Feedback</a>
       <hr>
-      <button type="button" class="logout-button nav-highlightable" role="menuitem">Log out</button>
+      <button type="button" class="logout-button nav-highlightable" role="menuitem">Guest Mode</button>
     </div>
   </div>
 </nav>`;
+
+(function ensureGuestMode() {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!sessionStorage.getItem('userEmail')) {
+      sessionStorage.setItem('guestExploring', 'true');
+    }
+  } catch (err) {
+    console.warn('guest mode unavailable', err);
+  }
+})();
 
 const FRAGMENT_CACHE_KEY = 'aps-fragment-cache-v1';
 let fragmentCacheStore = (() => {
@@ -225,6 +236,31 @@ function applyAuthVisibility() {
   });
 }
 
+function updateBookingActions() {
+  const guestMode = !isUserSignedIn();
+  document.querySelectorAll('.book-action').forEach((link) => {
+    if (!(link instanceof HTMLAnchorElement)) return;
+    if (!link.dataset.bookingHref) {
+      link.dataset.bookingHref = link.getAttribute('href') || '';
+    }
+
+    const originalHref = link.dataset.bookingHref || '';
+    const ctaButton = link.querySelector('.book-today');
+
+    if (guestMode) {
+      link.href = 'profile.html';
+      link.setAttribute('aria-label', 'Complete your profile before booking');
+      if (ctaButton) ctaButton.textContent = 'Complete your profile.';
+    } else {
+      if (originalHref) {
+        link.href = originalHref;
+      }
+      link.removeAttribute('aria-label');
+      if (ctaButton) ctaButton.textContent = 'Book Today';
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   // Try to load from external files first (works with http:// and https://)
   // Falls back to inline templates (works with file://)
@@ -281,6 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   scheduleIdleLazyLoad();
+  updateBookingActions();
 });
 
 function prepareReviewCarousel(container) {
@@ -303,39 +340,40 @@ function initializeAccountNav() {
   // Display user email if logged in
   const userEmail = sessionStorage.getItem('userEmail');
   updateAccountLabel(accountLabel, userEmail);
+  updateBookingActions();
 
   if (originalLogoutButton) {
     originalLogoutButton.replaceWith(originalLogoutButton.cloneNode(true));
   }
 
   const updatedLogoutButton = dropdown.querySelector('.logout-button');
-  const updateNavHighlight = (signedIn) => {
-    if (servicesLink) servicesLink.classList.toggle(highlightClass, signedIn);
-    if (updatedLogoutButton) updatedLogoutButton.classList.toggle(highlightClass, !signedIn);
-  };
+  if (servicesLink) servicesLink.classList.add(highlightClass);
 
   if (updatedLogoutButton) {
     if (userEmail) {
       updatedLogoutButton.textContent = 'Log out';
+      updatedLogoutButton.disabled = false;
+      updatedLogoutButton.removeAttribute('aria-disabled');
+      updatedLogoutButton.classList.add(highlightClass);
       updatedLogoutButton.addEventListener('click', (e) => {
         e.preventDefault();
         sessionStorage.removeItem('userEmail');
         sessionStorage.removeItem('loyaltyBadge');
         sessionStorage.removeItem('guestExploring');
         dispatchDogMomBadgeChange();
-        window.location.href = 'signin.html';
+        sessionStorage.setItem('guestExploring', 'true');
+        window.location.href = 'index.html';
       });
     } else {
-      updatedLogoutButton.textContent = 'Sign In';
+      updatedLogoutButton.textContent = 'Guest Mode Active';
+      updatedLogoutButton.disabled = true;
+      updatedLogoutButton.setAttribute('aria-disabled', 'true');
+      updatedLogoutButton.classList.remove(highlightClass);
       updatedLogoutButton.addEventListener('click', (e) => {
         e.preventDefault();
-        sessionStorage.removeItem('guestExploring');
-        window.location.href = 'signin.html';
       });
     }
   }
-
-  updateNavHighlight(Boolean(userEmail));
 
   function setOpen(isOpen) {
     dropdown.classList.toggle('open', isOpen);

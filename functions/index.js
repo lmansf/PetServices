@@ -197,6 +197,12 @@ exports.submitForm = functions.https.onCall(async (data, context) => {
 });
 
 // Helper function to interact with Dropbox
+const AUTO_CREATE_PROVIDERS = new Set([
+  'google.com',
+  'facebook.com',
+  'twitter.com'
+]);
+
 async function dropboxRequest(endpoint, options = {}) {
   const accessToken = functions.config().dropbox?.access_token;
   
@@ -335,6 +341,171 @@ async function validateDiscountCode(accessToken, code) {
   }
 
   return { isValid: false, canonicalName: trimmedCode };
+}
+
+function sanitizeForFileName(value) {
+  return (value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'anonymous';
+}
+
+function extractAuthContext(context) {
+  if (!context?.auth) {
+    return null;
+  }
+
+  const token = context.auth.token || {};
+  return {
+    uid: context.auth.uid,
+    email: (token.email || '').toLowerCase().trim(),
+    displayName: token.name || '',
+    providerId: token.firebase?.sign_in_provider || '',
+    picture: token.picture || '',
+    phoneNumber: token.phone_number || ''
+  };
+}
+
+function canAutoCreateProfile(authInfo, normalizedEmail) {
+  if (!authInfo || !normalizedEmail) {
+    return false;
+  }
+  if (authInfo.email !== normalizedEmail) {
+    return false;
+  }
+  if (!AUTO_CREATE_PROVIDERS.has(authInfo.providerId)) {
+    return false;
+  }
+  return true;
+}
+
+async function findProfileByEmail(accessToken, normalizedEmail) {
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  const listResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      path: '/form-submissions',
+      recursive: false
+    })
+  });
+
+  if (!listResponse.ok) {
+    if (listResponse.status === 409) {
+      return null;
+    }
+    await throwDropboxAccessIssue(listResponse, 'listing profile submissions');
+    const errorText = await listResponse.text().catch(() => '');
+    console.error('Dropbox error while listing profile submissions:', errorText || listResponse.statusText);
+    throw new functions.https.HttpsError('internal', 'Unable to load profile data');
+  }
+
+  const folderContents = await listResponse.json();
+
+  for (const entry of folderContents.entries) {
+    if (entry['.tag'] !== 'file' || !entry.name.endsWith('.json')) {
+      continue;
+    }
+
+    const downloadResponse = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Dropbox-API-Arg': JSON.stringify({
+          path: entry.path_lower
+        })
+      }
+    });
+
+    if (!downloadResponse.ok) {
+      if (downloadResponse.status === 409) {
+        continue;
+      }
+      await throwDropboxAccessIssue(downloadResponse, 'downloading profile submission');
+      const errorText = await downloadResponse.text().catch(() => '');
+      console.error(`Dropbox download error for ${entry.name}:`, errorText || downloadResponse.statusText);
+      continue;
+    }
+
+    const fileContent = await downloadResponse.text();
+    try {
+      const profileData = JSON.parse(fileContent);
+      const profileEmail = profileData.email ? profileData.email.toLowerCase().trim() : '';
+
+      if (profileEmail === normalizedEmail) {
+        return { profileData, entry };
+      }
+    } catch (parseError) {
+      console.log('Could not parse file:', entry.name, parseError.message);
+    }
+  }
+
+  return null;
+}
+
+async function createAutoProfileRecord(accessToken, normalizedEmail, authInfo, extraMetadata = {}) {
+  const timestamp = new Date().toISOString();
+  const sanitizedEmail = sanitizeForFileName(normalizedEmail);
+  const fileName = `provider-autocreated-${sanitizedEmail}-${Date.now()}.json`;
+  const filePath = `/form-submissions/${fileName}`;
+
+  const profileData = {
+    email: normalizedEmail,
+    displayName: extraMetadata.displayName || authInfo?.displayName || '',
+    providerAutoCreated: true,
+    needsProfileCompletion: true,
+    providerId: authInfo?.providerId || extraMetadata.providerId || 'social-login',
+    firebaseUid: authInfo?.uid || '',
+    phone: extraMetadata.phone || authInfo?.phoneNumber || '',
+    createdVia: 'firebase-provider',
+    submittedAt: timestamp,
+    serverProcessedAt: timestamp,
+    additionalComments: 'Auto-created via social sign-in. Please complete the rest of your profile.',
+    pets: [],
+    address: {},
+    metadata: {
+      picture: authInfo?.picture || '',
+      autoCreatedAt: timestamp,
+      source: 'provider-onboarding'
+    }
+  };
+
+  const uploadResponse = await fetch('https://content.dropboxapi.com/2/files/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/octet-stream',
+      'Dropbox-API-Arg': JSON.stringify({
+        path: filePath,
+        mode: 'add',
+        autorename: true
+      })
+    },
+    body: JSON.stringify(profileData, null, 2)
+  });
+
+  if (!uploadResponse.ok) {
+    if (uploadResponse.status === 401) {
+      await throwDropboxAccessIssue(uploadResponse, 'auto-creating provider profile');
+    }
+    const errorText = await uploadResponse.text().catch(() => '');
+    console.error('Dropbox upload error while auto-creating profile:', errorText || uploadResponse.statusText);
+    throw new functions.https.HttpsError('internal', 'Unable to create placeholder profile');
+  }
+
+  const uploadResult = await uploadResponse.json();
+  console.log('Auto-created provider profile at', uploadResult.path_display);
+
+  return {
+    profileData,
+    path: uploadResult.path_display
+  };
 }
 
 // Sign up endpoint
@@ -513,73 +684,19 @@ exports.getUserProfile = functions.https.onCall(async (data, context) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const authInfo = extractAuthContext(context);
 
-    // List all files in the form-submissions folder
-    const listResponse = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        path: '/form-submissions',
-        recursive: false
-      })
-    });
-
-    if (!listResponse.ok) {
-      if (listResponse.status === 409) {
-        throw new functions.https.HttpsError('not-found', 'No profile data found');
-      }
-      await throwDropboxAccessIssue(listResponse, 'listing profile submissions');
-      const errorText = await listResponse.text().catch(() => '');
-      console.error('Dropbox error while listing profile submissions:', errorText || listResponse.statusText);
-      throw new functions.https.HttpsError('internal', 'Unable to load profile data');
+    const profileRecord = await findProfileByEmail(accessToken, normalizedEmail);
+    if (profileRecord) {
+      return profileRecord.profileData;
     }
 
-    const folderContents = await listResponse.json();
-    
-    // Search through files to find matching email
-    for (const entry of folderContents.entries) {
-      if (entry['.tag'] === 'file' && entry.name.endsWith('.json')) {
-        // Download and check the file content
-        const downloadResponse = await fetch('https://content.dropboxapi.com/2/files/download', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Dropbox-API-Arg': JSON.stringify({
-              path: entry.path_lower
-            })
-          }
-        });
-        
-        if (!downloadResponse.ok) {
-          if (downloadResponse.status === 409) {
-            continue;
-          }
-          await throwDropboxAccessIssue(downloadResponse, 'downloading profile submission');
-          const errorText = await downloadResponse.text().catch(() => '');
-          console.error(`Dropbox download error for ${entry.name}:`, errorText || downloadResponse.statusText);
-          continue;
-        }
-
-        const fileContent = await downloadResponse.text();
-        try {
-          const profileData = JSON.parse(fileContent);
-          const profileEmail = profileData.email ? profileData.email.toLowerCase().trim() : '';
-          
-          if (profileEmail === normalizedEmail) {
-            // Found the matching profile!
-            return profileData;
-          }
-        } catch (parseError) {
-          console.log('Could not parse file:', entry.name, parseError.message);
-          continue;
-        }
-      }
+    if (canAutoCreateProfile(authInfo, normalizedEmail)) {
+      console.log('Auto-creating placeholder profile for provider login:', normalizedEmail, authInfo.providerId);
+      const autoProfile = await createAutoProfileRecord(accessToken, normalizedEmail, authInfo, data.autoMetadata || {});
+      return autoProfile.profileData;
     }
 
-    // If no profile found
     throw new functions.https.HttpsError(
       'not-found',
       'No profile data found for this email'

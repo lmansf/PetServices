@@ -12,19 +12,13 @@
     
     <!-- Firebase CDN Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
     
-    <!-- Authentication Check -->
-    <script>
-      // Redirect to sign-in if not logged in
-      if (!sessionStorage.getItem('userEmail')) {
-        window.location.href = 'signin.html';
-      }
-    </script>
     
     <!-- Your custom scripts -->
     <script src="script.js" defer></script>
@@ -70,7 +64,7 @@
                         <label for="email">Email Address: <span class="required">*</span></label>
                         <input type="email" id="email" name="email" required>
                         <div id="email-warning" class="email-warning" style="display: none;">
-                            This email address has already been used. Please <a href="#" id="sign-in-link" class="sign-in-link">sign in with another account</a>.
+                            This email address has already been used. Try a different email or contact Amanda so we can update your profile manually.
                         </div>
                     </div>
 
@@ -237,16 +231,6 @@
         document.getElementById('success-modal').addEventListener('click', function(e) {
             if (e.target.id === 'success-modal') {
                 window.location.href = 'index.html';
-            }
-        });
-
-        // Handle sign-in link click
-        document.addEventListener('click', function(e) {
-            if (e.target && e.target.id === 'sign-in-link') {
-                e.preventDefault();
-                // TODO: Implement actual sign-in functionality
-                // For now, this is a placeholder
-                alert('Sign-in functionality will be implemented here. Please contact support for assistance.');
             }
         });
 
@@ -616,17 +600,6 @@
             font-family: 'Montserrat', Arial, sans-serif;
             font-size: 0.95rem;
             border-left: 3px solid #d32f2f;
-        }
-
-        .sign-in-link {
-            color: #663399;
-            text-decoration: underline;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .sign-in-link:hover {
-            color: #4B0082;
         }
 
         /* Success Modal Styles */

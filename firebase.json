@@ -14,7 +14,7 @@
     "rewrites": [
       {
         "source": "/",
-        "destination": "/signin.html"
+        "destination": "/index.html"
       },
       {
         "source": "**",
