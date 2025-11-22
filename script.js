@@ -377,7 +377,8 @@ async function checkProfileCompletion(email, button) {
       // We need to fetch the profile to know for sure
       if (window.firebase && window.firebase.functions) {
         const getUserProfile = firebase.functions().httpsCallable('getUserProfile');
-        const result = await getUserProfile({ email: email });
+        // SECURITY UPDATE: Do not pass email. The function now uses the authenticated user's ID.
+        const result = await getUserProfile();
         const data = result.data;
 
         // Check fields

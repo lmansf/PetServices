@@ -240,7 +240,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             const profileFn = firebase.functions().httpsCallable('getUserProfile');
-            const result = await profileFn({ email });
+            // SECURITY UPDATE: Do not pass email. The function now uses the authenticated user's ID.
+            const result = await profileFn();
             const profile = result?.data ?? result;
 
             // Check completion

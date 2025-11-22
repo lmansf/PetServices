@@ -74,36 +74,25 @@ exports.submitForm = functions.https.onCall(async (data, context) => {
 //  Retrieves the profile for the currently logged-in user.
 // --------------------------------------------------------------------------
 exports.getUserProfile = functions.https.onCall(async (data, context) => {
-  // We prefer using the auth context to get the UID
-  let uid = context.auth ? context.auth.uid : null;
-  
-  // If called without auth (e.g. during login flow before token is ready), 
-  // we might try to look up by email, but it's less secure. 
-  // For this migration, we'll rely on the client being authenticated.
-  
-  if (!uid && data.email) {
-    // Fallback: Try to find user by email (Admin SDK)
-    try {
-      const userRecord = await admin.auth().getUserByEmail(data.email);
-      uid = userRecord.uid;
-    } catch (e) {
-      console.warn('Could not find user by email:', data.email);
-    }
+  // STRICT SECURITY: Only allow authenticated users to get THEIR OWN profile.
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be signed in to view your profile.'
+    );
   }
 
-  if (!uid) {
-    throw new functions.https.HttpsError('unauthenticated', 'User not identified');
-  }
+  const uid = context.auth.uid;
 
   try {
     const doc = await db.collection('users').doc(uid).get();
     
     if (!doc.exists) {
       // If no profile exists yet, return basic info from Auth
-      const userRecord = await admin.auth().getUser(uid);
+      // We can safely use context.auth.token here
       return {
-        email: userRecord.email,
-        displayName: userRecord.displayName,
+        email: context.auth.token.email,
+        displayName: context.auth.token.name || '',
         profileComplete: false
       };
     }
@@ -174,21 +163,25 @@ exports.applyLoyaltyPasscode = functions.https.onCall(async (data, context) => {
 });
 
 // --------------------------------------------------------------------------
-//  5. Get All Users (Admin Only)
+//  Helper: Check Admin Privileges
 // --------------------------------------------------------------------------
-exports.getAllUsers = functions.https.onCall(async (data, context) => {
+function checkAdmin(context) {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
   }
-
-  // Security: Check for specific admin email(s)
-  // Replace 'amansfld@gmail.com' with the actual admin email if different
-  const adminEmails = ['amansfld@gmail.com', 'lmansf96@gmail.com']; 
+  const adminEmails = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
   const userEmail = context.auth.token.email || '';
   
   if (!adminEmails.includes(userEmail.toLowerCase())) {
      throw new functions.https.HttpsError('permission-denied', 'Not authorized');
   }
+}
+
+// --------------------------------------------------------------------------
+//  5. Get All Users (Admin Only)
+// --------------------------------------------------------------------------
+exports.getAllUsers = functions.https.onCall(async (data, context) => {
+  checkAdmin(context);
 
   try {
     const snapshot = await db.collection('users').orderBy('submittedAt', 'desc').get();
@@ -207,16 +200,7 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
 //  6. Admin Update User Profile
 // --------------------------------------------------------------------------
 exports.adminUpdateUserProfile = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
-  }
-
-  const adminEmails = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
-  const userEmail = context.auth.token.email || '';
-
-  if (!adminEmails.includes(userEmail.toLowerCase())) {
-    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
-  }
+  checkAdmin(context);
 
   const { targetUid, updatedData } = data;
   if (!targetUid || !updatedData) {
