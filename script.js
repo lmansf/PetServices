@@ -13,16 +13,30 @@ const NAV_HTML = `<nav class="topnav account-nav">
       </span>
     </button>
     <div class="account-menu" role="menu">
-      <a href="About.html" role="menuitem">About Me</a>
-      <a href="index.html" role="menuitem" class="nav-services-link nav-highlightable nav-highlight">Services</a>
-      <a href="profile.html" role="menuitem">Profile</a>
-      <a href="firstform.html" role="menuitem" class="auth-hidden" data-auth="signed-in">First Form</a>
-      <a href="feedback.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Feedback</a>
+      <a href="index.html" role="menuitem" class="nav-services-link nav-highlightable">Services</a>
       <hr>
       <button type="button" class="logout-button nav-highlightable" role="menuitem">Sign In</button>
     </div>
   </div>
 </nav>`;
+
+const FOOTER_HTML = `<footer class="site-footer" aria-label="Amanda's Pet Services footer">
+  <video class="site-footer__video" autoplay loop muted playsinline>
+    <source src="footer.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+  <div class="site-footer__overlay">
+    <div class="site-footer__content">
+      <h2>Connect With Me</h2>
+      <p class="site-footer__contact">Contact: amansfld@gmail.com | (727) 346-8269</p>
+      <div class="site-footer__links" role="group" aria-label="Primary footer links">
+        <a href="feedback.html">Feedback</a>
+        <a href="About.html">About Me</a>
+        <a href="https://www.rover.com/members/amanda-m-retired-dog-mom-ready-to-play/" target="_blank" rel="noopener">Rover Profile</a>
+      </div>
+    </div>
+  </div>
+</footer>`;
 
 (function enforceSignInGate() {
   if (typeof window === 'undefined') return;
@@ -288,6 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const headerContainer = document.getElementById('header-container');
   const navContainer = document.getElementById('nav-container');
   const reviewsContainer = document.getElementById('reviews-container');
+  const footerContainer = document.getElementById('footer-container');
   
   if (headerContainer) {
     hydrateFragment({
@@ -324,6 +339,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  if (footerContainer) {
+    hydrateFragment({
+      url: 'footer.html',
+      container: footerContainer,
+      fallbackHtml: FOOTER_HTML
+    });
+  }
+
   applyAuthVisibility();
   queueLoyaltyPricing();
   const mainCarousel = document.getElementById('main-carousel');
@@ -345,59 +368,158 @@ function prepareReviewCarousel(container) {
   observeLazyFeature(container, 'initReviewCarousel', [{ container }]);
 }
 
+async function checkProfileCompletion(email, button) {
+  // Check session storage first
+  let isComplete = sessionStorage.getItem('profileComplete');
+
+  if (isComplete === null) {
+    try {
+      // We need to fetch the profile to know for sure
+      if (window.firebase && window.firebase.functions) {
+        const getUserProfile = firebase.functions().httpsCallable('getUserProfile');
+        const result = await getUserProfile({ email: email });
+        const data = result.data;
+
+        // Check fields
+        const hasName = data.firstName && data.lastName;
+        const hasPhone = data.phone;
+        const hasAddress = data.address && data.address.street && data.address.city && data.address.state && data.address.zip;
+        const hasPets = data.pets && data.pets.length > 0;
+
+        isComplete = (hasName && hasPhone && hasAddress && hasPets) ? 'true' : 'false';
+        sessionStorage.setItem('profileComplete', isComplete);
+      }
+    } catch (e) {
+      console.warn('Failed to check profile completion', e);
+      // If we can't check, assume complete to avoid annoying the user
+      return;
+    }
+  }
+
+  if (isComplete === 'false') {
+    // Blinking effect removed per user request
+    // button.classList.add('profile-incomplete');
+
+    // Also highlight the Profile link in the dropdown
+    // const profileLink = document.querySelector('.account-menu a[href="profile.html"]');
+    // if (profileLink) {
+    //   profileLink.classList.add('profile-incomplete');
+    // }
+
+    // Create tooltip element attached to body
+    let tooltip = document.getElementById('profile-tooltip-element');
+    if (!tooltip) {
+      tooltip = document.createElement('div');
+      tooltip.id = 'profile-tooltip-element';
+      tooltip.className = 'profile-tooltip';
+      tooltip.textContent = "Complete your profile to schedule your first introduction today!";
+      document.body.appendChild(tooltip);
+    }
+
+    // Add mouse events for "attached to mouse" behavior
+    button.addEventListener('mouseenter', () => {
+      tooltip.style.display = 'block';
+    });
+
+    button.addEventListener('mousemove', (e) => {
+      // Position tooltip near the mouse cursor
+      const offset = 15;
+      tooltip.style.left = (e.clientX + offset) + 'px';
+      tooltip.style.top = (e.clientY + offset) + 'px';
+    });
+
+    button.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+  }
+}
+
 // Account/email dropdown toggle
+const ADMIN_EMAILS = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
+
 function initializeAccountNav() {
   const dropdown = document.querySelector('.account-dropdown');
   if (!dropdown) return;
   const button = dropdown.querySelector('.account-button');
   const menu = dropdown.querySelector('.account-menu');
   const accountLabel = dropdown.querySelector('.account-label');
-  const servicesLink = dropdown.querySelector('.nav-services-link');
-  const originalLogoutButton = dropdown.querySelector('.logout-button');
-  const highlightClass = 'nav-highlight';
+  
   if (!button || !menu) return;
 
   // Display user email if logged in
   const userEmail = sessionStorage.getItem('userEmail');
   updateAccountLabel(accountLabel, userEmail);
-  updateBookingActions();
+  
+  // Clear existing menu items to rebuild based on role
+  menu.innerHTML = '';
 
-  if (originalLogoutButton) {
-    originalLogoutButton.replaceWith(originalLogoutButton.cloneNode(true));
-  }
+  const createLink = (text, href, extraClass = '') => {
+    const a = document.createElement('a');
+    a.href = href;
+    a.textContent = text;
+    a.setAttribute('role', 'menuitem');
+    if (extraClass) a.className = extraClass;
+    return a;
+  };
 
-  const updatedLogoutButton = dropdown.querySelector('.logout-button');
-  if (servicesLink) servicesLink.classList.add(highlightClass);
+  const createButton = (text, onClick) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'logout-button nav-highlightable';
+    btn.setAttribute('role', 'menuitem');
+    btn.textContent = text;
+    btn.addEventListener('click', onClick);
+    return btn;
+  };
 
-  if (updatedLogoutButton) {
-    if (userEmail) {
-      updatedLogoutButton.textContent = 'Log out';
-      updatedLogoutButton.disabled = false;
-      updatedLogoutButton.removeAttribute('aria-disabled');
-      updatedLogoutButton.classList.add(highlightClass);
-      updatedLogoutButton.addEventListener('click', (e) => {
+  const createHr = () => document.createElement('hr');
+
+  if (userEmail) {
+    checkProfileCompletion(userEmail, button);
+    
+    const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
+
+    if (isAdmin) {
+        // Admin Menu
+        menu.appendChild(createLink('Admin Management', 'admin.html'));
+        menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
+        menu.appendChild(createLink('My Profile', 'profile.html'));
+    } else {
+        // User/Customer Menu
+        menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
+        menu.appendChild(createLink('My Profile', 'profile.html'));
+    }
+
+    // Log Out
+    menu.appendChild(createHr());
+    menu.appendChild(createButton('Log out', (e) => {
         e.preventDefault();
         sessionStorage.removeItem('userEmail');
         sessionStorage.removeItem('loyaltyBadge');
         sessionStorage.removeItem('guestExploring');
         dispatchDogMomBadgeChange();
         window.location.href = 'index.html';
-      });
-    } else {
-      updatedLogoutButton.textContent = 'Sign in';
-      updatedLogoutButton.disabled = false;
-      updatedLogoutButton.removeAttribute('aria-disabled');
-      updatedLogoutButton.classList.add(highlightClass);
-      updatedLogoutButton.addEventListener('click', (e) => {
+    }));
+
+  } else {
+    // Guest Menu
+    menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
+    menu.appendChild(createHr());
+    menu.appendChild(createButton('Sign in', (e) => {
         e.preventDefault();
         const currentPath = (typeof window !== 'undefined')
           ? `${window.location.pathname || '/'}${window.location.search || ''}`
           : 'index.html';
         const signInTarget = `signin.html?next=${encodeURIComponent(currentPath)}`;
         window.location.href = signInTarget;
-      });
-    }
+    }));
   }
+
+  updateBookingActions();
+
+  // Highlight services link if it exists
+  const servicesLink = menu.querySelector('.nav-services-link');
+  if (servicesLink) servicesLink.classList.add('nav-highlight');
 
   function setOpen(isOpen) {
     dropdown.classList.toggle('open', isOpen);

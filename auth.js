@@ -10,6 +10,8 @@ const PROVIDER_LABELS = {
     facebook: 'Facebook'
 };
 
+const ADMIN_EMAILS = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
+
 function notifyLoyaltyBadgeChange() {
     try {
         window.dispatchEvent(new Event('dogmom-badge-change'));
@@ -138,7 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
         showSuccess('Signed in successfully! Redirecting...');
         setTimeout(() => {
             const needsOnboarding = !profileStatus.exists || profileStatus.autoCreated;
-            window.location.href = needsOnboarding ? 'firstform.html' : 'index.html';
+            if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+                window.location.href = 'admin.html';
+            } else {
+                window.location.href = needsOnboarding ? 'firstform.html' : 'index.html';
+            }
         }, 1200);
     }
 
@@ -236,6 +242,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const profileFn = firebase.functions().httpsCallable('getUserProfile');
             const result = await profileFn({ email });
             const profile = result?.data ?? result;
+
+            // Check completion
+            const hasName = profile.firstName && profile.lastName;
+            const hasPhone = profile.phone;
+            const hasAddress = profile.address && profile.address.street && profile.address.city && profile.address.state && profile.address.zip;
+            const hasPets = profile.pets && profile.pets.length > 0;
+            const isComplete = (hasName && hasPhone && hasAddress && hasPets) ? 'true' : 'false';
+            sessionStorage.setItem('profileComplete', isComplete);
+
             const hasBadge = Object.keys(profile || {}).some(
                 key => key.toLowerCase() === LOYALTY_CODE && profile[key]
             );
@@ -288,36 +303,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (discountWarning) discountWarning.style.display = 'none';
 
         try {
+            const authInstance = getFirebaseAuthInstance();
+            if (!authInstance) throw new Error('Authentication service unavailable');
+
             if (isSignUpMode) {
-                // Sign-up mode: create account and submit profile data
-                
-                // First, create the auth account
-                const authResponse = await fetch(`${AUTH_API_URL}/signup`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
+                // 1. Create User in Firebase Auth
+                const userCredential = await authInstance.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
 
-                let authData = {};
-                try {
-                    authData = await authResponse.json();
-                } catch (err) {
-                    authData = {};
-                }
-
-                if (!authResponse.ok) {
-                    const requestError = new Error(authData.error || 'Authentication failed');
-                    if (authData.code) {
-                        requestError.code = authData.code;
-                    }
-                    throw requestError;
-                }
-
-                // Then, submit the profile data
+                // 2. Prepare Profile Data
                 const formData = {
-                    submittedAt: new Date().toISOString(),
                     firstName: document.getElementById('first-name').value,
                     lastName: document.getElementById('last-name').value,
                     email: email,
@@ -351,14 +346,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Submit profile data to Firebase Function
+                // 3. Save Profile to Firestore via Cloud Function
                 const submitForm = firebase.functions().httpsCallable('submitForm');
-                const profileResult = await submitForm(formData);
+                await submitForm(formData);
 
                 // Success
-                sessionStorage.setItem('userEmail', authData.email);
+                sessionStorage.setItem('userEmail', email);
                 sessionStorage.removeItem(GUEST_MODE_KEY);
-                sessionStorage.setItem(LAST_PROVIDER_KEY, 'password-signup');
+                sessionStorage.setItem(LAST_PROVIDER_KEY, 'password');
+                
                 const loyaltyInput = document.getElementById('discount-code');
                 setBadgeFromCode(loyaltyInput ? loyaltyInput.value : '');
                 
@@ -366,58 +362,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('success-modal').style.display = 'flex';
                 
             } else {
-                // Sign-in mode: just authenticate
-                const response = await fetch(`${AUTH_API_URL}/signin`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-
-                let data = {};
-                try {
-                    data = await response.json();
-                } catch (err) {
-                    data = {};
-                }
-
-                if (!response.ok) {
-                    const requestError = new Error(data.error || 'Authentication failed');
-                    if (data.code) {
-                        requestError.code = data.code;
-                    }
-                    throw requestError;
-                }
+                // Sign-in mode: Authenticate with Firebase
+                await authInstance.signInWithEmailAndPassword(email, password);
 
                 // Success
-                showSuccess(data.message);
-                sessionStorage.setItem('userEmail', data.email);
+                showSuccess('Signed in successfully!');
+                sessionStorage.setItem('userEmail', email);
                 sessionStorage.removeItem(GUEST_MODE_KEY);
                 sessionStorage.setItem(LAST_PROVIDER_KEY, 'password');
-                await syncBadgeFromProfile(data.email);
+                
+                // Sync profile/badge
+                await syncBadgeFromProfile(email);
 
                 // Redirect after a short delay
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
                 }, 1500);
             }
 
         } catch (error) {
             console.error('Error:', error);
+            let msg = error.message;
+            
+            if (error.code === 'auth/email-already-in-use') {
+                msg = 'An account with this email already exists. Please sign in.';
+            } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                msg = 'Invalid email or password.';
+            } else if (error.code === 'auth/weak-password') {
+                msg = 'Password is too weak.';
+            }
 
-            const dropboxErrors = ['DROPBOX_TOKEN_EXPIRED', 'DROPBOX_AUTH_ERROR'];
-
-            if (dropboxErrors.includes(error.code)) {
-                showError(error.message || 'Sign-ins are temporarily unavailable while we refresh secure storage. Please try again soon.');
-            } else if (error.code === 'functions/invalid-argument' && error.message && error.message.includes('discount')) {
+            if (error.code === 'functions/invalid-argument' && msg.includes('discount')) {
                 if (discountWarning) {
                     discountWarning.style.display = 'block';
                 }
                 document.getElementById('discount-code').value = '';
                 document.getElementById('discount-code').focus();
             } else {
-                showError(error.message || 'An error occurred. Please try again.');
+                showError(msg || 'An error occurred. Please try again.');
             }
         } finally {
             // Re-enable button

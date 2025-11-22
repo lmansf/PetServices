@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Manager Dashboard - Amanda's Pet Services</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Coustard:wght@400;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="imgs/icons8-pet-16.png">
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+
+    <style>
+        .admin-container { 
+            max-width: 1200px; 
+            margin: 2rem auto; 
+            padding: 0 1.5rem; 
+            min-height: 60vh;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 1rem;
+        }
+        .dashboard-title {
+            font-family: 'Coustard', serif;
+            color: #2D3748;
+            margin: 0;
+        }
+        .refresh-btn {
+            background: #663399;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+        }
+        .refresh-btn:hover {
+            background: #54297a;
+        }
+        
+        /* Table Styles */
+        .users-table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        .users-table th, .users-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .users-table th {
+            background: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .users-table tr:last-child td {
+            border-bottom: none;
+        }
+        .users-table tr:hover {
+            background-color: #f8f6fc;
+        }
+        .action-btn {
+            background: transparent;
+            border: 1px solid #663399;
+            color: #663399;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: #663399;
+            color: white;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(2px);
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f6fc;
+            border-radius: 12px 12px 0 0;
+        }
+        .modal-title {
+            font-family: 'Coustard', serif;
+            font-size: 1.5rem;
+            color: #2D3748;
+            margin: 0;
+        }
+        .close-modal {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: #a0aec0;
+            cursor: pointer;
+        }
+        .close-modal:hover {
+            color: #4a5568;
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        .detail-group {
+            margin-bottom: 1.5rem;
+        }
+        .detail-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .detail-value {
+            font-size: 1rem;
+            color: #2d3748;
+            background: #f7fafc;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #edf2f7;
+        }
+        .pet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .pet-detail-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .pet-detail-header {
+            font-weight: bold;
+            color: #663399;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            background: #f8f6fc;
+            border-radius: 0 0 12px 12px;
+        }
+        .modal-btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+        }
+        .modal-btn-primary {
+            background: #663399;
+            color: white;
+        }
+        .modal-btn-primary:hover {
+            background: #54297a;
+        }
+        .modal-btn-secondary {
+            background: white;
+            border: 1px solid #cbd5e0;
+            color: #4a5568;
+        }
+        .modal-btn-secondary:hover {
+            background: #f7fafc;
+        }
+
+        #loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            color: #663399;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #663399;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="header-container"></div>
+    <div id="nav-container"></div>
+
+    <div class="content admin-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Manager Dashboard</h1>
+            <button class="refresh-btn" onclick="location.reload()">Refresh Data</button>
+        </div>
+
+        <div id="loading">
+            <div class="spinner"></div>
+            <div>Loading secure profiles...</div>
+        </div>
+        
+        <div id="error-msg" style="background: #fff5f5; color: #c53030; padding: 1rem; border-radius: 8px; text-align: center; display: none; border: 1px solid #feb2b2;"></div>
+        
+        <div id="users-list"></div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <!-- User Detail Modal -->
+    <div id="user-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-user-name">User Details</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Close</button>
+                <button class="modal-btn modal-btn-primary" onclick="alert('Edit functionality coming soon!')">Edit Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reuse existing script for header/nav injection -->
+    <script type="module" src="script.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Wait for Firebase to initialize from script.js or firebase-config.js
+            // We need to wait for auth state
+            
+            let authCheckInterval = setInterval(() => {
+                if (window.firebase && window.firebase.auth) {
+                    clearInterval(authCheckInterval);
+                    initAdmin();
+                }
+            }, 100);
+
+            function initAdmin() {
+                firebase.auth().onAuthStateChanged(async (user) => {
+                    if (!user) {
+                        // Redirect to sign in if not logged in
+                        sessionStorage.setItem('redirectAfterLogin', 'admin.html');
+                        window.location.href = 'signin.html';
+                        return;
+                    }
+
+                    // Check if user is the admin (simple client-side check for UX, real check is on server)
+                    const adminEmails = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
+                    if (!adminEmails.includes(user.email.toLowerCase())) {
+                        // Optional: Redirect non-admins or show warning
+                        // For now, we'll let the server reject the request if they aren't authorized
+                    }
+
+                    loadData();
+                });
+            }
+        });
+
+        let allUsers = []; // Store users globally for modal access
+        let currentUserIndex = -1;
+        let isEditMode = false;
+
+        async function loadData() {
+            try {
+                const getAllUsers = firebase.functions().httpsCallable('getAllUsers');
+                const result = await getAllUsers();
+                allUsers = result.data;
+                renderUsers(allUsers);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loading').style.display = 'none';
+                const errDiv = document.getElementById('error-msg');
+                errDiv.style.display = 'block';
+                
+                if (error.code === 'permission-denied') {
+                    errDiv.innerHTML = '<strong>Access Denied</strong><br>You are not authorized to view this page. Please sign in with an administrator account.';
+                } else {
+                    errDiv.textContent = 'Error loading data: ' + error.message;
+                }
+            }
+        }
+
+        function renderUsers(users) {
+            const container = document.getElementById('users-list');
+            document.getElementById('loading').style.display = 'none';
+            
+            if (!users || users.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding: 2rem; color: #718096;">No profiles found yet.</div>';
+                return;
+            }
+
+            let html = `
+                <div class="users-table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Pets</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            html += users.map((user, index) => {
+                const submittedDate = user.submittedAt && user.submittedAt._seconds 
+                    ? new Date(user.submittedAt._seconds * 1000).toLocaleDateString() 
+                    : 'Unknown';
+                
+                const petCount = user.pets ? user.pets.length : 0;
+                const petSummary = petCount > 0 
+                    ? `${petCount} pet${petCount !== 1 ? 's' : ''}` 
+                    : '<span style="color:#cbd5e0">None</span>';
+
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</strong></td>
+                        <td>${escapeHtml(user.email)}</td>
+                        <td><a href="tel:${escapeHtml(user.phone)}" style="color:inherit;text-decoration:none">${escapeHtml(user.phone || '—')}</a></td>
+                        <td>${petSummary}</td>
+                        <td>${submittedDate}</td>
+                        <td>
+                            <button class="action-btn" onclick="openUserModal(${index})">View / Edit</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function openUserModal(index) {
+            currentUserIndex = index;
+            isEditMode = false;
+            renderModalBody();
+            document.getElementById('user-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function renderModalBody() {
+            const user = allUsers[currentUserIndex];
+            if (!user) return;
+
+            const modalTitle = document.getElementById('modal-user-name');
+            const modalBody = document.getElementById('modal-body-content');
+            const modalFooter = document.querySelector('.modal-footer');
+
+            modalTitle.textContent = isEditMode 
+                ? `Editing: ${user.firstName} ${user.lastName}`
+                : `${user.firstName} ${user.lastName}`;
+
+            if (!isEditMode) {
+                // VIEW MODE
+                const addressStr = user.address 
+                    ? `${user.address.street || ''} ${user.address.apt ? '#' + user.address.apt : ''}, ${user.address.city || ''}, ${user.address.state || ''} ${user.address.zip || ''}`
+                    : 'No address provided';
+
+                let petsHtml = '';
+                if (user.pets && user.pets.length > 0) {
+                    petsHtml = `<div class="pet-grid">` + user.pets.map(pet => `
+                        <div class="pet-detail-card">
+                            <div class="pet-detail-header">
+                                <span>${escapeHtml(pet.name)}</span>
+                                <span style="font-weight:normal; font-size:0.85rem; background:#f0e6fa; padding:0.1rem 0.4rem; border-radius:4px;">${escapeHtml(pet.type)}</span>
+                            </div>
+                            <div style="font-size:0.9rem; color:#4a5568;">
+                                <div><strong>Breed:</strong> ${escapeHtml(pet.breed || '—')}</div>
+                                <div style="margin-top:0.25rem;">${escapeHtml(pet.description || '')}</div>
+                                ${pet.medication ? `<div style="margin-top:0.5rem; color:#e53e3e; font-weight:500;">💊 ${escapeHtml(pet.medication)}</div>` : ''}
+                                ${pet.careComments ? `<div style="margin-top:0.5rem; font-style:italic; font-size:0.85rem;">"${escapeHtml(pet.careComments)}"</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('') + `</div>`;
+                } else {
+                    petsHtml = '<p style="color:#718096; font-style:italic;">No pets listed.</p>';
+                }
+
+                modalBody.innerHTML = `
+                    <div class="detail-group">
+                        <div class="detail-label">Contact Info</div>
+                        <div class="detail-value">
+                            <div><strong>Email:</strong> <a href="mailto:${escapeHtml(user.email)}">${escapeHtml(user.email)}</a></div>
+                            <div style="margin-top:0.5rem;"><strong>Phone:</strong> <a href="tel:${escapeHtml(user.phone)}">${escapeHtml(user.phone)}</a></div>
+                        </div>
+                    </div>
+
+                    <div class="detail-group">
+                        <div class="detail-label">Address</div>
+                        <div class="detail-value">${escapeHtml(addressStr)}</div>
+                    </div>
+
+                    <div class="detail-group">
+                        <div class="detail-label">Pets</div>
+                        ${petsHtml}
+                    </div>
+
+                    <div class="detail-group">
+                        <div class="detail-label">Additional Notes</div>
+                        <div class="detail-value" style="font-style:italic;">
+                            ${user.additionalComments ? `"${escapeHtml(user.additionalComments)}"` : 'None'}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-group">
+                        <div class="detail-label">System Info</div>
+                        <div style="font-size:0.85rem; color:#718096;">
+                            User ID: ${user.id}<br>
+                            Discount Code: ${escapeHtml(user.discountCode || 'None')}
+                        </div>
+                    </div>
+                `;
+
+                modalFooter.innerHTML = `
+                    <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Close</button>
+                    <button class="modal-btn modal-btn-primary" onclick="toggleEditMode()">Edit Profile</button>
+                `;
+            } else {
+                // EDIT MODE
+                const address = user.address || {};
+                
+                let petsHtml = '';
+                if (user.pets && user.pets.length > 0) {
+                    petsHtml = user.pets.map((pet, i) => `
+                        <div class="pet-detail-card" style="margin-bottom:1rem;">
+                            <div style="margin-bottom:0.5rem; font-weight:bold; color:#663399;">Pet #${i+1}</div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                                <input type="text" class="edit-input" id="pet-name-${i}" value="${escapeHtml(pet.name)}" placeholder="Pet Name">
+                                <input type="text" class="edit-input" id="pet-type-${i}" value="${escapeHtml(pet.type)}" placeholder="Type (Dog, Cat...)">
+                            </div>
+                            <input type="text" class="edit-input" id="pet-breed-${i}" value="${escapeHtml(pet.breed)}" placeholder="Breed" style="margin-bottom:0.5rem; width:100%;">
+                            <textarea class="edit-input" id="pet-desc-${i}" placeholder="Description" rows="2" style="width:100%; margin-bottom:0.5rem;">${escapeHtml(pet.description)}</textarea>
+                            <input type="text" class="edit-input" id="pet-meds-${i}" value="${escapeHtml(pet.medication)}" placeholder="Medications" style="margin-bottom:0.5rem; width:100%;">
+                            <textarea class="edit-input" id="pet-care-${i}" placeholder="Care Comments" rows="2" style="width:100%;">${escapeHtml(pet.careComments)}</textarea>
+                        </div>
+                    `).join('');
+                } else {
+                    petsHtml = '<p>No pets to edit.</p>';
+                }
+
+                modalBody.innerHTML = `
+                    <style>
+                        .edit-input {
+                            width: 100%;
+                            padding: 0.5rem;
+                            border: 1px solid #cbd5e0;
+                            border-radius: 4px;
+                            font-family: inherit;
+                            box-sizing: border-box;
+                        }
+                        .edit-row {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 1rem;
+                            margin-bottom: 1rem;
+                        }
+                    </style>
+                    <div class="detail-group">
+                        <div class="detail-label">Personal Info</div>
+                        <div class="edit-row">
+                            <div>
+                                <label style="font-size:0.8rem;">First Name</label>
+                                <input type="text" class="edit-input" id="edit-fname" value="${escapeHtml(user.firstName)}">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem;">Last Name</label>
+                                <input type="text" class="edit-input" id="edit-lname" value="${escapeHtml(user.lastName)}">
+                            </div>
+                        </div>
+                        <div class="edit-row">
+                            <div>
+                                <label style="font-size:0.8rem;">Phone</label>
+                                <input type="tel" class="edit-input" id="edit-phone" value="${escapeHtml(user.phone)}">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem;">Discount Code</label>
+                                <input type="text" class="edit-input" id="edit-discount" value="${escapeHtml(user.discountCode)}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-group">
+                        <div class="detail-label">Address</div>
+                        <div style="margin-bottom:0.5rem;">
+                            <input type="text" class="edit-input" id="edit-street" value="${escapeHtml(address.street)}" placeholder="Street Address">
+                        </div>
+                        <div class="edit-row">
+                            <input type="text" class="edit-input" id="edit-apt" value="${escapeHtml(address.apt)}" placeholder="Apt/Unit">
+                            <input type="text" class="edit-input" id="edit-city" value="${escapeHtml(address.city)}" placeholder="City">
+                        </div>
+                        <div class="edit-row">
+                            <input type="text" class="edit-input" id="edit-state" value="${escapeHtml(address.state)}" placeholder="State">
+                            <input type="text" class="edit-input" id="edit-zip" value="${escapeHtml(address.zip)}" placeholder="Zip Code">
+                        </div>
+                    </div>
+
+                    <div class="detail-group">
+                        <div class="detail-label">Pets (Edit Existing)</div>
+                        ${petsHtml}
+                    </div>
+
+                    <div class="detail-group">
+                        <div class="detail-label">Additional Notes</div>
+                        <textarea class="edit-input" id="edit-notes" rows="3">${escapeHtml(user.additionalComments)}</textarea>
+                    </div>
+                `;
+
+                modalFooter.innerHTML = `
+                    <button class="modal-btn modal-btn-secondary" onclick="toggleEditMode()">Cancel</button>
+                    <button class="modal-btn modal-btn-primary" onclick="saveChanges()">Save Changes</button>
+                `;
+            }
+        }
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            renderModalBody();
+        }
+
+        async function saveChanges() {
+            const user = allUsers[currentUserIndex];
+            if (!user) return;
+
+            const saveBtn = document.querySelector('.modal-btn-primary');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+
+            // Gather data
+            const updatedData = {
+                firstName: document.getElementById('edit-fname').value,
+                lastName: document.getElementById('edit-lname').value,
+                phone: document.getElementById('edit-phone').value,
+                discountCode: document.getElementById('edit-discount').value,
+                additionalComments: document.getElementById('edit-notes').value,
+                address: {
+                    street: document.getElementById('edit-street').value,
+                    apt: document.getElementById('edit-apt').value,
+                    city: document.getElementById('edit-city').value,
+                    state: document.getElementById('edit-state').value,
+                    zip: document.getElementById('edit-zip').value
+                }
+            };
+
+            // Gather pets
+            if (user.pets && user.pets.length > 0) {
+                updatedData.pets = user.pets.map((oldPet, i) => ({
+                    name: document.getElementById(`pet-name-${i}`).value,
+                    type: document.getElementById(`pet-type-${i}`).value,
+                    breed: document.getElementById(`pet-breed-${i}`).value,
+                    description: document.getElementById(`pet-desc-${i}`).value,
+                    medication: document.getElementById(`pet-meds-${i}`).value,
+                    careComments: document.getElementById(`pet-care-${i}`).value
+                }));
+            } else {
+                updatedData.pets = [];
+            }
+
+            try {
+                const adminUpdateUserProfile = firebase.functions().httpsCallable('adminUpdateUserProfile');
+                await adminUpdateUserProfile({
+                    targetUid: user.id,
+                    updatedData: updatedData
+                });
+
+                // Update local data
+                Object.assign(user, updatedData);
+                
+                // Exit edit mode
+                isEditMode = false;
+                renderModalBody();
+                
+                // Refresh list view (in case name changed)
+                renderUsers(allUsers);
+
+                alert('User profile updated successfully!');
+
+            } catch (error) {
+                console.error('Update failed:', error);
+                alert('Failed to update profile: ' + error.message);
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('user-modal').style.display = 'none';
+            document.body.style.overflow = '';
+            isEditMode = false; // Reset on close
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('user-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'user-modal') {
+                closeModal();
+            }
+        });
+
+        function escapeHtml(text) {
+            if (!text && text !== 0) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

@@ -24,355 +24,7 @@
     <script src="script.js" defer></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
-  </head>
-  <body>
-    <div id="header-container"></div>
-    
-    <!-- Success Modal -->
-    <div id="success-modal" class="modal-overlay" style="display: none;">
-      <div class="modal-content">
-        <div class="modal-icon">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <h2 class="modal-title">Thank You!</h2>
-        <p class="modal-message">Your information has been submitted successfully. We will be in touch soon.</p>
-        <button id="modal-ok-btn" class="modal-btn">OK</button>
-      </div>
-    </div>
-    
-    <div id="first-time-form">
-        <h1>Welcome to Amanda's Pet Services!</h1>
-        <p>To get started, fill out the information below. This will help me provide the best care for your pets.</p>
-        
-        <form id="user-info-form">
-            <!-- Required Contact Information -->
-            <section class="form-section">
-                <h2>Contact Information <span class="required-indicator">*Required</span></h2>
-                
-                <div class="form-group">
-                    <label for="first-name">First Name: <span class="required">*</span></label>
-                    <input type="text" id="first-name" name="first-name" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="last-name">Last Name: <span class="required">*</span></label>
-                    <input type="text" id="last-name" name="last-name" required>
-                </div>
-
-                <div class="form-row form-row-two">
-                    <div class="form-group">
-                        <label for="email">Email Address: <span class="required">*</span></label>
-                        <input type="email" id="email" name="email" required>
-                        <div id="email-warning" class="email-warning" style="display: none;">
-                            This email address has already been used. Try a different email or contact Amanda so we can update your profile manually.
-                        </div>
-                    </div>
-
-                    <div class="form-group special-code-group">
-                        <label for="discount-code">Special Code <span class="optional-indicator">(Optional)</span></label>
-                        <input type="text" id="discount-code" name="discount-code" placeholder="Enter your special code">
-                        <div class="field-hint">Have a promo or referral code? Drop it here.</div>
-                        <div id="discount-warning" class="discount-warning" style="display: none;">
-                            No special code applied. Check that the code you entered is correct.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="phone">Phone Number: <span class="required">*</span></label>
-                    <input type="tel" id="phone" name="phone" required>
-                </div>
-            </section>
-
-            <!-- Required Address Information -->
-            <section class="form-section">
-                <h2>Address <span class="required-indicator">*Required</span></h2>
-                
-                <div class="form-group">
-                    <label for="street-address">Street Address: <span class="required">*</span></label>
-                    <input type="text" id="street-address" name="street-address" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="apt-suite">Apartment/Suite (Optional):</label>
-                    <input type="text" id="apt-suite" name="apt-suite">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="city">City: <span class="required">*</span></label>
-                        <input type="text" id="city" name="city" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="state">State: <span class="required">*</span></label>
-                        <input type="text" id="state" name="state" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="zip">ZIP Code: <span class="required">*</span></label>
-                        <input type="text" id="zip" name="zip" required>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Optional Pet Information -->
-            <section class="form-section">
-                <h2>Pet Information <span class="optional-indicator">(Optional)</span></h2>
-                <p class="section-description">Add information about your pets below. You can add multiple pets if needed.</p>
-                
-                <div id="pets-container"></div>
-                
-                <button type="button" class="nav-btn add-pet-btn" onclick="addPetSection()">
-                    <i class="fas fa-plus"></i> Add Pet
-                </button>
-            </section>
-
-            <!-- Optional Additional Comments -->
-            <section class="form-section">
-                <h2>Additional Comments <span class="optional-indicator">(Optional)</span></h2>
-                
-                <div class="form-group">
-                    <label for="additional-comments">Is there anything else you'd like me to know?</label>
-                    <textarea id="additional-comments" name="additional-comments" rows="5" placeholder="Share any additional information, special requests, or concerns..."></textarea>
-                </div>
-            </section>
-
-            <button type="submit" class="nav-btn submit-btn">Submit Information</button>
-        </form>
-    </div>
-
-    <script>
-        let petCount = 0;
-
-        function addPetSection() {
-            petCount++;
-            const container = document.getElementById('pets-container');
-            
-            const petSection = document.createElement('div');
-            petSection.className = 'pet-section';
-            petSection.id = `pet-${petCount}`;
-            
-            petSection.innerHTML = `
-                <div class="pet-header">
-                    <h3>Pet #${petCount}</h3>
-                    <button type="button" class="remove-pet-btn" onclick="removePetSection(${petCount})">
-                        <i class="fas fa-times"></i> Remove
-                    </button>
-                </div>
-
-                <div class="form-group">
-                    <label for="pet-name-${petCount}">Pet Name:</label>
-                    <input type="text" id="pet-name-${petCount}" name="pet-name-${petCount}">
-                </div>
-
-                <div class="form-group">
-                    <label for="pet-type-${petCount}">Pet Type:</label>
-                    <select id="pet-type-${petCount}" name="pet-type-${petCount}">
-                        <option value="">Select...</option>
-                        <option value="dog">Dog</option>
-                        <option value="cat">Cat</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="pet-breed-${petCount}">Breed:</label>
-                    <input type="text" id="pet-breed-${petCount}" name="pet-breed-${petCount}" placeholder="e.g., Golden Retriever, Mixed Breed">
-                </div>
-
-                <div class="form-group">
-                    <label for="pet-description-${petCount}">Description:</label>
-                    <textarea id="pet-description-${petCount}" name="pet-description-${petCount}" rows="3" placeholder="Age, weight, personality traits, energy level, etc."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="pet-medication-${petCount}">Medication Information:</label>
-                    <textarea id="pet-medication-${petCount}" name="pet-medication-${petCount}" rows="3" placeholder="List any medications, dosages, and administration instructions..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="pet-care-comments-${petCount}">Care Comments:</label>
-                    <textarea id="pet-care-comments-${petCount}" name="pet-care-comments-${petCount}" rows="3" placeholder="Special care instructions, behavioral notes, likes/dislikes, feeding schedule, etc."></textarea>
-                </div>
-            `;
-            
-            container.appendChild(petSection);
-        }
-
-        function removePetSection(petId) {
-            const petSection = document.getElementById(`pet-${petId}`);
-            if (petSection) {
-                petSection.remove();
-            }
-        }
-
-        // Firebase Functions - secure backend submission
-        async function submitToBackend(formData) {
-            try {
-                // Call Firebase Cloud Function
-                const submitForm = firebase.functions().httpsCallable('submitForm');
-                const result = await submitForm(formData);
-                return result.data;
-            } catch (error) {
-                console.error('Backend submission error:', error);
-                console.error('Error code:', error.code);
-                console.error('Error message:', error.message);
-                console.error('Error details:', error.details);
-                throw error;
-            }
-        }
-
-        // Handle success modal close - redirect to services page
-        document.getElementById('modal-ok-btn').addEventListener('click', function() {
-            window.location.href = 'index.html';
-        });
-
-        // Close modal when clicking outside of it - redirect to services page
-        document.getElementById('success-modal').addEventListener('click', function(e) {
-            if (e.target.id === 'success-modal') {
-                window.location.href = 'index.html';
-            }
-        });
-
-        // Clear email warning when user modifies email field
-        document.getElementById('email').addEventListener('input', function() {
-            const emailWarning = document.getElementById('email-warning');
-            if (emailWarning) {
-                emailWarning.style.display = 'none';
-            }
-        });
-
-        // Handle form submission
-        document.getElementById('user-info-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitButton = this.querySelector('.submit-btn');
-            const originalButtonText = submitButton.textContent;
-            submitButton.disabled = true;
-            submitButton.textContent = 'Submitting...';
-            
-            // Collect form data
-            const formData = {
-                submittedAt: new Date().toISOString(),
-                firstName: document.getElementById('first-name').value,
-                lastName: document.getElementById('last-name').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                address: {
-                    street: document.getElementById('street-address').value,
-                    apt: document.getElementById('apt-suite').value,
-                    city: document.getElementById('city').value,
-                    state: document.getElementById('state').value,
-                    zip: document.getElementById('zip').value
-                },
-                pets: [],
-                additionalComments: document.getElementById('additional-comments').value,
-                discountCode: document.getElementById('discount-code').value.trim()
-            };
-
-            // Collect pet information
-            for (let i = 1; i <= petCount; i++) {
-                const petNameInput = document.getElementById(`pet-name-${i}`);
-                if (petNameInput && petNameInput.value) {
-                    formData.pets.push({
-                        name: petNameInput.value,
-                        type: document.getElementById(`pet-type-${i}`).value,
-                        breed: document.getElementById(`pet-breed-${i}`).value,
-                        description: document.getElementById(`pet-description-${i}`).value,
-                        medication: document.getElementById(`pet-medication-${i}`).value,
-                        careComments: document.getElementById(`pet-care-comments-${i}`).value
-                    });
-                }
-            }
-
-            console.log('Form Data:', formData);
-            
-            try {
-                // Submit to secure backend
-                const result = await submitToBackend(formData);
-                
-                // Show success modal
-                document.getElementById('success-modal').style.display = 'flex';
-                
-                // Reset form
-                this.reset();
-                document.getElementById('pets-container').innerHTML = '';
-                petCount = 0;
-                
-                // Hide special code warning on successful submission
-                const discountWarning = document.getElementById('discount-warning');
-                if (discountWarning) {
-                    discountWarning.style.display = 'none';
-                }
-            } catch (error) {
-                console.log('Caught error:', error);
-                console.log('Error code:', error.code);
-                console.log('Error message:', error.message);
-                
-                let errorMessage = 'There was an error submitting your form. Please try again or contact us directly.';
-                
-                // Check if email already exists
-                if (error.code === 'functions/already-exists') {
-                    // Hide special code warning if shown
-                    const discountWarning = document.getElementById('discount-warning');
-                    if (discountWarning) {
-                        discountWarning.style.display = 'none';
-                    }
-                    
-                    // Show email warning
-                    const emailWarning = document.getElementById('email-warning');
-                    if (emailWarning) {
-                        emailWarning.style.display = 'block';
-                    }
-                    document.getElementById('email').focus();
-                    
-                    // Scroll to email field
-                    document.getElementById('email').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
-                    submitButton.disabled = false;
-                    submitButton.textContent = originalButtonText;
-                    return; // Don't show generic error
-                }
-                
-                // Check if it's a special code validation error
-                if (error.code === 'functions/invalid-argument' && error.message && error.message.includes('discount')) {
-                    // Show special code warning
-                    const discountWarning = document.getElementById('discount-warning');
-                    if (discountWarning) {
-                        discountWarning.style.display = 'block';
-                    }
-                    document.getElementById('discount-code').value = '';
-                    document.getElementById('discount-code').focus();
-                    
-                    submitButton.disabled = false;
-                    submitButton.textContent = originalButtonText;
-                    return; // Don't show generic error
-                }
-                
-                // Provide more specific error messages
-                if (error.code === 'failed-precondition') {
-                    errorMessage = 'Configuration error: ' + (error.message || 'Dropbox not configured');
-                } else if (error.code === 'unauthenticated') {
-                    errorMessage = 'Authentication error. Please refresh the page and try again.';
-                } else if (error.code === 'internal') {
-                    errorMessage = 'Server error: ' + (error.message || 'Unknown error');
-                } else if (error.message) {
-                    errorMessage += '\n\nDetails: ' + error.message;
-                }
-                
-                // DEBUG: Show full error temporarily
-                errorMessage += '\n\nError Code: ' + error.code;
-                
-                alert(errorMessage);
-                console.error('Submission error:', error);
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = originalButtonText;
-            }
-        });
-    </script>
-
-    <style>
+      <style>
         #first-time-form {
             max-width: 800px;
             margin: 2rem auto;
@@ -705,5 +357,361 @@
             transform: translateY(0);
         }
     </style>
+</head>
+  <body>
+    <div id="header-container"></div>
+    
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h2 class="modal-title">Thank You!</h2>
+        <p class="modal-message">Your information has been submitted successfully. We will be in touch soon.</p>
+        <button id="modal-ok-btn" class="modal-btn">OK</button>
+      </div>
     </div>
+    
+    <div id="first-time-form">
+        <h1>Welcome to Amanda's Pet Services!</h1>
+        <p>To get started, fill out the information below. This will help me provide the best care for your pets.</p>
+        
+        <form id="user-info-form">
+            <!-- Required Contact Information -->
+            <section class="form-section">
+                <h2>Contact Information <span class="required-indicator">*Required</span></h2>
+                
+                <div class="form-group">
+                    <label for="first-name">First Name: <span class="required">*</span></label>
+                    <input type="text" id="first-name" name="first-name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="last-name">Last Name: <span class="required">*</span></label>
+                    <input type="text" id="last-name" name="last-name" required>
+                </div>
+
+                <div class="form-row form-row-two">
+                    <div class="form-group">
+                        <label for="email">Email Address: <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required>
+                        <div id="email-warning" class="email-warning" style="display: none;">
+                            This email address has already been used. Try a different email or contact Amanda so we can update your profile manually.
+                        </div>
+                    </div>
+
+                    <div class="form-group special-code-group">
+                        <label for="discount-code">Special Code <span class="optional-indicator">(Optional)</span></label>
+                        <input type="text" id="discount-code" name="discount-code" placeholder="Enter your special code">
+                        <div class="field-hint">Have a promo or referral code? Drop it here.</div>
+                        <div id="discount-warning" class="discount-warning" style="display: none;">
+                            No special code applied. Check that the code you entered is correct.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number: <span class="required">*</span></label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+            </section>
+
+            <!-- Required Address Information -->
+            <section class="form-section">
+                <h2>Address <span class="required-indicator">*Required</span></h2>
+                
+                <div class="form-group">
+                    <label for="street-address">Street Address: <span class="required">*</span></label>
+                    <input type="text" id="street-address" name="street-address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="apt-suite">Apartment/Suite (Optional):</label>
+                    <input type="text" id="apt-suite" name="apt-suite">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City: <span class="required">*</span></label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="state">State: <span class="required">*</span></label>
+                        <input type="text" id="state" name="state" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="zip">ZIP Code: <span class="required">*</span></label>
+                        <input type="text" id="zip" name="zip" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Optional Pet Information -->
+            <section class="form-section">
+                <h2>Pet Information <span class="optional-indicator">(Optional)</span></h2>
+                <p class="section-description">Add information about your pets below. You can add multiple pets if needed.</p>
+                
+                <div id="pets-container"></div>
+                
+                <button type="button" class="nav-btn add-pet-btn" onclick="addPetSection()">
+                    <i class="fas fa-plus"></i> Add Pet
+                </button>
+            </section>
+
+            <!-- Optional Additional Comments -->
+            <section class="form-section">
+                <h2>Additional Comments <span class="optional-indicator">(Optional)</span></h2>
+                
+                <div class="form-group">
+                    <label for="additional-comments">Is there anything else you'd like me to know?</label>
+                    <textarea id="additional-comments" name="additional-comments" rows="5" placeholder="Share any additional information, special requests, or concerns..."></textarea>
+                </div>
+            </section>
+
+            <button type="submit" class="nav-btn submit-btn">Submit Information</button>
+        </form>
+    </div>
+
+    <script>
+        let petCount = 0;
+
+        function addPetSection() {
+            petCount++;
+            const container = document.getElementById('pets-container');
+            
+            const petSection = document.createElement('div');
+            petSection.className = 'pet-section';
+            petSection.id = `pet-${petCount}`;
+            
+            petSection.innerHTML = `
+                <div class="pet-header">
+                    <h3>Pet #${petCount}</h3>
+                    <button type="button" class="remove-pet-btn" onclick="removePetSection(${petCount})">
+                        <i class="fas fa-times"></i> Remove
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-name-${petCount}">Pet Name:</label>
+                    <input type="text" id="pet-name-${petCount}" name="pet-name-${petCount}">
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-type-${petCount}">Pet Type:</label>
+                    <select id="pet-type-${petCount}" name="pet-type-${petCount}">
+                        <option value="">Select...</option>
+                        <option value="dog">Dog</option>
+                        <option value="cat">Cat</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-breed-${petCount}">Breed:</label>
+                    <input type="text" id="pet-breed-${petCount}" name="pet-breed-${petCount}" placeholder="e.g., Golden Retriever, Mixed Breed">
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-description-${petCount}">Description:</label>
+                    <textarea id="pet-description-${petCount}" name="pet-description-${petCount}" rows="3" placeholder="Age, weight, personality traits, energy level, etc."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-medication-${petCount}">Medication Information:</label>
+                    <textarea id="pet-medication-${petCount}" name="pet-medication-${petCount}" rows="3" placeholder="List any medications, dosages, and administration instructions..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="pet-care-comments-${petCount}">Care Comments:</label>
+                    <textarea id="pet-care-comments-${petCount}" name="pet-care-comments-${petCount}" rows="3" placeholder="Special care instructions, behavioral notes, likes/dislikes, feeding schedule, etc."></textarea>
+                </div>
+            `;
+            
+            container.appendChild(petSection);
+        }
+
+        function removePetSection(petId) {
+            const petSection = document.getElementById(`pet-${petId}`);
+            if (petSection) {
+                petSection.remove();
+            }
+        }
+
+        // Firebase Functions - secure backend submission
+        async function submitToBackend(formData) {
+            try {
+                // Ensure user is signed in (anonymously if needed)
+                if (!firebase.auth().currentUser) {
+                    console.log('Signing in anonymously...');
+                    await firebase.auth().signInAnonymously();
+                }
+
+                // Call Firebase Cloud Function
+                const submitForm = firebase.functions().httpsCallable('submitForm');
+                const result = await submitForm(formData);
+                return result.data;
+            } catch (error) {
+                console.error('Backend submission error:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                console.error('Error details:', error.details);
+                throw error;
+            }
+        }
+
+        // Handle success modal close - redirect to services page
+        document.getElementById('modal-ok-btn').addEventListener('click', function() {
+            window.location.href = 'index.html';
+        });
+
+        // Close modal when clicking outside of it - redirect to services page
+        document.getElementById('success-modal').addEventListener('click', function(e) {
+            if (e.target.id === 'success-modal') {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Clear email warning when user modifies email field
+        document.getElementById('email').addEventListener('input', function() {
+            const emailWarning = document.getElementById('email-warning');
+            if (emailWarning) {
+                emailWarning.style.display = 'none';
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('user-info-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitButton = this.querySelector('.submit-btn');
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+            
+            // Collect form data
+            const formData = {
+                submittedAt: new Date().toISOString(),
+                firstName: document.getElementById('first-name').value,
+                lastName: document.getElementById('last-name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: {
+                    street: document.getElementById('street-address').value,
+                    apt: document.getElementById('apt-suite').value,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value,
+                    zip: document.getElementById('zip').value
+                },
+                pets: [],
+                additionalComments: document.getElementById('additional-comments').value,
+                discountCode: document.getElementById('discount-code').value.trim()
+            };
+
+            // Collect pet information
+            for (let i = 1; i <= petCount; i++) {
+                const petNameInput = document.getElementById(`pet-name-${i}`);
+                if (petNameInput && petNameInput.value) {
+                    formData.pets.push({
+                        name: petNameInput.value,
+                        type: document.getElementById(`pet-type-${i}`).value,
+                        breed: document.getElementById(`pet-breed-${i}`).value,
+                        description: document.getElementById(`pet-description-${i}`).value,
+                        medication: document.getElementById(`pet-medication-${i}`).value,
+                        careComments: document.getElementById(`pet-care-comments-${i}`).value
+                    });
+                }
+            }
+
+            console.log('Form Data:', formData);
+            
+            try {
+                // Submit to secure backend
+                const result = await submitToBackend(formData);
+                
+                // Show success modal
+                document.getElementById('success-modal').style.display = 'flex';
+                
+                // Reset form
+                this.reset();
+                document.getElementById('pets-container').innerHTML = '';
+                petCount = 0;
+                
+                // Hide special code warning on successful submission
+                const discountWarning = document.getElementById('discount-warning');
+                if (discountWarning) {
+                    discountWarning.style.display = 'none';
+                }
+            } catch (error) {
+                console.log('Caught error:', error);
+                console.log('Error code:', error.code);
+                console.log('Error message:', error.message);
+                
+                let errorMessage = 'There was an error submitting your form. Please try again or contact us directly.';
+                
+                // Check if email already exists
+                if (error.code === 'functions/already-exists') {
+                    // Hide special code warning if shown
+                    const discountWarning = document.getElementById('discount-warning');
+                    if (discountWarning) {
+                        discountWarning.style.display = 'none';
+                    }
+                    
+                    // Show email warning
+                    const emailWarning = document.getElementById('email-warning');
+                    if (emailWarning) {
+                        emailWarning.style.display = 'block';
+                    }
+                    document.getElementById('email').focus();
+                    
+                    // Scroll to email field
+                    document.getElementById('email').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                    return; // Don't show generic error
+                }
+                
+                // Check if it's a special code validation error
+                if (error.code === 'functions/invalid-argument' && error.message && error.message.includes('discount')) {
+                    // Show special code warning
+                    const discountWarning = document.getElementById('discount-warning');
+                    if (discountWarning) {
+                        discountWarning.style.display = 'block';
+                    }
+                    document.getElementById('discount-code').value = '';
+                    document.getElementById('discount-code').focus();
+                    
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                    return; // Don't show generic error
+                }
+                
+                // Provide more specific error messages
+                if (error.code === 'failed-precondition') {
+                    errorMessage = 'Configuration error: ' + (error.message || 'Dropbox not configured');
+                } else if (error.code === 'unauthenticated') {
+                    errorMessage = 'Authentication error. Please refresh the page and try again.';
+                } else if (error.code === 'internal' && (error.message.includes('NOT_FOUND') || error.message.includes('Database configuration error'))) {
+                    errorMessage = 'System Error: The database has not been set up yet. Please contact the site administrator.';
+                } else if (error.code === 'internal') {
+                    errorMessage = 'Server error: ' + (error.message || 'Unknown error');
+                } else if (error.message) {
+                    errorMessage += '\n\nDetails: ' + error.message;
+                }
+                
+                // DEBUG: Show full error temporarily
+                errorMessage += '\n\nError Code: ' + error.code;
+                
+                alert(errorMessage);
+                console.error('Submission error:', error);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+            }
+        });
+    </script>
+    <div id="footer-container"></div>
   </body>
+</html>
