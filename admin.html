@@ -271,6 +271,9 @@
 
         /* Mobile Responsive Styles */
         @media screen and (max-width: 768px) {
+            .admin-container {
+                padding: 0 1rem;
+            }
             .users-table-container {
                 background: transparent;
                 box-shadow: none;
@@ -278,7 +281,8 @@
             }
             .users-table {
                 display: block;
-                width: 50%;
+                width: 100%;
+                min-width: 0; /* Override desktop min-width */
                 margin: 0 auto;
                 box-sizing: border-box;
             }
@@ -305,6 +309,8 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                flex-wrap: wrap;
+                gap: 0.5rem;
             }
             .users-table td:before {
                 content: attr(data-label);
@@ -313,6 +319,7 @@
                 font-size: 0.85rem;
                 text-transform: uppercase;
                 letter-spacing: 0.05em;
+                flex-shrink: 0;
             }
             
             /* Name styling */
@@ -345,6 +352,8 @@
                 text-align: center;
                 border-radius: 8px;
                 margin-top: 0.5rem;
+                box-sizing: border-box;
+                white-space: nowrap;
             }
             .action-btn:hover {
                 background: #54297a;
