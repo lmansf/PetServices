@@ -26,9 +26,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
       <style>
         #first-time-form {
-            max-width: 800px;
+            max-width: 1100px;
             margin: 2rem auto;
             padding: 0 1rem;
+            box-sizing: border-box;
         }
 
         #first-time-form > h1 {
@@ -402,11 +403,11 @@
                     </div>
 
                     <div class="form-group special-code-group">
-                        <label for="discount-code">Special Code <span class="optional-indicator">(Optional)</span></label>
-                        <input type="text" id="discount-code" name="discount-code" placeholder="Enter your special code">
-                        <div class="field-hint">Have a promo or referral code? Drop it here.</div>
+                        <label for="discount-code"><span class="promotion-icon">👑</span> Promocode <span class="optional-indicator">(Optional)</span></label>
+                        <input type="text" id="discount-code" name="discount-code" placeholder="PROMO2025">
+                        <div class="field-hint">Unlock referral or VIP perks instantly.</div>
                         <div id="discount-warning" class="discount-warning" style="display: none;">
-                            No special code applied. Check that the code you entered is correct.
+                            No promocode applied. Check that the code you entered is correct.
                         </div>
                     </div>
                 </div>
@@ -710,6 +711,37 @@
                 submitButton.disabled = false;
                 submitButton.textContent = originalButtonText;
             }
+        });
+    </script>
+    <script>
+        // Use simple, descriptive placeholders for first-time sign-up fields
+        document.addEventListener('DOMContentLoaded', () => {
+            const labels = {
+                firstName: 'First name',
+                lastName: 'Last name',
+                email: 'Email address',
+                phone: 'Phone number',
+                street: 'Street address',
+                city: 'City',
+                state: 'State',
+                zip: 'ZIP',
+                promo: 'Promocode'
+            };
+
+            const set = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.placeholder = value;
+            };
+
+            set('first-name', labels.firstName);
+            set('last-name', labels.lastName);
+            set('email', labels.email);
+            set('phone', labels.phone);
+            set('street-address', labels.street);
+            set('city', labels.city);
+            set('state', labels.state);
+            set('zip', labels.zip);
+            set('discount-code', labels.promo);
         });
     </script>
     <div id="footer-container"></div>

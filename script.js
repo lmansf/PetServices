@@ -215,9 +215,9 @@ function scheduleIdleLazyLoad() {
   idle(() => loadLazyModule('idle'));
 }
 
-function dispatchDogMomBadgeChange() {
+function dispatchPromotionBadgeChange() {
   try {
-    window.dispatchEvent(new Event('dogmom-badge-change'));
+    window.dispatchEvent(new Event('promotion-badge-change'));
   } catch (err) {
     // no-op if window unavailable
   }
@@ -231,17 +231,17 @@ function isUserSignedIn() {
   return Boolean(sessionStorage.getItem('userEmail'));
 }
 
-function hasLoyaltyBadge() {
-  const badge = sessionStorage.getItem('loyaltyBadge');
+function hasPromotionBadge() {
+  const badge = sessionStorage.getItem('promotionBadge');
   return typeof badge === 'string' && badge.toLowerCase() === 'dogmom';
 }
 
-function queueLoyaltyPricing() {
-  invokeLazy('ensureLoyaltyPricing');
+function queuePromotionPricing() {
+  invokeLazy('ensurePromotionPricing');
 }
 
 if (typeof window !== 'undefined') {
-  window.applyDogMomPricing = () => invokeLazy('applyDogMomPricing');
+  window.applyPromotionPricing = () => invokeLazy('applyPromotionPricing');
 }
 
 function updateAccountLabel(accountLabel, userEmail) {
@@ -249,9 +249,9 @@ function updateAccountLabel(accountLabel, userEmail) {
   const labelText = userEmail || 'Guest';
   accountLabel.textContent = '';
 
-  if (userEmail && hasLoyaltyBadge()) {
+  if (userEmail && hasPromotionBadge()) {
     const icon = document.createElement('span');
-    icon.className = 'loyalty-badge-icon';
+    icon.className = 'promotion-badge-icon';
     icon.textContent = '👑';
     icon.setAttribute('aria-hidden', 'true');
     accountLabel.appendChild(icon);
@@ -271,7 +271,9 @@ function applyAuthVisibility() {
 }
 
 function updateBookingActions() {
-  const guestMode = !isUserSignedIn();
+  const signedIn = isUserSignedIn();
+  const exploringGuest = sessionStorage.getItem('guestExploring') === 'true';
+
   document.querySelectorAll('.book-action').forEach((link) => {
     if (!(link instanceof HTMLAnchorElement)) return;
     if (!link.dataset.bookingHref) {
@@ -281,10 +283,20 @@ function updateBookingActions() {
     const originalHref = link.dataset.bookingHref || '';
     const ctaButton = link.querySelector('.book-today');
 
-    if (guestMode) {
-      link.href = 'profile.html';
-      link.setAttribute('aria-label', 'Complete your profile before booking');
-      if (ctaButton) ctaButton.textContent = 'Complete your profile.';
+    // If user is not signed in, handle two cases:
+    // - exploringGuest === true: go to sign-in/sign-up and show 'Sign Up to Book Today'
+    // - not exploringGuest (regular anonymous visitor): keep the previous behavior (go to profile)
+    if (!signedIn) {
+      if (exploringGuest) {
+        // Redirect guest explorers to the hosted signin page with Calendly as the next target
+        link.href = 'https://amandaspetservices-55506.web.app/signin.html?next=https%3A%2F%2Fcalendly.com%2Flmansf96%2F30min#';
+        link.setAttribute('aria-label', 'Sign up to book today');
+        if (ctaButton) ctaButton.textContent = 'Sign Up to Book Today';
+      } else {
+        link.href = 'profile.html';
+        link.setAttribute('aria-label', 'Complete your profile before booking');
+        if (ctaButton) ctaButton.textContent = 'Complete your profile.';
+      }
     } else {
       if (originalHref) {
         link.href = originalHref;
@@ -319,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
       initializeAccountNav();
       initializeMobileNav();
       applyAuthVisibility();
-      queueLoyaltyPricing();
+      queuePromotionPricing();
     };
 
     hydrateFragment({
@@ -348,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   applyAuthVisibility();
-  queueLoyaltyPricing();
+  queuePromotionPricing();
   const mainCarousel = document.getElementById('main-carousel');
   if (mainCarousel) {
     observeLazyFeature(mainCarousel, 'initMainCarousel');
@@ -494,12 +506,12 @@ function initializeAccountNav() {
     // Log Out
     menu.appendChild(createHr());
     menu.appendChild(createButton('Log out', (e) => {
-        e.preventDefault();
-        sessionStorage.removeItem('userEmail');
-        sessionStorage.removeItem('loyaltyBadge');
-        sessionStorage.removeItem('guestExploring');
-        dispatchDogMomBadgeChange();
-        window.location.href = 'index.html';
+      e.preventDefault();
+      sessionStorage.removeItem('userEmail');
+      sessionStorage.removeItem('promotionBadge');
+      sessionStorage.removeItem('guestExploring');
+      dispatchPromotionBadgeChange();
+      window.location.href = 'index.html';
     }));
 
   } else {

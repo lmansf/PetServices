@@ -130,9 +130,9 @@ exports.updateUserProfile = functions.https.onCall(async (data, context) => {
 });
 
 // --------------------------------------------------------------------------
-//  4. Apply Loyalty Passcode
+//  4. Apply Promotion / Promocode
 // --------------------------------------------------------------------------
-exports.applyLoyaltyPasscode = functions.https.onCall(async (data, context) => {
+exports.applyPromotionPasscode = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
   }
@@ -151,7 +151,7 @@ exports.applyLoyaltyPasscode = functions.https.onCall(async (data, context) => {
   try {
     await db.collection('users').doc(uid).set({
       discountCode: normalizedCode,
-      [`loyalty_${normalizedCode}`]: true,
+      [`promotion_${normalizedCode}`]: true,
       lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
 
@@ -161,6 +161,9 @@ exports.applyLoyaltyPasscode = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', 'Failed to apply code');
   }
 });
+
+// Backwards compatibility: keep old function name as an alias
+exports.applyLoyaltyPasscode = exports.applyPromotionPasscode;
 
 // --------------------------------------------------------------------------
 //  Helper: Check Admin Privileges

@@ -1,7 +1,7 @@
 // Auth.js - Client-side authentication logic
 let isSignUpMode = false;
-const LOYALTY_CODE = 'dogmom';
-const LOYALTY_BADGE_KEY = 'loyaltyBadge';
+const PROMOTION_CODE = 'dogmom';
+const PROMOTION_BADGE_KEY = 'promotionBadge';
 const GUEST_MODE_KEY = 'guestExploring';
 const LAST_PROVIDER_KEY = 'lastAuthProvider';
 const PROVIDER_LABELS = {
@@ -12,9 +12,9 @@ const PROVIDER_LABELS = {
 
 const ADMIN_EMAILS = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
 
-function notifyLoyaltyBadgeChange() {
+function notifyPromotionBadgeChange() {
     try {
-        window.dispatchEvent(new Event('dogmom-badge-change'));
+        window.dispatchEvent(new Event('promotion-badge-change'));
     } catch (err) {
         // Safe to ignore if window unavailable
     }
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             profileStatus = await syncBadgeFromProfile(email);
         } catch (err) {
-            console.warn('Unable to sync loyalty badge after provider sign-in', err);
+            console.warn('Unable to sync promotion badge after provider sign-in', err);
         }
 
         showSuccess('Signed in successfully! Redirecting...');
@@ -216,26 +216,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const setBadgeFromCode = (code) => {
         if (!code) {
-            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
-            notifyLoyaltyBadgeChange();
+            sessionStorage.removeItem(PROMOTION_BADGE_KEY);
+            notifyPromotionBadgeChange();
             return false;
         }
         const normalized = code.trim().toLowerCase();
-        const hasBadge = normalized === LOYALTY_CODE;
+        const hasBadge = normalized === PROMOTION_CODE;
         if (hasBadge) {
-            sessionStorage.setItem(LOYALTY_BADGE_KEY, 'dogMom');
+            sessionStorage.setItem(PROMOTION_BADGE_KEY, 'dogMom');
         } else {
-            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+            sessionStorage.removeItem(PROMOTION_BADGE_KEY);
         }
-        notifyLoyaltyBadgeChange();
+        notifyPromotionBadgeChange();
         return hasBadge;
     };
 
     const syncBadgeFromProfile = async (email) => {
         const defaultStatus = { exists: false, autoCreated: false };
         if (!email) {
-            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
-            notifyLoyaltyBadgeChange();
+            sessionStorage.removeItem(PROMOTION_BADGE_KEY);
+            notifyPromotionBadgeChange();
             return defaultStatus;
         }
         try {
@@ -253,20 +253,20 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.setItem('profileComplete', isComplete);
 
             const hasBadge = Object.keys(profile || {}).some(
-                key => key.toLowerCase() === LOYALTY_CODE && profile[key]
+                key => key.toLowerCase() === PROMOTION_CODE && profile[key]
             );
             if (hasBadge) {
-                sessionStorage.setItem(LOYALTY_BADGE_KEY, 'dogMom');
+                sessionStorage.setItem(PROMOTION_BADGE_KEY, 'dogMom');
             } else {
-                sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+                sessionStorage.removeItem(PROMOTION_BADGE_KEY);
             }
-            notifyLoyaltyBadgeChange();
+            notifyPromotionBadgeChange();
             return {
                 exists: !!profile,
                 autoCreated: !!profile?.providerAutoCreated
             };
         } catch (err) {
-            console.warn('Unable to sync loyalty badge', err);
+            console.warn('Unable to sync promotion badge', err);
             return defaultStatus;
         }
     };
@@ -356,8 +356,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.removeItem(GUEST_MODE_KEY);
                 sessionStorage.setItem(LAST_PROVIDER_KEY, 'password');
                 
-                const loyaltyInput = document.getElementById('discount-code');
-                setBadgeFromCode(loyaltyInput ? loyaltyInput.value : '');
+                const promoInput = document.getElementById('discount-code');
+                setBadgeFromCode(promoInput ? promoInput.value : '');
                 
                 // Show success modal
                 document.getElementById('success-modal').style.display = 'flex';
@@ -462,10 +462,10 @@ function startAnonymousSession() {
 
 function setGuestSessionAndRedirect() {
     sessionStorage.removeItem('userEmail');
-    sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+    sessionStorage.removeItem(PROMOTION_BADGE_KEY);
     sessionStorage.removeItem(LAST_PROVIDER_KEY);
     sessionStorage.setItem(GUEST_MODE_KEY, 'true');
-    notifyLoyaltyBadgeChange();
+    notifyPromotionBadgeChange();
     window.location.href = 'index.html';
 }
 
@@ -534,7 +534,7 @@ function checkAuth() {
 // Sign out function (can be called from other pages)
 function signOut() {
     sessionStorage.removeItem('userEmail');
-    sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+    sessionStorage.removeItem(PROMOTION_BADGE_KEY);
     sessionStorage.removeItem(GUEST_MODE_KEY);
     sessionStorage.removeItem(LAST_PROVIDER_KEY);
     const authInstance = getFirebaseAuthInstance();

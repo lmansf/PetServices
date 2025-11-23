@@ -53,10 +53,11 @@
         }
 
         .auth-shell {
-            width: min(1200px, 100%);
+            width: min(1300px, 100%);
             margin: 0 auto;
             display: grid;
-            grid-template-columns: minmax(280px, 420px) minmax(320px, 520px);
+            /* Wider columns on desktop so panels are less compressed */
+            grid-template-columns: minmax(340px, 560px) minmax(420px, 760px);
             gap: clamp(1.5rem, 3vw, 3rem);
             align-items: stretch;
         }
@@ -485,7 +486,7 @@
             padding: 1rem;
         }
 
-        .loyalty-icon {
+        .promotion-icon {
             margin-right: 0.25rem;
         }
 
@@ -696,10 +697,10 @@
                                 <input type="text" id="zip" name="zip" placeholder="98103">
                             </div>
                             <div class="form-group special-code-group">
-                                <label for="discount-code"><span class="loyalty-icon">👑</span> Loyalty passcode (optional)</label>
-                                <input type="text" id="discount-code" name="discount-code" placeholder="dogmom">
+                                <label for="discount-code"><span class="promotion-icon">👑</span> Promocode (optional)</label>
+                                <input type="text" id="discount-code" name="discount-code" placeholder="PROMO2025">
                                 <div class="field-hint">Unlock referral or VIP perks instantly.</div>
-                                <div id="discount-warning" class="discount-warning">No loyalty passcode applied. Double-check and try again.</div>
+                                <div id="discount-warning" class="discount-warning">No promocode applied. Double-check and try again.</div>
                             </div>
                         </div>
 
@@ -732,6 +733,36 @@
 
     <script src="auth.js"></script>
     <script>
+        // Use simple, descriptive placeholders for sign-up fields
+        document.addEventListener('DOMContentLoaded', () => {
+            const labels = {
+                firstName: 'First name',
+                lastName: 'Last name',
+                email: 'Email address',
+                phone: 'Phone number',
+                street: 'Street address',
+                city: 'City',
+                state: 'State',
+                zip: 'ZIP',
+                promo: 'Promocode'
+            };
+
+            const set = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.placeholder = value;
+            };
+
+            set('first-name', labels.firstName);
+            set('last-name', labels.lastName);
+            set('email', labels.email);
+            set('phone', labels.phone);
+            set('street-address', labels.street);
+            set('city', labels.city);
+            set('state', labels.state);
+            set('zip', labels.zip);
+            set('discount-code', labels.promo);
+        });
+
         window.petCount = 0;
 
         function addPetSection() {

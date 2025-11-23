@@ -1,6 +1,6 @@
-const DOGMOM_DISCOUNT = 5;
-let dogMomPricingWatcherId = null;
-let lastDogMomBadgeState = null;
+const PROMOTION_DISCOUNT = 5;
+let promotionPricingWatcherId = null;
+let lastPromotionBadgeState = null;
 let petCarouselInitialized = false;
 let mainCarouselInitialized = false;
 let carouselItems = [];
@@ -9,9 +9,9 @@ let mainSlideIndex = 0;
 let mainSlideInterval = null;
 const MAIN_SLIDE_DELAY = 4000; // ms
 
-function hasLoyaltyBadge() {
+function hasPromotionBadge() {
   try {
-    const badge = sessionStorage.getItem('loyaltyBadge');
+    const badge = sessionStorage.getItem('promotionBadge');
     return typeof badge === 'string' && badge.toLowerCase() === 'dogmom';
   } catch (err) {
     return false;
@@ -42,12 +42,12 @@ function createPriceLine(className, amount, unitText, decimals) {
   return line;
 }
 
-export function applyDogMomPricing() {
-  if (!hasLoyaltyBadge()) return;
+export function applyPromotionPricing() {
+  if (!hasPromotionBadge()) return;
 
   try {
     document.querySelectorAll('[data-price-base]').forEach((node) => {
-      if (node.dataset.dogmomApplied === 'true') return;
+      if (node.dataset.promotionApplied === 'true') return;
 
       const baseAttr = node.getAttribute('data-price-base');
       const basePrice = typeof baseAttr === 'string' ? parseFloat(baseAttr) : NaN;
@@ -60,41 +60,41 @@ export function applyDogMomPricing() {
 
       const unitText = node.getAttribute('data-price-unit') || '';
       const discountAttr = parseFloat(node.getAttribute('data-price-discount'));
-      const discountValue = Number.isFinite(discountAttr) ? discountAttr : DOGMOM_DISCOUNT;
+      const discountValue = Number.isFinite(discountAttr) ? discountAttr : PROMOTION_DISCOUNT;
       const discountedPrice = Math.max(0, basePrice - discountValue);
 
-      node.classList.add('dogmom-price-active');
-      node.dataset.dogmomApplied = 'true';
+      node.classList.add('promotion-price-active');
+      node.dataset.promotionApplied = 'true';
       node.innerHTML = '';
       node.appendChild(createPriceLine('price-current', discountedPrice, unitText, precision));
       node.appendChild(createPriceLine('price-original', basePrice, unitText, precision));
     });
   } catch (err) {
-    console.warn('dogMom pricing adjustment failed', err);
+    console.warn('promotion pricing adjustment failed', err);
   }
 }
 
-export function startDogMomPricingWatcher() {
-  if (dogMomPricingWatcherId || typeof window === 'undefined') return;
+export function startPromotionPricingWatcher() {
+  if (promotionPricingWatcherId || typeof window === 'undefined') return;
 
   const refreshPricing = () => {
-    const isDogMom = hasLoyaltyBadge();
-    const hasUnstyledPrice = document.querySelector('[data-price-base]:not([data-dogmom-applied="true"])');
-    if (isDogMom && (hasUnstyledPrice || lastDogMomBadgeState === false)) {
-      applyDogMomPricing();
+    const isPromo = hasPromotionBadge();
+    const hasUnstyledPrice = document.querySelector('[data-price-base]:not([data-promotion-applied="true"])');
+    if (isPromo && (hasUnstyledPrice || lastPromotionBadgeState === false)) {
+      applyPromotionPricing();
     }
-    lastDogMomBadgeState = isDogMom;
+    lastPromotionBadgeState = isPromo;
   };
 
   window.addEventListener('focus', refreshPricing, { passive: true });
-  window.addEventListener('dogmom-badge-change', refreshPricing);
-  dogMomPricingWatcherId = window.setInterval(refreshPricing, 2000);
+  window.addEventListener('promotion-badge-change', refreshPricing);
+  promotionPricingWatcherId = window.setInterval(refreshPricing, 2000);
   refreshPricing();
 }
 
-export function ensureLoyaltyPricing() {
-  applyDogMomPricing();
-  startDogMomPricingWatcher();
+export function ensurePromotionPricing() {
+  applyPromotionPricing();
+  startPromotionPricingWatcher();
 }
 
 export function initPetCarousel() {

@@ -136,9 +136,9 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        const hasDogMomBadge = () => {
+        const hasPromotionBadge = () => {
           try {
-            return (sessionStorage.getItem('loyaltyBadge') || '').toLowerCase() === 'dogmom';
+            return (sessionStorage.getItem('promotionBadge') || '').toLowerCase() === 'dogmom';
           } catch (err) {
             return false;
           }
@@ -169,10 +169,10 @@
         };
 
         const upgradePrices = () => {
-          if (!hasDogMomBadge()) return;
+          if (!hasPromotionBadge()) return;
           const defaultDiscount = 5;
           document.querySelectorAll('[data-price-base]').forEach((node) => {
-            if (node.dataset.dogmomApplied === 'true') return;
+            if (node.dataset.promotionApplied === 'true') return;
             const baseAttr = node.getAttribute('data-price-base');
             const basePrice = typeof baseAttr === 'string' ? parseFloat(baseAttr) : NaN;
             if (!Number.isFinite(basePrice)) return;
@@ -187,8 +187,8 @@
             const discountValue = Number.isFinite(discountAttr) ? discountAttr : defaultDiscount;
             const discountedPrice = Math.max(0, basePrice - discountValue);
 
-            node.classList.add('dogmom-price-active');
-            node.dataset.dogmomApplied = 'true';
+            node.classList.add('promotion-price-active');
+            node.dataset.promotionApplied = 'true';
             node.innerHTML = '';
             node.appendChild(buildLine('price-current', discountedPrice, unitText, precision));
             node.appendChild(buildLine('price-original', basePrice, unitText, precision));
@@ -197,19 +197,19 @@
 
         const runPricing = () => {
           try {
-            if (typeof window.applyDogMomPricing === 'function') {
-              window.applyDogMomPricing();
+            if (typeof window.applyPromotionPricing === 'function') {
+              window.applyPromotionPricing();
             } else {
               upgradePrices();
             }
           } catch (err) {
-            console.warn('dogMom pricing fell back to inline handler', err);
+            console.warn('promotion pricing fell back to inline handler', err);
             upgradePrices();
           }
         };
 
         runPricing();
-        window.addEventListener('dogmom-badge-change', runPricing);
+        window.addEventListener('promotion-badge-change', runPricing);
       });
     </script>
   </body>
