@@ -135,7 +135,7 @@
       document.addEventListener('DOMContentLoaded', function () {
         const hasDogMomBadge = () => {
           try {
-            return (sessionStorage.getItem('loyaltyBadge') || '').toLowerCase() === 'dogmom';
+            return (sessionStorage.getItem('loyaltyBadge') || '').toUpperCase() === 'DOGMOM';
           } catch (err) {
             return false;
           }

@@ -673,14 +673,14 @@
             }
         });
     let profileData = null; // Store profile data globally for editing
-    const LOYALTY_CODE_KEY = 'dogmom';
+    const LOYALTY_CODE_KEY = 'DOGMOM';
 
         function renderProfile(data) {
             profileData = data; // Store for editing
             const container = document.getElementById('profile-content');
             const trimmedDiscountCode = (data.discountCode || '').trim();
             const loyaltyBadge = sessionStorage.getItem('loyaltyBadge');
-            const loyaltyCodeDisplay = trimmedDiscountCode ? trimmedDiscountCode.toUpperCase() : (loyaltyBadge === 'dogMom' ? 'DOGMOM' : '');
+            const loyaltyCodeDisplay = trimmedDiscountCode ? trimmedDiscountCode.toUpperCase() : ((loyaltyBadge || '').toUpperCase() === 'DOGMOM' ? 'DOGMOM' : '');
             const hasLoyaltyCode = Boolean(loyaltyCodeDisplay);
             const loyaltyStatusText = hasLoyaltyCode ? 'VIP Loyalty Active' : 'No Loyalty Passcode Yet';
             const loyaltyMessageText = hasLoyaltyCode
@@ -1197,9 +1197,9 @@
 
         function setLocalLoyaltyBadge(code) {
             if (!code) return;
-            const normalized = code.trim().toLowerCase();
+            const normalized = code.trim().toUpperCase();
             if (normalized === LOYALTY_CODE_KEY) {
-                sessionStorage.setItem('loyaltyBadge', 'dogMom');
+                sessionStorage.setItem('loyaltyBadge', LOYALTY_CODE_KEY);
                 dispatchLoyaltyBadgeUpdate();
             }
         }

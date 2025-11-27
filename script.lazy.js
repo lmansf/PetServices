@@ -12,7 +12,7 @@ const MAIN_SLIDE_DELAY = 4000; // ms
 function hasLoyaltyBadge() {
   try {
     const badge = sessionStorage.getItem('loyaltyBadge');
-    return typeof badge === 'string' && badge.toLowerCase() === 'dogmom';
+    return typeof badge === 'string' && (badge || '').toUpperCase() === 'DOGMOM';
   } catch (err) {
     return false;
   }

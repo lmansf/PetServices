@@ -219,7 +219,7 @@ function isUserSignedIn() {
 
 function hasLoyaltyBadge() {
   const badge = sessionStorage.getItem('loyaltyBadge');
-  return typeof badge === 'string' && badge.toLowerCase() === 'dogmom';
+  return typeof badge === 'string' && (badge || '').toUpperCase() === 'DOGMOM';
 }
 
 function queueLoyaltyPricing() {

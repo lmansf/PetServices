@@ -1,6 +1,6 @@
 // Auth.js - Client-side authentication logic
 let isSignUpMode = false;
-const LOYALTY_CODE = 'dogmom';
+const LOYALTY_CODE = 'DOGMOM';
 const LOYALTY_BADGE_KEY = 'loyaltyBadge';
 const GUEST_MODE_KEY = 'guestExploring';
 const LAST_PROVIDER_KEY = 'lastAuthProvider';
@@ -214,13 +214,13 @@ document.addEventListener('DOMContentLoaded', () => {
             notifyLoyaltyBadgeChange();
             return false;
         }
-        const normalized = code.trim().toLowerCase();
-        const hasBadge = normalized === LOYALTY_CODE;
-        if (hasBadge) {
-            sessionStorage.setItem(LOYALTY_BADGE_KEY, 'dogMom');
-        } else {
-            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
-        }
+            const normalized = code.trim().toUpperCase();
+            const hasBadge = normalized === LOYALTY_CODE;
+            if (hasBadge) {
+                sessionStorage.setItem(LOYALTY_BADGE_KEY, LOYALTY_CODE);
+            } else {
+                sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+            }
         notifyLoyaltyBadgeChange();
         return hasBadge;
     };
@@ -237,10 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await profileFn({ email });
             const profile = result?.data ?? result;
             const hasBadge = Object.keys(profile || {}).some(
-                key => key.toLowerCase() === LOYALTY_CODE && profile[key]
+                key => key.toUpperCase() === LOYALTY_CODE && profile[key]
             );
             if (hasBadge) {
-                sessionStorage.setItem(LOYALTY_BADGE_KEY, 'dogMom');
+                sessionStorage.setItem(LOYALTY_BADGE_KEY, LOYALTY_CODE);
             } else {
                 sessionStorage.removeItem(LOYALTY_BADGE_KEY);
             }
