@@ -52,6 +52,9 @@ let lastGeneratedString = '';
 let tipAmount = 7.00;
 let tipSelected = '7';
 
+// Webstore service fee (automatically added when services are selected)
+const WEBSTORE_FEE = 2.00;
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
     initializeQuantityInputs();
@@ -136,12 +139,24 @@ function updateTotalsFromQuantities() {
         currentService = breakdown.map(b => `${b.qty} × ${b.name}`).join(', ');
     }
 
-    updatePaymentDetailsDisplay(total, breakdown);
+    // If there are selected services, add the webstore fee as a line item
+    if (total > 0) {
+        breakdown.push({ name: 'Webstore Fee', qty: 1, price: WEBSTORE_FEE, lineTotal: WEBSTORE_FEE });
+        total = Number((total + WEBSTORE_FEE).toFixed(2));
+    }
+
+    // currentAmount represents subtotal + fee (but before tip)
+    currentAmount = total;
+
+    updatePaymentDetailsDisplay(/*subtotal=*/ total - (total > 0 ? WEBSTORE_FEE : 0), breakdown);
 }
 
 function updatePaymentDetailsDisplay(amount, breakdown) {
     const subtotal = amount;
-    const total = Number((subtotal + (Number(tipAmount) || 0)).toFixed(2));
+    // determine if a webstore fee line exists in the breakdown
+    const feeLine = (breakdown || []).find(b => b && b.name === 'Webstore Fee');
+    const fee = feeLine ? Number(feeLine.lineTotal || WEBSTORE_FEE) : 0;
+    const total = Number((subtotal + fee + (Number(tipAmount) || 0)).toFixed(2));
 
     document.getElementById('selected-service').textContent = breakdown.length ? currentService : 'No items selected';
     // Update the explicit rows: subtotal, tip, total
