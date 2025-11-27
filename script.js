@@ -236,7 +236,6 @@ function hasPromotionBadge() {
   const badge = sessionStorage.getItem('promotionBadge');
   return typeof badge === 'string' && (badge || '').toUpperCase() === 'DOGMOM';
 }
-}
 
 function queuePromotionPricing() {
   invokeLazy('ensurePromotionPricing');
