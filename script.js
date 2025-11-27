@@ -14,6 +14,7 @@ const NAV_HTML = `<nav class="topnav account-nav">
     </button>
     <div class="account-menu" role="menu">
       <a href="index.html" role="menuitem" class="nav-services-link nav-highlightable">Services</a>
+      <a href="payment.html" role="menuitem" class="nav-payment-link nav-highlightable">Payment</a>
       <hr>
       <button type="button" class="logout-button nav-highlightable" role="menuitem">Sign In</button>
     </div>
@@ -42,7 +43,7 @@ const FOOTER_HTML = `<footer class="site-footer" aria-label="Amanda's Pet Servic
   if (typeof window === 'undefined') return;
   try {
     const path = (window.location.pathname || '').toLowerCase();
-    const bypassPaths = ['/signin.html', '/signin', '/error.html'];
+    const bypassPaths = ['/signin.html', '/signin', '/error.html', '/payment.html', '/payment'];
     if (bypassPaths.some(suffix => path.endsWith(suffix))) {
       return;
     }
