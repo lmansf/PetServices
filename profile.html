@@ -415,11 +415,11 @@
             text-align: center;
         }
 
-        .loyalty-section {
+        .promotion-section {
             margin-top: -0.5rem;
         }
 
-        .loyalty-card {
+        .promotion-card {
             background: linear-gradient(135deg, #FFF7D6 0%, #FFF1B8 100%);
             border: 2px solid #FFD700;
             border-radius: 18px;
@@ -431,37 +431,37 @@
             gap: 1rem;
         }
 
-        .loyalty-card.inactive {
+        .promotion-card.inactive {
             border-style: dashed;
             box-shadow: none;
             opacity: 0.95;
         }
 
-        .loyalty-card-header {
+        .promotion-card-header {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
 
-        .loyalty-card-icon {
+        .promotion-card-icon {
             font-size: 2.75rem;
             line-height: 1;
         }
 
-        .loyalty-status {
+        .promotion-status {
             margin: 0;
             font-size: 1.15rem;
             font-weight: 700;
             color: #8a6a00;
         }
 
-        .loyalty-message {
+        .promotion-message {
             margin: 0.15rem 0 0;
             font-size: 0.95rem;
             color: #6a5200;
         }
 
-        .loyalty-code-display {
+        .promotion-code-display {
             font-family: 'Coustard', Georgia, serif;
             font-size: 2rem;
             letter-spacing: 0.3rem;
@@ -474,13 +474,13 @@
             border: 2px dashed rgba(255, 215, 0, 0.7);
         }
 
-        .loyalty-card-footer {
+        .promotion-card-footer {
             font-size: 0.95rem;
             color: #6a5200;
             text-align: center;
         }
 
-        .loyalty-passcode-form {
+        .promotion-passcode-form {
             margin-top: 1rem;
             background: #fdf6dd;
             border: 2px dashed rgba(255, 215, 0, 0.6);
@@ -488,7 +488,7 @@
             padding: 1.25rem;
         }
 
-        .loyalty-passcode-form label {
+        .promotion-passcode-form label {
             font-size: 0.95rem;
             color: #6a5200;
             font-weight: 600;
@@ -517,7 +517,7 @@
             box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1);
         }
 
-        .loyalty-passcode-btn {
+        .promotion-passcode-btn {
             background: #663399;
             color: white;
             border: none;
@@ -532,12 +532,12 @@
             gap: 0.4rem;
         }
 
-        .loyalty-passcode-btn:hover:not(:disabled) {
+        .promotion-passcode-btn:hover:not(:disabled) {
             background: #54297a;
             transform: translateY(-1px);
         }
 
-        .loyalty-passcode-btn:disabled {
+        .promotion-passcode-btn:disabled {
             opacity: 0.7;
             cursor: not-allowed;
         }
@@ -673,22 +673,22 @@
             }
         });
     let profileData = null; // Store profile data globally for editing
-    const LOYALTY_CODE_KEY = 'DOGMOM';
+    const PROMOTION_CODE_KEY = 'DOGMOM';
 
         function renderProfile(data) {
             profileData = data; // Store for editing
             const container = document.getElementById('profile-content');
             const trimmedDiscountCode = (data.discountCode || '').trim();
-            const loyaltyBadge = sessionStorage.getItem('loyaltyBadge');
-            const loyaltyCodeDisplay = trimmedDiscountCode ? trimmedDiscountCode.toUpperCase() : ((loyaltyBadge || '').toUpperCase() === 'DOGMOM' ? 'DOGMOM' : '');
-            const hasLoyaltyCode = Boolean(loyaltyCodeDisplay);
-            const loyaltyStatusText = hasLoyaltyCode ? 'VIP Loyalty Active' : 'No Loyalty Passcode Yet';
-            const loyaltyMessageText = hasLoyaltyCode
+            const promotionBadge = sessionStorage.getItem('promotionBadge');
+            const promotionCodeDisplay = trimmedDiscountCode ? trimmedDiscountCode.toUpperCase() : ((promotionBadge || '').toUpperCase() === 'DOGMOM' ? 'DOGMOM' : '');
+            const hasPromotionCode = Boolean(promotionCodeDisplay);
+            const promotionStatusText = hasPromotionCode ? 'VIP Promotion Active' : 'No Promocode Yet';
+            const promotionMessageText = hasPromotionCode
                 ? 'Your crown follows every booking — you are locked in for VIP perks.'
-                : 'Add your passcode to unlock crowns, early access, and preferred scheduling.';
-            const loyaltyFooterText = hasLoyaltyCode
-                ? 'Flash this passcode whenever you reach out so Amanda keeps your VIP rate.'
-                : 'Need a passcode? Ask Amanda on your next visit or drop her a quick note.';
+                : 'Add your promocode to unlock crowns, early access, and preferred scheduling.';
+            const promotionFooterText = hasPromotionCode
+                ? 'Flash this promocode whenever you reach out so Amanda keeps your VIP rate.'
+                : 'Need a promocode? Ask Amanda on your next visit or drop her a quick note.';
             
             // Build profile HTML
             let html = `
@@ -764,38 +764,38 @@
             html += `
                     </div>
                 </div>
-                <div class="profile-section loyalty-section" id="loyalty-section">
+                <div class="profile-section promotion-section" id="promotion-section">
                     <div class="section-header">
-                        <h2><i class="fas fa-crown"></i> Loyalty Passcode</h2>
+                        <h2><i class="fas fa-crown"></i> Promocode</h2>
                     </div>
-                    <div class="loyalty-card${hasLoyaltyCode ? '' : ' inactive'}">
-                        <div class="loyalty-card-header">
-                            <div class="loyalty-card-icon">👑</div>
+                    <div class="promotion-card${hasPromotionCode ? '' : ' inactive'}">
+                        <div class="promotion-card-header">
+                            <div class="promotion-card-icon">👑</div>
                             <div>
-                                <p class="loyalty-status">${loyaltyStatusText}</p>
-                                <p class="loyalty-message">${loyaltyMessageText}</p>
+                                <p class="promotion-status">${promotionStatusText}</p>
+                                <p class="promotion-message">${promotionMessageText}</p>
                             </div>
                         </div>
-                        <div class="loyalty-code-display">
-                            ${hasLoyaltyCode ? loyaltyCodeDisplay : 'NO PASSCODE'}
+                        <div class="promotion-code-display">
+                            ${hasPromotionCode ? promotionCodeDisplay : 'NO PASSCODE'}
                         </div>
-                        <div class="loyalty-card-footer">
-                            ${loyaltyFooterText}
+                        <div class="promotion-card-footer">
+                            ${promotionFooterText}
                         </div>
                     </div>
-                    ${hasLoyaltyCode ? '' : `
-                        <div class="loyalty-passcode-form" id="loyalty-passcode-form">
-                            <label for="loyalty-passcode-input">Add your loyalty passcode</label>
+                    ${hasPromotionCode ? '' : `
+                        <div class="promotion-passcode-form" id="promotion-passcode-form">
+                            <label for="promotion-passcode-input">Add your promocode</label>
                             <div class="passcode-input-row">
-                                <input type="text" id="loyalty-passcode-input" placeholder="Enter passcode" maxlength="48" autocomplete="one-time-code">
-                                <button type="button" id="loyalty-passcode-button" class="loyalty-passcode-btn">
+                                <input type="text" id="promotion-passcode-input" placeholder="Enter passcode" maxlength="48" autocomplete="one-time-code">
+                                <button type="button" id="promotion-passcode-button" class="promotion-passcode-btn">
                                     <i class="fas fa-unlock"></i> Unlock perks
                                 </button>
                             </div>
-                            <div id="loyalty-passcode-warning" class="discount-warning" style="display: none;">
+                            <div id="promotion-passcode-warning" class="discount-warning" style="display: none;">
                                 No special code applied. Check that the code you entered is correct.
                             </div>
-                            <p class="passcode-helper">You'll find this passcode on Amanda's welcome card or referral invite.</p>
+                            <p class="passcode-helper">You'll find this promocode on Amanda's welcome card or referral invite.</p>
                         </div>
                     `}
                 </div>
@@ -905,7 +905,7 @@
             }
 
             container.innerHTML = html;
-            setupLoyaltyPasscodeForm(hasLoyaltyCode);
+            setupPromotionPasscodeForm(hasPromotionCode);
         }
 
         function editSection(section) {
@@ -1187,28 +1187,35 @@
             }
         }
 
-        function dispatchLoyaltyBadgeUpdate() {
+        function dispatchPromotionBadgeUpdate() {
             try {
-                window.dispatchEvent(new Event('dogmom-badge-change'));
+                window.dispatchEvent(new Event('promotion-badge-change'));
             } catch (err) {
                 // Swallow errors when running outside the browser context
             }
         }
 
-        function setLocalLoyaltyBadge(code) {
+        function setLocalPromotionBadge(code) {
             if (!code) return;
+<<<<<<< HEAD
             const normalized = code.trim().toUpperCase();
             if (normalized === LOYALTY_CODE_KEY) {
                 sessionStorage.setItem('loyaltyBadge', LOYALTY_CODE_KEY);
                 dispatchLoyaltyBadgeUpdate();
+=======
+            const normalized = code.trim().toLowerCase();
+            if (normalized === PROMOTION_CODE_KEY) {
+                sessionStorage.setItem('promotionBadge', 'dogMom');
+                dispatchPromotionBadgeUpdate();
+>>>>>>> 034f3c61b08252a35b4cfc7f2ac64a7439f2b0fd
             }
         }
 
-        function setupLoyaltyPasscodeForm(hasLoyaltyCode) {
-            if (hasLoyaltyCode) return;
-            const input = document.getElementById('loyalty-passcode-input');
-            const button = document.getElementById('loyalty-passcode-button');
-            const warning = document.getElementById('loyalty-passcode-warning');
+        function setupPromotionPasscodeForm(hasPromotionCode) {
+            if (hasPromotionCode) return;
+            const input = document.getElementById('promotion-passcode-input');
+            const button = document.getElementById('promotion-passcode-button');
+            const warning = document.getElementById('promotion-passcode-warning');
 
             if (!input || !button) return;
 
@@ -1223,11 +1230,11 @@
             });
 
             button.addEventListener('click', () => {
-                handleLoyaltyPasscodeSubmit({ input, button, warning });
+                handlePromotionPasscodeSubmit({ input, button, warning });
             });
         }
 
-        async function handleLoyaltyPasscodeSubmit({ input, button, warning }) {
+        async function handlePromotionPasscodeSubmit({ input, button, warning }) {
             const passcode = input.value.trim();
             if (!passcode) {
                 if (warning) {
@@ -1242,7 +1249,7 @@
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
 
             try {
-                const applyPasscode = firebase.functions().httpsCallable('applyLoyaltyPasscode');
+                const applyPasscode = firebase.functions().httpsCallable('applyPromotionPasscode');
                 const result = await applyPasscode({ email: profileData.email, passcode });
                 const canonicalCode = (result?.data?.discountCode || passcode).trim();
                 const displayCode = canonicalCode.toUpperCase();
@@ -1250,11 +1257,11 @@
                 profileData.discountCode = displayCode;
                 profileData[canonicalCode] = true;
                 profileData[displayCode] = true;
-                setLocalLoyaltyBadge(canonicalCode);
+                setLocalPromotionBadge(canonicalCode);
 
                 renderProfile(profileData);
             } catch (error) {
-                console.error('Error applying loyalty passcode:', error);
+                console.error('Error applying promocode:', error);
                 const message = String(error?.message || '');
                 if (error?.code === 'functions/invalid-argument' && message.toLowerCase().includes('discount')) {
                     if (warning) {
@@ -1263,7 +1270,7 @@
                     input.value = '';
                     input.focus();
                 } else {
-                    alert('Unable to apply your passcode right now. Please try again shortly.');
+                    alert('Unable to apply your promocode right now. Please try again shortly.');
                 }
             } finally {
                 button.disabled = false;
@@ -1327,5 +1334,6 @@
             });
         }
     </script>
+    <div id="footer-container"></div>
 </body>
 </html>

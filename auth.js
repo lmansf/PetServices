@@ -1,7 +1,7 @@
 // Auth.js - Client-side authentication logic
 let isSignUpMode = false;
-const LOYALTY_CODE = 'DOGMOM';
-const LOYALTY_BADGE_KEY = 'loyaltyBadge';
+const PROMOTION_CODE = 'DOGMOM';
+const PROMOTION_BADGE_KEY = 'promotionBadge';
 const GUEST_MODE_KEY = 'guestExploring';
 const LAST_PROVIDER_KEY = 'lastAuthProvider';
 const PROVIDER_LABELS = {
@@ -10,9 +10,11 @@ const PROVIDER_LABELS = {
     facebook: 'Facebook'
 };
 
-function notifyLoyaltyBadgeChange() {
+const ADMIN_EMAILS = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
+
+function notifyPromotionBadgeChange() {
     try {
-        window.dispatchEvent(new Event('dogmom-badge-change'));
+        window.dispatchEvent(new Event('promotion-badge-change'));
     } catch (err) {
         // Safe to ignore if window unavailable
     }
@@ -132,13 +134,17 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             profileStatus = await syncBadgeFromProfile(email);
         } catch (err) {
-            console.warn('Unable to sync loyalty badge after provider sign-in', err);
+            console.warn('Unable to sync promotion badge after provider sign-in', err);
         }
 
         showSuccess('Signed in successfully! Redirecting...');
         setTimeout(() => {
             const needsOnboarding = !profileStatus.exists || profileStatus.autoCreated;
-            window.location.href = needsOnboarding ? 'firstform.html' : 'index.html';
+            if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+                window.location.href = 'admin.html';
+            } else {
+                window.location.href = needsOnboarding ? 'firstform.html' : 'index.html';
+            }
         }, 1200);
     }
 
@@ -210,47 +216,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const setBadgeFromCode = (code) => {
         if (!code) {
-            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
-            notifyLoyaltyBadgeChange();
+            sessionStorage.removeItem(PROMOTION_BADGE_KEY);
+            notifyPromotionBadgeChange();
             return false;
         }
-            const normalized = code.trim().toUpperCase();
-            const hasBadge = normalized === LOYALTY_CODE;
-            if (hasBadge) {
-                sessionStorage.setItem(LOYALTY_BADGE_KEY, LOYALTY_CODE);
-            } else {
-                sessionStorage.removeItem(LOYALTY_BADGE_KEY);
-            }
-        notifyLoyaltyBadgeChange();
+        const normalized = code.trim().toUpperCase();
+        const hasBadge = normalized === PROMOTION_CODE;
+        if (hasBadge) {
+            sessionStorage.setItem(PROMOTION_BADGE_KEY, PROMOTION_CODE);
+        } else {
+            sessionStorage.removeItem(PROMOTION_BADGE_KEY);
+        }
+        notifyPromotionBadgeChange();
         return hasBadge;
     };
 
     const syncBadgeFromProfile = async (email) => {
         const defaultStatus = { exists: false, autoCreated: false };
         if (!email) {
-            sessionStorage.removeItem(LOYALTY_BADGE_KEY);
-            notifyLoyaltyBadgeChange();
+            sessionStorage.removeItem(PROMOTION_BADGE_KEY);
+            notifyPromotionBadgeChange();
             return defaultStatus;
         }
         try {
             const profileFn = firebase.functions().httpsCallable('getUserProfile');
-            const result = await profileFn({ email });
+            // SECURITY UPDATE: Do not pass email. The function now uses the authenticated user's ID.
+            const result = await profileFn();
             const profile = result?.data ?? result;
+
+            // Check completion
+            const hasName = profile.firstName && profile.lastName;
+            const hasPhone = profile.phone;
+            const hasAddress = profile.address && profile.address.street && profile.address.city && profile.address.state && profile.address.zip;
+            const hasPets = profile.pets && profile.pets.length > 0;
+            const isComplete = (hasName && hasPhone && hasAddress && hasPets) ? 'true' : 'false';
+            sessionStorage.setItem('profileComplete', isComplete);
+
             const hasBadge = Object.keys(profile || {}).some(
-                key => key.toUpperCase() === LOYALTY_CODE && profile[key]
+                key => key.toUpperCase() === PROMOTION_CODE && profile[key]
             );
             if (hasBadge) {
-                sessionStorage.setItem(LOYALTY_BADGE_KEY, LOYALTY_CODE);
+                sessionStorage.setItem(PROMOTION_BADGE_KEY, PROMOTION_CODE);
             } else {
-                sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+                sessionStorage.removeItem(PROMOTION_BADGE_KEY);
             }
-            notifyLoyaltyBadgeChange();
+            notifyPromotionBadgeChange();
             return {
                 exists: !!profile,
                 autoCreated: !!profile?.providerAutoCreated
             };
         } catch (err) {
-            console.warn('Unable to sync loyalty badge', err);
+            console.warn('Unable to sync promotion badge', err);
             return defaultStatus;
         }
     };
@@ -288,36 +304,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (discountWarning) discountWarning.style.display = 'none';
 
         try {
+            const authInstance = getFirebaseAuthInstance();
+            if (!authInstance) throw new Error('Authentication service unavailable');
+
             if (isSignUpMode) {
-                // Sign-up mode: create account and submit profile data
-                
-                // First, create the auth account
-                const authResponse = await fetch(`${AUTH_API_URL}/signup`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
+                // 1. Create User in Firebase Auth
+                const userCredential = await authInstance.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
 
-                let authData = {};
-                try {
-                    authData = await authResponse.json();
-                } catch (err) {
-                    authData = {};
-                }
-
-                if (!authResponse.ok) {
-                    const requestError = new Error(authData.error || 'Authentication failed');
-                    if (authData.code) {
-                        requestError.code = authData.code;
-                    }
-                    throw requestError;
-                }
-
-                // Then, submit the profile data
+                // 2. Prepare Profile Data
                 const formData = {
-                    submittedAt: new Date().toISOString(),
                     firstName: document.getElementById('first-name').value,
                     lastName: document.getElementById('last-name').value,
                     email: email,
@@ -351,73 +347,64 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Submit profile data to Firebase Function
+                // 3. Save Profile to Firestore via Cloud Function
                 const submitForm = firebase.functions().httpsCallable('submitForm');
-                const profileResult = await submitForm(formData);
+                await submitForm(formData);
 
                 // Success
-                sessionStorage.setItem('userEmail', authData.email);
+                sessionStorage.setItem('userEmail', email);
                 sessionStorage.removeItem(GUEST_MODE_KEY);
-                sessionStorage.setItem(LAST_PROVIDER_KEY, 'password-signup');
-                const loyaltyInput = document.getElementById('discount-code');
-                setBadgeFromCode(loyaltyInput ? loyaltyInput.value : '');
+                sessionStorage.setItem(LAST_PROVIDER_KEY, 'password');
+                
+                const promoInput = document.getElementById('discount-code');
+                setBadgeFromCode(promoInput ? promoInput.value : '');
                 
                 // Show success modal
                 document.getElementById('success-modal').style.display = 'flex';
                 
             } else {
-                // Sign-in mode: just authenticate
-                const response = await fetch(`${AUTH_API_URL}/signin`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-
-                let data = {};
-                try {
-                    data = await response.json();
-                } catch (err) {
-                    data = {};
-                }
-
-                if (!response.ok) {
-                    const requestError = new Error(data.error || 'Authentication failed');
-                    if (data.code) {
-                        requestError.code = data.code;
-                    }
-                    throw requestError;
-                }
+                // Sign-in mode: Authenticate with Firebase
+                await authInstance.signInWithEmailAndPassword(email, password);
 
                 // Success
-                showSuccess(data.message);
-                sessionStorage.setItem('userEmail', data.email);
+                showSuccess('Signed in successfully!');
+                sessionStorage.setItem('userEmail', email);
                 sessionStorage.removeItem(GUEST_MODE_KEY);
                 sessionStorage.setItem(LAST_PROVIDER_KEY, 'password');
-                await syncBadgeFromProfile(data.email);
+                
+                // Sync profile/badge
+                await syncBadgeFromProfile(email);
 
                 // Redirect after a short delay
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
                 }, 1500);
             }
 
         } catch (error) {
             console.error('Error:', error);
+            let msg = error.message;
+            
+            if (error.code === 'auth/email-already-in-use') {
+                msg = 'An account with this email already exists. Please sign in.';
+            } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                msg = 'Invalid email or password.';
+            } else if (error.code === 'auth/weak-password') {
+                msg = 'Password is too weak.';
+            }
 
-            const dropboxErrors = ['DROPBOX_TOKEN_EXPIRED', 'DROPBOX_AUTH_ERROR'];
-
-            if (dropboxErrors.includes(error.code)) {
-                showError(error.message || 'Sign-ins are temporarily unavailable while we refresh secure storage. Please try again soon.');
-            } else if (error.code === 'functions/invalid-argument' && error.message && error.message.includes('discount')) {
+            if (error.code === 'functions/invalid-argument' && msg.includes('discount')) {
                 if (discountWarning) {
                     discountWarning.style.display = 'block';
                 }
                 document.getElementById('discount-code').value = '';
                 document.getElementById('discount-code').focus();
             } else {
-                showError(error.message || 'An error occurred. Please try again.');
+                showError(msg || 'An error occurred. Please try again.');
             }
         } finally {
             // Re-enable button
@@ -475,10 +462,10 @@ function startAnonymousSession() {
 
 function setGuestSessionAndRedirect() {
     sessionStorage.removeItem('userEmail');
-    sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+    sessionStorage.removeItem(PROMOTION_BADGE_KEY);
     sessionStorage.removeItem(LAST_PROVIDER_KEY);
     sessionStorage.setItem(GUEST_MODE_KEY, 'true');
-    notifyLoyaltyBadgeChange();
+    notifyPromotionBadgeChange();
     window.location.href = 'index.html';
 }
 
@@ -547,7 +534,7 @@ function checkAuth() {
 // Sign out function (can be called from other pages)
 function signOut() {
     sessionStorage.removeItem('userEmail');
-    sessionStorage.removeItem(LOYALTY_BADGE_KEY);
+    sessionStorage.removeItem(PROMOTION_BADGE_KEY);
     sessionStorage.removeItem(GUEST_MODE_KEY);
     sessionStorage.removeItem(LAST_PROVIDER_KEY);
     const authInstance = getFirebaseAuthInstance();

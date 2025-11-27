@@ -23,8 +23,13 @@ if (typeof firebase.analytics === 'function') {
   console.warn('Firebase Analytics is not available in this context.');
 }
 
-// Initialize Functions
-const functions = firebase.functions();
+// Initialize Functions when SDK is available
+let functions = null;
+if (typeof firebase.functions === 'function') {
+  functions = firebase.functions();
+} else {
+  console.warn('Firebase Functions SDK is missing; skipping functions initialization.');
+}
 
 // Initialize Auth (includes anonymous capability)
 const auth = firebase.auth();
