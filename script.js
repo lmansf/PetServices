@@ -43,7 +43,7 @@ const FOOTER_HTML = `<footer class="site-footer" aria-label="Amanda's Pet Servic
   if (typeof window === 'undefined') return;
   try {
     const path = (window.location.pathname || '').toLowerCase();
-    const bypassPaths = ['/signin.html', '/signin', '/error.html', '/payment.html', '/payment'];
+    const bypassPaths = ['/signin.html', '/signin', '/error.html', '/payment.html', '/payment', '/', '/index.html'];     
     if (bypassPaths.some(suffix => path.endsWith(suffix))) {
       return;
     }
