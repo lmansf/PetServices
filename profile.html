@@ -1197,17 +1197,11 @@
 
         function setLocalPromotionBadge(code) {
             if (!code) return;
-<<<<<<< HEAD
             const normalized = code.trim().toUpperCase();
-            if (normalized === LOYALTY_CODE_KEY) {
-                sessionStorage.setItem('loyaltyBadge', LOYALTY_CODE_KEY);
-                dispatchLoyaltyBadgeUpdate();
-=======
-            const normalized = code.trim().toLowerCase();
             if (normalized === PROMOTION_CODE_KEY) {
-                sessionStorage.setItem('promotionBadge', 'dogMom');
+                sessionStorage.setItem('promotionBadge', PROMOTION_CODE_KEY);
                 dispatchPromotionBadgeUpdate();
->>>>>>> 034f3c61b08252a35b4cfc7f2ac64a7439f2b0fd
+            }
             }
         }
 
