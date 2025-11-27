@@ -498,10 +498,12 @@ function initializeAccountNav() {
     if (isAdmin) {
         // Admin Menu
         menu.appendChild(createLink('Admin Management', 'admin.html'));
+          menu.appendChild(createLink('Make a Payment', 'payment.html', 'nav-payment-link nav-highlightable'));
         menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
         menu.appendChild(createLink('My Profile', 'profile.html'));
     } else {
         // User/Customer Menu
+          menu.appendChild(createLink('Make a Payment', 'payment.html', 'nav-payment-link nav-highlightable'));
         menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
         menu.appendChild(createLink('My Profile', 'profile.html'));
     }
@@ -519,7 +521,8 @@ function initializeAccountNav() {
 
   } else {
     // Guest Menu
-    menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
+      menu.appendChild(createLink('Make a Payment', 'payment.html', 'nav-payment-link nav-highlightable'));
+      menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
     menu.appendChild(createHr());
     menu.appendChild(createButton('Sign in', (e) => {
         e.preventDefault();
