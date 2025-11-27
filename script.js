@@ -43,7 +43,9 @@ const FOOTER_HTML = `<footer class="site-footer" aria-label="Amanda's Pet Servic
   if (typeof window === 'undefined') return;
   try {
     const path = (window.location.pathname || '').toLowerCase();
-    const bypassPaths = ['/signin.html', '/signin', '/error.html', '/payment.html', '/payment', '/', '/index.html'];     
+    // Default behavior: redirect visitors to the sign-in landing (default first page).
+    // Exceptions: allow the sign-in page itself, error page, and direct access to payment pages.
+    const bypassPaths = ['/signin.html', '/signin', '/error.html', '/payment.html', '/payment'];
     if (bypassPaths.some(suffix => path.endsWith(suffix))) {
       return;
     }
