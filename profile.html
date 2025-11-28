@@ -639,7 +639,7 @@
                 
                 // Call Firebase Function to get user profile
                 const getUserProfile = firebase.functions().httpsCallable('getUserProfile');
-                const result = await getUserProfile({ email: userEmail });
+                const result = await getUserProfile(); // <-- No arguments
                 
                 console.log('Profile data received:', result.data);
                 const profileData = result.data;
@@ -1203,7 +1203,6 @@
                 dispatchPromotionBadgeUpdate();
             }
             }
-        }
 
         function setupPromotionPasscodeForm(hasPromotionCode) {
             if (hasPromotionCode) return;
