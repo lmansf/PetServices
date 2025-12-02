@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem(GUEST_MODE_KEY);
         sessionStorage.setItem(LAST_PROVIDER_KEY, providerKey);
 
-        let profileStatus = { exists: false, autoCreated: false };
+        let profileStatus = { exists: false, autoCreated: false, profileComplete: false };
         try {
             profileStatus = await syncBadgeFromProfile(email);
         } catch (err) {
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showSuccess('Signed in successfully! Redirecting...');
         setTimeout(() => {
-            const needsOnboarding = !profileStatus.exists || profileStatus.autoCreated;
+            const needsOnboarding = !profileStatus.profileComplete;
             if (ADMIN_EMAILS.includes(email.toLowerCase())) {
                 window.location.href = 'admin.html';
             } else {
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const syncBadgeFromProfile = async (email) => {
-        const defaultStatus = { exists: false, autoCreated: false };
+        const defaultStatus = { exists: false, autoCreated: false, profileComplete: false };
         if (!email) {
             sessionStorage.removeItem(PROMOTION_BADGE_KEY);
             notifyPromotionBadgeChange();
@@ -242,15 +242,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const profileFn = firebase.functions().httpsCallable('getUserProfile');
             // SECURITY UPDATE: Do not pass email. The function now uses the authenticated user's ID.
             const result = await profileFn();
-            const profile = result?.data ?? result;
+            const profile = result?.data ?? result ?? {};
 
             // Check completion
             const hasName = profile.firstName && profile.lastName;
             const hasPhone = profile.phone;
             const hasAddress = profile.address && profile.address.street && profile.address.city && profile.address.state && profile.address.zip;
             const hasPets = profile.pets && profile.pets.length > 0;
-            const isComplete = (hasName && hasPhone && hasAddress && hasPets) ? 'true' : 'false';
-            sessionStorage.setItem('profileComplete', isComplete);
+            const isCompleteBool = profile.profileComplete === true || (hasName && hasPhone && hasAddress && hasPets);
+            sessionStorage.setItem('profileComplete', isCompleteBool ? 'true' : 'false');
 
             const hasBadge = Object.keys(profile || {}).some(
                 key => key.toUpperCase() === PROMOTION_CODE && profile[key]
@@ -261,9 +261,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.removeItem(PROMOTION_BADGE_KEY);
             }
             notifyPromotionBadgeChange();
+            const docExists = (typeof profile.profileDocumentExists === 'boolean')
+                ? profile.profileDocumentExists
+                : Object.keys(profile).length > 0;
             return {
-                exists: !!profile,
-                autoCreated: !!profile?.providerAutoCreated
+                exists: docExists,
+                autoCreated: !!profile?.providerAutoCreated,
+                profileComplete: !!isCompleteBool
             };
         } catch (err) {
             console.warn('Unable to sync promotion badge', err);

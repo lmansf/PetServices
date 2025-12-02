@@ -30,7 +30,8 @@ exports.submitForm = functions.https.onCall(async (data, context) => {
       uid: uid,
       submittedAt: admin.firestore.FieldValue.serverTimestamp(),
       lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      profileComplete: true
+      profileComplete: true,
+      providerAutoCreated: false
     };
 
     // Validate Discount Code (Simple check against a hardcoded list or DB)
@@ -85,19 +86,39 @@ exports.getUserProfile = functions.https.onCall(async (data, context) => {
   const uid = context.auth.uid;
 
   try {
-    const doc = await db.collection('users').doc(uid).get();
-    
+    const userRef = db.collection('users').doc(uid);
+    const doc = await userRef.get();
+
     if (!doc.exists) {
-      // If no profile exists yet, return basic info from Auth
-      // We can safely use context.auth.token here
+      const email = context.auth.token.email || '';
+      const displayName = context.auth.token.name || '';
+      const baseProfile = {
+        email,
+        displayName,
+        providerAutoCreated: true,
+        profileComplete: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      await userRef.set(baseProfile, { merge: true });
+
       return {
-        email: context.auth.token.email,
-        displayName: context.auth.token.name || '',
-        profileComplete: false
+        email,
+        displayName,
+        providerAutoCreated: true,
+        profileComplete: false,
+        profileDocumentExists: false
       };
     }
 
-    return doc.data();
+    const data = doc.data() || {};
+    return {
+      ...data,
+      providerAutoCreated: !!data.providerAutoCreated,
+      profileComplete: data.profileComplete === true,
+      profileDocumentExists: true
+    };
 
   } catch (error) {
     console.error('Error fetching profile:', error);
