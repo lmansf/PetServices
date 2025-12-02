@@ -1,6 +1,5 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const jwt = require('jsonwebtoken');
 // node-fetch and express are no longer needed for the core auth/db logic
 // but we keep admin initialized.
 
@@ -14,18 +13,25 @@ const DEFAULT_ADMIN_EMAILS = [
   'amansfld1@gmail.com'
 ];
 const ADMIN_EMAIL_CACHE_TTL_MS = 5 * 60 * 1000;
-const ADMIN_JWT_TTL_SECONDS = 30 * 60;
-
-const resolvedAdminSecret = process.env.ADMIN_JWT_SECRET || functions.config()?.admin?.jwt_secret;
-if (!resolvedAdminSecret) {
-  console.warn('[admin] ADMIN_JWT_SECRET missing; falling back to development secret. Configure admin.jwt_secret before production deploy.');
-}
-const ADMIN_JWT_SECRET = resolvedAdminSecret || 'dev-only-admin-secret';
 
 let cachedAdminEmails = null;
 let cachedAdminFetchTs = 0;
 
 const normalizeEmail = (email = '') => email.trim().toLowerCase();
+const withDefaultAdmins = (emails = []) => {
+  const normalizedSet = new Set(
+    emails
+      .filter(Boolean)
+      .map(normalizeEmail)
+  );
+  DEFAULT_ADMIN_EMAILS.forEach(email => normalizedSet.add(normalizeEmail(email)));
+  return Array.from(normalizedSet);
+};
+
+function needsDefaultMerge(existing = []) {
+  const normalizedExisting = existing.map(normalizeEmail);
+  return DEFAULT_ADMIN_EMAILS.some(defaultEmail => !normalizedExisting.includes(normalizeEmail(defaultEmail)));
+}
 
 async function readAdminSettings() {
   const docRef = db.doc(ADMIN_SETTINGS_DOC);
@@ -39,10 +45,18 @@ async function readAdminSettings() {
   }
   const data = snapshot.data() || {};
   if (!Array.isArray(data.emails)) {
-    await docRef.set({ emails: DEFAULT_ADMIN_EMAILS }, { merge: true });
-    return { emails: DEFAULT_ADMIN_EMAILS };
+    const merged = withDefaultAdmins(DEFAULT_ADMIN_EMAILS);
+    await docRef.set({ emails: merged }, { merge: true });
+    return { emails: merged };
   }
-  return data;
+
+  if (needsDefaultMerge(data.emails)) {
+    const merged = withDefaultAdmins(data.emails);
+    await docRef.set({ emails: merged }, { merge: true });
+    return { emails: merged };
+  }
+
+  return { ...data, emails: data.emails.map(normalizeEmail) };
 }
 
 async function getAdminEmails() {
@@ -62,19 +76,18 @@ async function isAdminEmail(email) {
   return allowed.includes(normalizeEmail(email));
 }
 
-function signAdminJwt(uid, email) {
-  const iat = Math.floor(Date.now() / 1000);
-  const exp = iat + ADMIN_JWT_TTL_SECONDS;
-  const payload = { sub: uid, email, role: 'admin', iss: 'aps-admin', iat, exp };
-  return { token: jwt.sign(payload, ADMIN_JWT_SECRET, { algorithm: 'HS256' }), expiresAt: exp };
-}
-
-function verifyAdminJwt(token) {
+async function applyAdminClaim(uid, isAdmin) {
   try {
-    return jwt.verify(token, ADMIN_JWT_SECRET, { algorithms: ['HS256'] });
+    const userRecord = await admin.auth().getUser(uid);
+    const claims = { ...(userRecord.customClaims || {}) };
+    if (isAdmin) {
+      claims.isAdmin = true;
+    } else {
+      delete claims.isAdmin;
+    }
+    await admin.auth().setCustomUserClaims(uid, claims);
   } catch (err) {
-    console.error('[admin] token verification failed', err);
-    throw new functions.https.HttpsError('permission-denied', 'Invalid admin token');
+    console.error('[admin] failed to update custom claim', err);
   }
 }
 
@@ -85,33 +98,36 @@ async function ensureAdminAccess(context, options = {}) {
 
   const uid = context.auth.uid;
   const email = normalizeEmail(context.auth.token.email || '');
+  const claimIsAdmin = context.auth.token?.isAdmin === true;
+  if (claimIsAdmin) {
+    return { uid, email };
+  }
 
   if (!email || !(await isAdminEmail(email))) {
     throw new functions.https.HttpsError('permission-denied', 'Not authorized');
   }
 
-  if (options.requireJwt !== false) {
-    const adminToken = options.token;
-    if (!adminToken) {
-      throw new functions.https.HttpsError('permission-denied', 'Missing admin token');
-    }
-    const decoded = verifyAdminJwt(adminToken);
-    if (decoded.sub !== uid) {
-      throw new functions.https.HttpsError('permission-denied', 'Admin token mismatch');
-    }
+  if (options.syncClaim !== false) {
+    await applyAdminClaim(uid, true);
   }
 
   return { uid, email };
 }
 
 // --------------------------------------------------------------------------
-//  1. Issue Admin Token (Callable)
-//  Returns a short-lived JWT for verified admin accounts.
+//  1. Sync Admin Claim (Callable)
+//  Updates the custom claim so clients can gate UI without extra tokens.
 // --------------------------------------------------------------------------
-exports.issueAdminToken = functions.https.onCall(async (data, context) => {
-  const { uid, email } = await ensureAdminAccess(context, { requireJwt: false });
-  const { token, expiresAt } = signAdminJwt(uid, email);
-  return { token, expiresAt };
+exports.syncAdminClaim = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const uid = context.auth.uid;
+  const email = normalizeEmail(context.auth.token.email || '');
+  const allowed = await isAdminEmail(email);
+  await applyAdminClaim(uid, allowed);
+  return { isAdmin: allowed };
 });
 
 // --------------------------------------------------------------------------
@@ -298,8 +314,7 @@ exports.applyLoyaltyPasscode = exports.applyPromotionPasscode;
 //  6. Get All Users (Admin Only)
 // --------------------------------------------------------------------------
 exports.getAllUsers = functions.https.onCall(async (data, context) => {
-  const payload = data || {};
-  await ensureAdminAccess(context, { token: payload.adminToken });
+  await ensureAdminAccess(context);
 
   try {
     const snapshot = await db.collection('users').orderBy('submittedAt', 'desc').get();
@@ -319,7 +334,7 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
 // --------------------------------------------------------------------------
 exports.adminUpdateUserProfile = functions.https.onCall(async (data, context) => {
   const payload = data || {};
-  await ensureAdminAccess(context, { token: payload.adminToken });
+  await ensureAdminAccess(context);
 
   const { targetUid, updatedData } = payload;
   if (!targetUid || !updatedData) {

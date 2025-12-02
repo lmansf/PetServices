@@ -40,8 +40,6 @@ const FOOTER_HTML = `<footer class="site-footer" aria-label="Amanda's Pet Servic
 </footer>`;
 
 const ADMIN_STATUS_KEY = 'apsIsAdmin';
-const ADMIN_TOKEN_KEY = 'apsAdminToken';
-const ADMIN_TOKEN_EXP_KEY = 'apsAdminTokenExpiresAt';
 
 (function enforceSignInGate() {
   if (typeof window === 'undefined') return;
@@ -248,9 +246,62 @@ function userIsAdmin() {
 }
 
 function clearStoredAdminSession() {
-  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-  sessionStorage.removeItem(ADMIN_TOKEN_EXP_KEY);
   sessionStorage.removeItem(ADMIN_STATUS_KEY);
+}
+
+async function refreshAdminStatus(options = {}) {
+  const forceRefresh = options.forceRefresh === true;
+  if (!window.firebase || !firebase.auth) {
+    clearStoredAdminSession();
+    return false;
+  }
+
+  const authInstance = firebase.auth();
+  const currentUser = authInstance.currentUser;
+  if (!currentUser) {
+    clearStoredAdminSession();
+    return false;
+  }
+
+  const readClaim = async (force) => {
+    try {
+      const tokenResult = await currentUser.getIdTokenResult(force);
+      return tokenResult?.claims?.isAdmin === true;
+    } catch (err) {
+      console.warn('Failed to inspect admin claim', err);
+      return false;
+    }
+  };
+
+  const hasClaim = await readClaim(forceRefresh);
+  if (hasClaim) {
+    sessionStorage.setItem(ADMIN_STATUS_KEY, 'true');
+    return true;
+  }
+
+  if (!window.firebase.functions) {
+    return false;
+  }
+
+  try {
+    const callable = firebase.functions().httpsCallable('syncAdminClaim');
+    const response = await callable();
+    const result = response?.data ?? response;
+    const isAdmin = result && typeof result === 'object' ? result.isAdmin === true : result === true;
+    if (isAdmin) {
+      await currentUser.getIdToken(true);
+      sessionStorage.setItem(ADMIN_STATUS_KEY, 'true');
+      return true;
+    }
+  } catch (err) {
+    if (err?.code === 'permission-denied') {
+      clearStoredAdminSession();
+      return false;
+    }
+    console.warn('Admin claim sync failed', err);
+  }
+
+  return false;
 }
 
 function queuePromotionPricing() {
@@ -500,24 +551,46 @@ function initializeAccountNav() {
   };
 
   const createHr = () => document.createElement('hr');
+  const appendCoreLinks = (includeProfile = false) => {
+    menu.appendChild(createLink('Make a Payment', 'payment.html', 'nav-payment-link nav-highlightable'));
+    menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
+    if (includeProfile) {
+      menu.appendChild(createLink('My Profile', 'profile.html'));
+    }
+  };
+
+  let adminLinkEl = null;
+  let adminCheckPromise = null;
+
+  const insertAdminLink = () => {
+    if (adminLinkEl || !menu) return;
+    adminLinkEl = createLink('Admin Management', 'admin.html');
+    menu.insertBefore(adminLinkEl, menu.firstChild);
+  };
+
+  const runAdminCheckOnce = () => {
+    if (!userEmail || adminLinkEl) return;
+    if (userIsAdmin()) {
+      insertAdminLink();
+      return;
+    }
+    if (adminCheckPromise) return;
+    adminCheckPromise = refreshAdminStatus({ forceRefresh: true })
+      .then((isAdmin) => {
+        if (isAdmin) insertAdminLink();
+        return isAdmin;
+      })
+      .catch(err => {
+        console.warn('Admin status refresh failed', err);
+      })
+      .finally(() => {
+        adminCheckPromise = null;
+      });
+  };
 
   if (userEmail) {
     checkProfileCompletion(userEmail, button);
-    
-    const isAdmin = userIsAdmin();
-
-    if (isAdmin) {
-        // Admin Menu
-        menu.appendChild(createLink('Admin Management', 'admin.html'));
-          menu.appendChild(createLink('Make a Payment', 'payment.html', 'nav-payment-link nav-highlightable'));
-        menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
-        menu.appendChild(createLink('My Profile', 'profile.html'));
-    } else {
-        // User/Customer Menu
-          menu.appendChild(createLink('Make a Payment', 'payment.html', 'nav-payment-link nav-highlightable'));
-        menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
-        menu.appendChild(createLink('My Profile', 'profile.html'));
-    }
+    appendCoreLinks(true);
 
     // Log Out
     menu.appendChild(createHr());
@@ -533,8 +606,7 @@ function initializeAccountNav() {
 
   } else {
     // Guest Menu
-      menu.appendChild(createLink('Make a Payment', 'payment.html', 'nav-payment-link nav-highlightable'));
-      menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
+    appendCoreLinks(false);
     menu.appendChild(createHr());
     menu.appendChild(createButton('Sign in', (e) => {
         e.preventDefault();
@@ -560,6 +632,9 @@ function initializeAccountNav() {
   button.addEventListener('click', () => {
     const isOpen = !dropdown.classList.contains('open');
     setOpen(isOpen);
+    if (isOpen && userEmail) {
+      runAdminCheckOnce();
+    }
   });
 
   // Close when clicking outside
@@ -568,6 +643,11 @@ function initializeAccountNav() {
       setOpen(false);
     }
   });
+
+  // Trigger admin check lazily if menu rendered as open by default
+  if (dropdown.classList.contains('open') && userEmail) {
+    runAdminCheckOnce();
+  }
 }
 
 

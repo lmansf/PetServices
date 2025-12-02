@@ -408,72 +408,58 @@
     <script type="module" src="script.js"></script>
 
     <script>
-        const ADMIN_TOKEN_KEY = 'apsAdminToken';
-        const ADMIN_TOKEN_EXP_KEY = 'apsAdminTokenExpiresAt';
         const ADMIN_STATUS_KEY = 'apsIsAdmin';
 
-        function cacheAdminSession(token, expiresAtSeconds) {
-            if (!token || !expiresAtSeconds) return;
-            sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
-            sessionStorage.setItem(ADMIN_TOKEN_EXP_KEY, String(expiresAtSeconds * 1000));
-            sessionStorage.setItem(ADMIN_STATUS_KEY, 'true');
+        function setAdminStatus(isAdmin) {
+            try {
+                sessionStorage.setItem(ADMIN_STATUS_KEY, isAdmin ? 'true' : 'false');
+            } catch (err) {
+                console.warn('Unable to persist admin status', err);
+            }
         }
 
         function purgeAdminSession() {
-            sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-            sessionStorage.removeItem(ADMIN_TOKEN_EXP_KEY);
-            sessionStorage.setItem(ADMIN_STATUS_KEY, 'false');
+            setAdminStatus(false);
         }
 
-        function getCachedAdminToken() {
-            const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
-            const expiry = parseInt(sessionStorage.getItem(ADMIN_TOKEN_EXP_KEY), 10) || 0;
-            if (token && expiry && Date.now() < expiry) {
-                return token;
-            }
-            return null;
-        }
+        async function ensureAdminClaim(user) {
+            const hasClaim = async (forceRefresh = false) => {
+                try {
+                    const tokenResult = await user.getIdTokenResult(forceRefresh);
+                    return tokenResult?.claims?.isAdmin === true;
+                } catch (err) {
+                    console.warn('Admin claim lookup failed', err);
+                    return false;
+                }
+            };
 
-        async function getOrRefreshAdminToken(forceRefresh = false) {
-            if (!forceRefresh) {
-                const cached = getCachedAdminToken();
-                if (cached) return cached;
+            if (await hasClaim(false)) {
+                setAdminStatus(true);
+                return true;
             }
 
             if (!window.firebase || !firebase.functions) {
                 throw new Error('Firebase Functions are unavailable.');
             }
 
-            try {
-                const callable = firebase.functions().httpsCallable('issueAdminToken');
-                const response = await callable();
-                const { token, expiresAt } = response?.data || {};
-                if (!token || !expiresAt) {
-                    throw new Error('Admin token missing from response.');
-                }
-                cacheAdminSession(token, expiresAt);
-                return token;
-            } catch (error) {
-                if (error?.code === 'permission-denied') {
-                    purgeAdminSession();
-                }
-                throw error;
+            const callable = firebase.functions().httpsCallable('syncAdminClaim');
+            await callable();
+            const refreshed = await hasClaim(true);
+            if (refreshed) {
+                setAdminStatus(true);
+                return true;
             }
+
+            setAdminStatus(false);
+            throw Object.assign(new Error('Admin claim missing'), { code: 'permission-denied' });
         }
 
-        async function callAdminFunction(functionName, payload = {}, options = {}) {
-            const forceRefreshToken = options.forceRefreshToken === true;
-            try {
-                const adminToken = await getOrRefreshAdminToken(forceRefreshToken);
-                const callable = firebase.functions().httpsCallable(functionName);
-                return await callable({ ...payload, adminToken });
-            } catch (error) {
-                if (!forceRefreshToken && error?.code === 'permission-denied') {
-                    purgeAdminSession();
-                    return callAdminFunction(functionName, payload, { forceRefreshToken: true });
-                }
-                throw error;
+        async function callAdminFunction(functionName, payload = {}) {
+            if (!window.firebase || !firebase.functions) {
+                throw new Error('Firebase Functions are unavailable.');
             }
+            const callable = firebase.functions().httpsCallable(functionName);
+            return callable(payload);
         }
 
         function handleAccessDenied(error) {
@@ -507,12 +493,12 @@
                     if (!user) {
                         // Redirect to sign in if not logged in
                         sessionStorage.setItem('redirectAfterLogin', 'admin.html');
-                        window.location.href = 'signin.html';
+                        window.location.href = 'signin.html?next=' + encodeURIComponent('admin.html');
                         return;
                     }
 
                     try {
-                        await getOrRefreshAdminToken();
+                        await ensureAdminClaim(user);
                         loadData();
                     } catch (error) {
                         if (error?.code === 'permission-denied') {

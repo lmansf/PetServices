@@ -10,8 +10,6 @@ const PROVIDER_LABELS = {
     facebook: 'Facebook'
 };
 
-const ADMIN_TOKEN_KEY = 'apsAdminToken';
-const ADMIN_TOKEN_EXP_KEY = 'apsAdminTokenExpiresAt';
 const ADMIN_STATUS_KEY = 'apsIsAdmin';
 
 function notifyPromotionBadgeChange() {
@@ -33,49 +31,58 @@ function setAdminStatusFlag(isAdmin) {
 
 function clearAdminSession() {
     if (typeof sessionStorage === 'undefined') return;
-    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-    sessionStorage.removeItem(ADMIN_TOKEN_EXP_KEY);
     sessionStorage.removeItem(ADMIN_STATUS_KEY);
 }
 
-async function ensureAdminSession(options = {}) {
+async function refreshAdminClaim(options = {}) {
     const forceRefresh = options.forceRefresh === true;
+    const authInstance = getFirebaseAuthInstance();
+    const currentUser = authInstance?.currentUser;
+    if (!currentUser) {
+        clearAdminSession();
+        return false;
+    }
+
+    const readClaim = async (force = false) => {
+        try {
+            const result = await currentUser.getIdTokenResult(force);
+            return result?.claims?.isAdmin === true;
+        } catch (err) {
+            console.warn('Failed to read admin claim', err);
+            return false;
+        }
+    };
+
+    const hasClaim = await readClaim(forceRefresh);
+    if (hasClaim) {
+        setAdminStatusFlag(true);
+        return true;
+    }
+
+    if (!window.firebase || !firebase.functions) {
+        clearAdminSession();
+        return false;
+    }
+
     try {
-        const cachedToken = sessionStorage.getItem(ADMIN_TOKEN_KEY);
-        const cachedExpiry = parseInt(sessionStorage.getItem(ADMIN_TOKEN_EXP_KEY), 10) || 0;
-        const hasValidCache = cachedToken && cachedExpiry && Date.now() < cachedExpiry;
-
-        if (!forceRefresh && hasValidCache) {
-            setAdminStatusFlag(true);
-            return { token: cachedToken, isAdmin: true };
-        }
-
-        if (!window.firebase || !firebase.functions) {
-            return { token: null, isAdmin: false };
-        }
-
-        const callable = firebase.functions().httpsCallable('issueAdminToken');
+        const callable = firebase.functions().httpsCallable('syncAdminClaim');
         const response = await callable();
-        const { token, expiresAt } = response?.data || {};
-
-        if (token && expiresAt) {
-            sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
-            sessionStorage.setItem(ADMIN_TOKEN_EXP_KEY, String(expiresAt * 1000));
+        const { isAdmin } = response?.data || response || {};
+        if (isAdmin) {
+            await currentUser.getIdToken(true);
             setAdminStatusFlag(true);
-            return { token, isAdmin: true };
+            return true;
         }
     } catch (err) {
         if (err?.code === 'permission-denied') {
             clearAdminSession();
-            setAdminStatusFlag(false);
-            return { token: null, isAdmin: false };
+            return false;
         }
-        console.warn('Admin session refresh failed', err);
+        console.warn('Admin claim sync failed', err);
     }
 
     clearAdminSession();
-    setAdminStatusFlag(false);
-    return { token: null, isAdmin: false };
+    return false;
 }
 
 // Get Firebase Cloud Function URL
@@ -95,6 +102,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirm-password');
     const confirmWarning = document.getElementById('confirm-warning');
+    const globalLoader = document.getElementById('global-loading');
+    const globalLoaderMessage = document.getElementById('global-loading-message');
+
+    const setGlobalLoader = (isActive, message) => {
+        if (!globalLoader) return;
+        if (message && globalLoaderMessage) {
+            globalLoaderMessage.textContent = message;
+        }
+        globalLoader.classList.toggle('is-visible', !!isActive);
+        if (isActive) {
+            globalLoader.setAttribute('aria-hidden', 'false');
+        } else {
+            globalLoader.setAttribute('aria-hidden', 'true');
+        }
+    };
 
     if (guestButton) {
         guestButton.addEventListener('click', () => {
@@ -132,11 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setButtonBusy(triggerButton, true);
+        setGlobalLoader(true, `Connecting with ${label}...`);
 
         try {
             const result = await authInstance.signInWithPopup(provider);
             await handleFirebaseProviderResult(result?.user, providerKey);
         } catch (error) {
+            setGlobalLoader(false);
             handleProviderError(error, providerKey);
         } finally {
             setButtonBusy(triggerButton, false);
@@ -169,12 +193,14 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleFirebaseProviderResult(user, providerKey) {
         if (!user) {
             showError('Unable to finish sign-in. Please try again.');
+            setGlobalLoader(false);
             return;
         }
 
         const email = extractUserEmail(user);
         if (!email) {
             showError(`${formatProviderLabel(providerKey)} did not return an email address. Please share your email with that provider or sign up with email/password.`);
+            setGlobalLoader(false);
             try {
                 const authInstance = getFirebaseAuthInstance();
                 await authInstance?.signOut();
@@ -188,30 +214,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem(GUEST_MODE_KEY);
         sessionStorage.setItem(LAST_PROVIDER_KEY, providerKey);
 
-        let profileStatus = { exists: false, autoCreated: false, profileComplete: false };
-        try {
-            profileStatus = await syncBadgeFromProfile(email);
-        } catch (err) {
-            console.warn('Unable to sync promotion badge after provider sign-in', err);
-        }
+        const metadata = user.metadata || {};
+        const isFirstLogin = metadata?.creationTime && metadata?.lastSignInTime
+            ? metadata.creationTime === metadata.lastSignInTime
+            : false;
 
-        let isAdmin = false;
-        try {
-            const adminSession = await ensureAdminSession();
-            isAdmin = adminSession.isAdmin;
-        } catch (err) {
-            console.warn('Admin session check failed after provider sign-in', err);
-        }
-
+        queuePostAuthSync(email);
         showSuccess('Signed in successfully! Redirecting...');
-        setTimeout(() => {
-            const needsOnboarding = !profileStatus.profileComplete;
-            if (isAdmin) {
-                window.location.href = 'admin.html';
-            } else {
-                window.location.href = needsOnboarding ? 'firstform.html' : 'index.html';
-            }
-        }, 1200);
+        const fallback = isFirstLogin ? 'firstform.html' : 'index.html';
+        redirectToPortal(fallback);
     }
 
     const syncConfirmWarning = () => {
@@ -341,6 +352,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    function queuePostAuthSync(email) {
+        const tasks = [];
+        if (email) {
+            tasks.push(syncBadgeFromProfile(email));
+        }
+        tasks.push(refreshAdminClaim({ forceRefresh: true }));
+        Promise.allSettled(tasks).catch(() => {
+            // Background sync errors are logged inside each task; no-op here.
+        });
+    }
+
     // Handle form submission
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -368,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = true;
         submitButton.textContent = isSignUpMode ? 'Creating Account...' : 'Signing In...';
         hideMessages();
+        setGlobalLoader(true, isSignUpMode ? 'Creating your secure account...' : 'Signing you in...');
         
         // Hide discount warning
         const discountWarning = document.getElementById('discount-warning');
@@ -428,6 +451,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const promoInput = document.getElementById('discount-code');
                 setBadgeFromCode(promoInput ? promoInput.value : '');
+                sessionStorage.setItem('profileComplete', 'true');
+                setGlobalLoader(false);
                 
                 // Show success modal
                 document.getElementById('success-modal').style.display = 'flex';
@@ -442,21 +467,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.removeItem(GUEST_MODE_KEY);
                 sessionStorage.setItem(LAST_PROVIDER_KEY, 'password');
                 
-                // Sync profile/badge
-                await syncBadgeFromProfile(email);
-
-                let isAdmin = false;
-                try {
-                    const adminSession = await ensureAdminSession();
-                    isAdmin = adminSession.isAdmin;
-                } catch (err) {
-                    console.warn('Admin session check failed after password sign-in', err);
-                }
-
-                // Redirect after a short delay
-                setTimeout(() => {
-                    window.location.href = isAdmin ? 'admin.html' : 'index.html';
-                }, 1500);
+                queuePostAuthSync(email);
+                setGlobalLoader(true, 'Preparing your dashboard...');
+                redirectToPortal('index.html');
             }
 
         } catch (error) {
@@ -480,6 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showError(msg || 'An error occurred. Please try again.');
             }
+            setGlobalLoader(false);
         } finally {
             // Re-enable button
             submitButton.disabled = false;
@@ -513,6 +527,45 @@ function showSuccess(message) {
 function hideMessages() {
     document.getElementById('error-message').style.display = 'none';
     document.getElementById('success-message').style.display = 'none';
+}
+
+function getPostAuthDestination(defaultPath = 'index.html') {
+    try {
+        const params = new URLSearchParams(window.location.search || '');
+        const rawNext = params.get('next');
+        if (!rawNext) {
+            return defaultPath;
+        }
+        let decoded = rawNext;
+        try {
+            decoded = decodeURIComponent(rawNext);
+        } catch (_) {
+            // leave as-is if decoding fails
+        }
+
+        if (!decoded || /^https?:/i.test(decoded)) {
+            return defaultPath;
+        }
+
+        const normalized = decoded.replace(/^\//, '');
+        if (!normalized) {
+            return defaultPath;
+        }
+
+        if (normalized.toLowerCase().startsWith('admin')) {
+            return defaultPath;
+        }
+
+        return normalized;
+    } catch (err) {
+        console.warn('Unable to parse redirect param', err);
+        return defaultPath;
+    }
+}
+
+function redirectToPortal(fallbackPath = 'index.html') {
+    const destination = getPostAuthDestination(fallbackPath);
+    window.location.href = destination;
 }
 
 function beginAnonymousExplore() {
@@ -629,6 +682,8 @@ window.authHelpers = {
     startProviderSignIn: () => {
         console.warn('Provider sign-in helpers are not ready yet.');
     },
-    refreshAdminSession: (options) => ensureAdminSession(options || {}),
-    clearAdminSession
+    refreshAdminStatus: (options) => refreshAdminClaim(options || {}),
+    clearAdminSession,
+    redirectToPortal,
+    getPostAuthDestination
 };
