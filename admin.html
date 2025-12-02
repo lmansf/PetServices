@@ -408,6 +408,89 @@
     <script type="module" src="script.js"></script>
 
     <script>
+        const ADMIN_TOKEN_KEY = 'apsAdminToken';
+        const ADMIN_TOKEN_EXP_KEY = 'apsAdminTokenExpiresAt';
+        const ADMIN_STATUS_KEY = 'apsIsAdmin';
+
+        function cacheAdminSession(token, expiresAtSeconds) {
+            if (!token || !expiresAtSeconds) return;
+            sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+            sessionStorage.setItem(ADMIN_TOKEN_EXP_KEY, String(expiresAtSeconds * 1000));
+            sessionStorage.setItem(ADMIN_STATUS_KEY, 'true');
+        }
+
+        function purgeAdminSession() {
+            sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+            sessionStorage.removeItem(ADMIN_TOKEN_EXP_KEY);
+            sessionStorage.setItem(ADMIN_STATUS_KEY, 'false');
+        }
+
+        function getCachedAdminToken() {
+            const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+            const expiry = parseInt(sessionStorage.getItem(ADMIN_TOKEN_EXP_KEY), 10) || 0;
+            if (token && expiry && Date.now() < expiry) {
+                return token;
+            }
+            return null;
+        }
+
+        async function getOrRefreshAdminToken(forceRefresh = false) {
+            if (!forceRefresh) {
+                const cached = getCachedAdminToken();
+                if (cached) return cached;
+            }
+
+            if (!window.firebase || !firebase.functions) {
+                throw new Error('Firebase Functions are unavailable.');
+            }
+
+            try {
+                const callable = firebase.functions().httpsCallable('issueAdminToken');
+                const response = await callable();
+                const { token, expiresAt } = response?.data || {};
+                if (!token || !expiresAt) {
+                    throw new Error('Admin token missing from response.');
+                }
+                cacheAdminSession(token, expiresAt);
+                return token;
+            } catch (error) {
+                if (error?.code === 'permission-denied') {
+                    purgeAdminSession();
+                }
+                throw error;
+            }
+        }
+
+        async function callAdminFunction(functionName, payload = {}, options = {}) {
+            const forceRefreshToken = options.forceRefreshToken === true;
+            try {
+                const adminToken = await getOrRefreshAdminToken(forceRefreshToken);
+                const callable = firebase.functions().httpsCallable(functionName);
+                return await callable({ ...payload, adminToken });
+            } catch (error) {
+                if (!forceRefreshToken && error?.code === 'permission-denied') {
+                    purgeAdminSession();
+                    return callAdminFunction(functionName, payload, { forceRefreshToken: true });
+                }
+                throw error;
+            }
+        }
+
+        function handleAccessDenied(error) {
+            purgeAdminSession();
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'none';
+            const errDiv = document.getElementById('error-msg');
+            if (errDiv) {
+                errDiv.style.display = 'block';
+                const detail = (error && error.message) ? error.message : 'You are not authorized to view this dashboard.';
+                errDiv.innerHTML = `<strong>Access Denied</strong><br>${detail}`;
+            }
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 4000);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             // Wait for Firebase to initialize from script.js or firebase-config.js
             // We need to wait for auth state
@@ -428,14 +511,21 @@
                         return;
                     }
 
-                    // Check if user is the admin (simple client-side check for UX, real check is on server)
-                    const adminEmails = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
-                    if (!adminEmails.includes(user.email.toLowerCase())) {
-                        // Optional: Redirect non-admins or show warning
-                        // For now, we'll let the server reject the request if they aren't authorized
+                    try {
+                        await getOrRefreshAdminToken();
+                        loadData();
+                    } catch (error) {
+                        if (error?.code === 'permission-denied') {
+                            handleAccessDenied(error);
+                        } else {
+                            console.error(error);
+                            const errDiv = document.getElementById('error-msg');
+                            if (errDiv) {
+                                errDiv.style.display = 'block';
+                                errDiv.textContent = 'Unable to verify admin access. Please refresh or contact support.';
+                            }
+                        }
                     }
-
-                    loadData();
                 });
             }
         });
@@ -472,8 +562,7 @@
 
         async function loadData() {
             try {
-                const getAllUsers = firebase.functions().httpsCallable('getAllUsers');
-                const result = await getAllUsers();
+                const result = await callAdminFunction('getAllUsers');
                 allUsers = result.data;
                 renderUsers(allUsers);
             } catch (error) {
@@ -482,8 +571,8 @@
                 const errDiv = document.getElementById('error-msg');
                 errDiv.style.display = 'block';
                 
-                if (error.code === 'permission-denied') {
-                    errDiv.innerHTML = '<strong>Access Denied</strong><br>You are not authorized to view this page. Please sign in with an administrator account.';
+                if (error?.code === 'permission-denied') {
+                    handleAccessDenied(error);
                 } else {
                     errDiv.textContent = 'Error loading data: ' + error.message;
                 }
@@ -775,10 +864,9 @@
             }
 
             try {
-                const adminUpdateUserProfile = firebase.functions().httpsCallable('adminUpdateUserProfile');
-                await adminUpdateUserProfile({
+                await callAdminFunction('adminUpdateUserProfile', {
                     targetUid: user.id,
-                    updatedData: updatedData
+                    updatedData
                 });
 
                 // Update local data
@@ -795,7 +883,11 @@
 
             } catch (error) {
                 console.error('Update failed:', error);
-                alert('Failed to update profile: ' + error.message);
+                if (error?.code === 'permission-denied') {
+                    handleAccessDenied(error);
+                } else {
+                    alert('Failed to update profile: ' + error.message);
+                }
                 saveBtn.textContent = originalText;
                 saveBtn.disabled = false;
             }

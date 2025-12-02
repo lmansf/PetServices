@@ -39,6 +39,10 @@ const FOOTER_HTML = `<footer class="site-footer" aria-label="Amanda's Pet Servic
   </div>
 </footer>`;
 
+const ADMIN_STATUS_KEY = 'apsIsAdmin';
+const ADMIN_TOKEN_KEY = 'apsAdminToken';
+const ADMIN_TOKEN_EXP_KEY = 'apsAdminTokenExpiresAt';
+
 (function enforceSignInGate() {
   if (typeof window === 'undefined') return;
   try {
@@ -237,6 +241,16 @@ function isUserSignedIn() {
 function hasPromotionBadge() {
   const badge = sessionStorage.getItem('promotionBadge');
   return typeof badge === 'string' && (badge || '').toUpperCase() === 'DOGMOM';
+}
+
+function userIsAdmin() {
+  return sessionStorage.getItem(ADMIN_STATUS_KEY) === 'true';
+}
+
+function clearStoredAdminSession() {
+  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+  sessionStorage.removeItem(ADMIN_TOKEN_EXP_KEY);
+  sessionStorage.removeItem(ADMIN_STATUS_KEY);
 }
 
 function queuePromotionPricing() {
@@ -450,9 +464,6 @@ async function checkProfileCompletion(email, button) {
   }
 }
 
-// Account/email dropdown toggle
-const ADMIN_EMAILS = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
-
 function initializeAccountNav() {
   const dropdown = document.querySelector('.account-dropdown');
   if (!dropdown) return;
@@ -493,7 +504,7 @@ function initializeAccountNav() {
   if (userEmail) {
     checkProfileCompletion(userEmail, button);
     
-    const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
+    const isAdmin = userIsAdmin();
 
     if (isAdmin) {
         // Admin Menu
@@ -515,6 +526,7 @@ function initializeAccountNav() {
       sessionStorage.removeItem('userEmail');
       sessionStorage.removeItem('promotionBadge');
       sessionStorage.removeItem('guestExploring');
+      clearStoredAdminSession();
       dispatchPromotionBadgeChange();
       window.location.href = 'index.html';
     }));

@@ -10,7 +10,9 @@ const PROVIDER_LABELS = {
     facebook: 'Facebook'
 };
 
-const ADMIN_EMAILS = ['amansfld@gmail.com', 'lmansf96@gmail.com'];
+const ADMIN_TOKEN_KEY = 'apsAdminToken';
+const ADMIN_TOKEN_EXP_KEY = 'apsAdminTokenExpiresAt';
+const ADMIN_STATUS_KEY = 'apsIsAdmin';
 
 function notifyPromotionBadgeChange() {
     try {
@@ -18,6 +20,62 @@ function notifyPromotionBadgeChange() {
     } catch (err) {
         // Safe to ignore if window unavailable
     }
+}
+
+function setAdminStatusFlag(isAdmin) {
+    if (typeof sessionStorage === 'undefined') return;
+    if (isAdmin) {
+        sessionStorage.setItem(ADMIN_STATUS_KEY, 'true');
+    } else {
+        sessionStorage.setItem(ADMIN_STATUS_KEY, 'false');
+    }
+}
+
+function clearAdminSession() {
+    if (typeof sessionStorage === 'undefined') return;
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(ADMIN_TOKEN_EXP_KEY);
+    sessionStorage.removeItem(ADMIN_STATUS_KEY);
+}
+
+async function ensureAdminSession(options = {}) {
+    const forceRefresh = options.forceRefresh === true;
+    try {
+        const cachedToken = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+        const cachedExpiry = parseInt(sessionStorage.getItem(ADMIN_TOKEN_EXP_KEY), 10) || 0;
+        const hasValidCache = cachedToken && cachedExpiry && Date.now() < cachedExpiry;
+
+        if (!forceRefresh && hasValidCache) {
+            setAdminStatusFlag(true);
+            return { token: cachedToken, isAdmin: true };
+        }
+
+        if (!window.firebase || !firebase.functions) {
+            return { token: null, isAdmin: false };
+        }
+
+        const callable = firebase.functions().httpsCallable('issueAdminToken');
+        const response = await callable();
+        const { token, expiresAt } = response?.data || {};
+
+        if (token && expiresAt) {
+            sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+            sessionStorage.setItem(ADMIN_TOKEN_EXP_KEY, String(expiresAt * 1000));
+            setAdminStatusFlag(true);
+            return { token, isAdmin: true };
+        }
+    } catch (err) {
+        if (err?.code === 'permission-denied') {
+            clearAdminSession();
+            setAdminStatusFlag(false);
+            return { token: null, isAdmin: false };
+        }
+        console.warn('Admin session refresh failed', err);
+    }
+
+    clearAdminSession();
+    setAdminStatusFlag(false);
+    return { token: null, isAdmin: false };
 }
 
 // Get Firebase Cloud Function URL
@@ -137,10 +195,18 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Unable to sync promotion badge after provider sign-in', err);
         }
 
+        let isAdmin = false;
+        try {
+            const adminSession = await ensureAdminSession();
+            isAdmin = adminSession.isAdmin;
+        } catch (err) {
+            console.warn('Admin session check failed after provider sign-in', err);
+        }
+
         showSuccess('Signed in successfully! Redirecting...');
         setTimeout(() => {
             const needsOnboarding = !profileStatus.profileComplete;
-            if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+            if (isAdmin) {
                 window.location.href = 'admin.html';
             } else {
                 window.location.href = needsOnboarding ? 'firstform.html' : 'index.html';
@@ -379,13 +445,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Sync profile/badge
                 await syncBadgeFromProfile(email);
 
+                let isAdmin = false;
+                try {
+                    const adminSession = await ensureAdminSession();
+                    isAdmin = adminSession.isAdmin;
+                } catch (err) {
+                    console.warn('Admin session check failed after password sign-in', err);
+                }
+
                 // Redirect after a short delay
                 setTimeout(() => {
-                    if (ADMIN_EMAILS.includes(email.toLowerCase())) {
-                        window.location.href = 'admin.html';
-                    } else {
-                        window.location.href = 'index.html';
-                    }
+                    window.location.href = isAdmin ? 'admin.html' : 'index.html';
                 }, 1500);
             }
 
@@ -469,6 +539,7 @@ function setGuestSessionAndRedirect() {
     sessionStorage.removeItem(PROMOTION_BADGE_KEY);
     sessionStorage.removeItem(LAST_PROVIDER_KEY);
     sessionStorage.setItem(GUEST_MODE_KEY, 'true');
+    clearAdminSession();
     notifyPromotionBadgeChange();
     window.location.href = 'index.html';
 }
@@ -541,6 +612,7 @@ function signOut() {
     sessionStorage.removeItem(PROMOTION_BADGE_KEY);
     sessionStorage.removeItem(GUEST_MODE_KEY);
     sessionStorage.removeItem(LAST_PROVIDER_KEY);
+    clearAdminSession();
     const authInstance = getFirebaseAuthInstance();
     if (authInstance?.signOut) {
         authInstance.signOut().catch((error) => console.warn('Firebase sign-out failed', error));
@@ -556,5 +628,7 @@ window.authHelpers = {
     beginAnonymousExplore,
     startProviderSignIn: () => {
         console.warn('Provider sign-in helpers are not ready yet.');
-    }
+    },
+    refreshAdminSession: (options) => ensureAdminSession(options || {}),
+    clearAdminSession
 };
