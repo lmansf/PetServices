@@ -52,9 +52,6 @@ let lastGeneratedString = '';
 let tipAmount = 7.00;
 let tipSelected = '7';
 
-// Webstore service fee (automatically added when services are selected)
-const WEBSTORE_FEE = 2.00;
-
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
     initializeQuantityInputs();
@@ -62,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTipButtons();
     // initialize totals/UI
     updateTotalsFromQuantities();
-    setupFeeModal();
     selectProvider(selectedProvider.id);
     initializeCopyButton();
 
@@ -133,10 +129,7 @@ function updateTotalsFromQuantities() {
         }
     });
 
-    // subtotal is the sum of service lines (before fee)
     const subtotal = total;
-    // fee applies only when there are selected services; show fee row always but fee value will be 0 when no services selected
-    const feeValue = subtotal > 0 ? WEBSTORE_FEE : 0;
 
     if (breakdown.length === 0) {
         currentService = 'No items selected';
@@ -144,35 +137,20 @@ function updateTotalsFromQuantities() {
         currentService = breakdown.map(b => `${b.qty} × ${b.name}`).join(', ');
     }
 
-    // If there are selected services, add the webstore fee as a line item in the breakdown for itemized view
-    if (subtotal > 0) {
-        breakdown.push({ name: 'Webstore Fee', qty: 1, price: WEBSTORE_FEE, lineTotal: WEBSTORE_FEE });
-    }
-
-    // total before tip
-    const totalBeforeTip = Number((subtotal + feeValue).toFixed(2));
-    // currentAmount represents subtotal + fee (before tip)
-    currentAmount = totalBeforeTip;
+    currentAmount = subtotal;
 
     updatePaymentDetailsDisplay(/*subtotal=*/ subtotal, breakdown);
 }
 
 function updatePaymentDetailsDisplay(amount, breakdown) {
     const subtotal = amount;
-    // compute fee based on subtotal (always show fee row; value 0 when no items)
-    const fee = subtotal > 0 ? WEBSTORE_FEE : 0;
-    const total = Number((subtotal + fee + (Number(tipAmount) || 0)).toFixed(2));
+    const total = Number((subtotal + (Number(tipAmount) || 0)).toFixed(2));
 
     document.getElementById('selected-service').textContent = breakdown.length ? currentService : 'No items selected';
-    // Update the explicit rows: fee, subtotal, tip, total
+    // Update the explicit rows: subtotal, tip, total
     const subtotalEl = document.getElementById('payment-subtotal');
-    const feeEl = document.getElementById('payment-fee');
     const tipEl = document.getElementById('payment-tip');
     const totalEl = document.getElementById('payment-total');
-    if (feeEl) {
-        feeEl.textContent = formatCurrency(fee);
-        feeEl.style.display = 'inline';
-    }
     if (subtotalEl) subtotalEl.textContent = formatCurrency(subtotal);
     if (tipEl) tipEl.textContent = formatCurrency(Number(tipAmount) || 0);
     if (totalEl) totalEl.textContent = formatCurrency(total);
@@ -220,47 +198,6 @@ function updatePaymentDetails(amount, service) {
 function formatCurrency(amount) {
     if (amount === 0) return 'Free';
     return `$${amount.toFixed(2)}`;
-}
-
-// Fee modal setup
-function setupFeeModal() {
-    const openBtn = document.getElementById('fee-info');
-    const modal = document.getElementById('fee-modal');
-    const backdrop = document.getElementById('fee-modal-backdrop');
-    const closeBtn = document.getElementById('fee-modal-close');
-
-    if (!openBtn || !modal) return;
-
-    function openModal() {
-        modal.hidden = false;
-        modal.removeAttribute('aria-hidden');
-        // focus trap: move focus to close button
-        if (closeBtn) closeBtn.focus();
-        // disable body scroll
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-        modal.hidden = true;
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-        openBtn.focus();
-    }
-
-    openBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        openModal();
-    });
-
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (backdrop) backdrop.addEventListener('click', closeModal);
-
-    // close on ESC
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal && !modal.hidden) {
-            closeModal();
-        }
-    });
 }
 
 // Payment method selection

@@ -7,15 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Coustard:wght@400;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="payment-styles.css" />
-    <style>
-    /* Minimal modal styling for fee explanation */
-    .modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1200; }
-    .modal[hidden] { display: none; }
-    .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
-    .modal-content { position: relative; background: #fff; border-radius: 8px; padding: 1rem 1.25rem; max-width: 520px; width: 92%; box-shadow: 0 10px 30px rgba(0,0,0,0.18); z-index: 2; }
-    .modal-close { position: absolute; right: 8px; top: 6px; background: transparent; border: none; font-size: 1.25rem; cursor: pointer; }
-    .fee-info-btn { background: transparent; border: none; padding: 0 4px; margin-left: 6px; cursor: pointer; color: inherit; }
-    </style>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="imgs/icons8-pet-16.png">
@@ -115,14 +106,6 @@
                         <span class="payment-value" id="selected-service">House Sitting</span>
                     </div>
                     <div class="payment-row">
-                        <span class="payment-label">Webstore Fee
-                            <button id="fee-info" class="fee-info-btn" aria-label="About webstore fee" type="button">
-                                <i class="fa-solid fa-info-circle" aria-hidden="true"></i>
-                            </button>
-                        </span>
-                        <span class="payment-value" id="payment-fee">$2.00</span>
-                    </div>
-                    <div class="payment-row">
                         <span class="payment-label">Subtotal:</span>
                         <span class="payment-value" id="payment-subtotal">$50.00</span>
                     </div>
@@ -152,16 +135,6 @@
     </div>
 
     <div id="footer-container"></div>
-
-    <!-- Fee explanation modal -->
-    <div id="fee-modal" class="modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="fee-modal-title">
-        <div class="modal-backdrop" id="fee-modal-backdrop"></div>
-        <div class="modal-content" role="document">
-            <button id="fee-modal-close" class="modal-close" aria-label="Close fee info">×</button>
-            <h2 id="fee-modal-title">Webstore Fee</h2>
-            <p>The webstore fee helps cover payment processing and the maintenance of the online store. It is applied per order when items are selected. If no items are selected, the fee shows as $0.00.</p>
-        </div>
-    </div>
 
     <script src="payment-script.js"></script>
 </body>
