@@ -31,13 +31,12 @@ const PAYMENT_PROVIDERS = [
         makeUrl: (amount, service) => `https://www.paypal.me/${encodeURIComponent('YourPayPalUser')}/${encodeURIComponent(amount.toString())}`
     },
     {
-        id: 'stripe',
-        name: 'Stripe',
+        id: 'cashapp',
+        name: 'Cash App',
         type: 'url',
-        // Stripe usually requires a hosted Checkout session or Payment Link — use your hosted link here.
-        // Placeholder: replace with your real Stripe checkout/payment link that accepts an amount parameter.
-        handle: 'your-stripe-checkout',
-        makeUrl: (amount, service) => `https://example.com/stripe-checkout?amount=${encodeURIComponent(amount)}&service=${encodeURIComponent(service)}`
+        // replace with your Cash App $cashtag (without the $)
+        handle: 'your-cashtag',
+        makeUrl: (amount, service) => `https://cash.app/$${encodeURIComponent('your-cashtag')}/${amount}`
     }
 ];
 
@@ -267,7 +266,7 @@ function providerIconFor(id) {
     switch (id) {
         case 'venmo': return '📱';
         case 'paypal': return '💸';
-        case 'stripe': return '💳';
+        case 'cashapp': return '💲';
         default: return '🔗';
     }
 }
