@@ -832,47 +832,39 @@
             `;
 
             // Address Information
-            if (data.address) {
-                const addr = data.address;
-                const fullAddress = [
-                    addr.street,
-                    addr.apt ? `Apt/Suite ${addr.apt}` : '',
-                    `${addr.city}, ${addr.state} ${addr.zip}`
-                ].filter(Boolean).join('<br>');
-
-                html += `
-                    <div class="profile-section" id="address-section">
-                        <div class="section-header">
-                            <h2><i class="fas fa-home"></i> Address</h2>
-                            <button class="edit-btn" onclick="editSection('address')">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
+            const addr = data.address || {};
+            html += `
+                <div class="profile-section" id="address-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-home"></i> Address</h2>
+                        <button class="edit-btn" onclick="editSection('address')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                    <div class="info-grid" id="address-view">
+                        <div class="info-item">
+                            <span class="info-label">Street Address</span>
+                            <span class="info-value">${addr.street || 'Not provided'}</span>
                         </div>
-                        <div class="info-grid" id="address-view">
-                            <div class="info-item">
-                                <span class="info-label">Street Address</span>
-                                <span class="info-value">${addr.street || 'Not provided'}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Apartment/Suite</span>
-                                <span class="info-value">${addr.apt || 'Not provided'}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">City</span>
-                                <span class="info-value">${addr.city || 'Not provided'}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">State</span>
-                                <span class="info-value">${addr.state || 'Not provided'}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">ZIP Code</span>
-                                <span class="info-value">${addr.zip || 'Not provided'}</span>
-                            </div>
+                        <div class="info-item">
+                            <span class="info-label">Apartment/Suite</span>
+                            <span class="info-value">${addr.apt || 'Not provided'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">City</span>
+                            <span class="info-value">${addr.city || 'Not provided'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">State</span>
+                            <span class="info-value">${addr.state || 'Not provided'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">ZIP Code</span>
+                            <span class="info-value">${addr.zip || 'Not provided'}</span>
                         </div>
                     </div>
-                `;
-            }
+                </div>
+            `;
 
             // Additional Comments
             html += `
