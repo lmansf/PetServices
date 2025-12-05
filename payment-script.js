@@ -47,9 +47,9 @@ let paymentAddress = PAYMENT_CONFIG.defaultAddress;
 let statusCheckTimer = null;
 let selectedProvider = PAYMENT_PROVIDERS[0];
 let lastGeneratedString = '';
-// Tip state (default $7 as requested)
-let tipAmount = 7.00;
-let tipSelected = '7';
+// Tip state (default custom $0.00)
+let tipAmount = 0.00;
+let tipSelected = 'custom';
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
@@ -319,12 +319,14 @@ function initializeTipButtons() {
         });
     });
 
-    // set default ($7) active on load
-    const defaultBtn = tipButtonsContainer.querySelector('.tip-btn[data-tip="7"]');
+    // set default (custom $0) active on load
+    const defaultBtn = tipButtonsContainer.querySelector('.tip-btn[data-tip="custom"]');
     if (defaultBtn) {
         defaultBtn.classList.add('active');
-        tipSelected = '7';
-        tipAmount = 7;
+        tipSelected = 'custom';
+        tipAmount = 0;
+        if (customInputWrap) customInputWrap.style.display = 'block';
+        if (customInput) customInput.value = '0.00';
     }
 
     if (customInput) {

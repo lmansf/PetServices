@@ -58,19 +58,19 @@
                         </div>
                     </div>
 
-                    <div class="service-row" data-service-id="dropin">
+                                        <div class="service-row" data-service-id="dropin">
                         <div class="service-info">
                             <div class="service-icon">🐾</div>
                             <div>
-                                <div class="service-name">Drop In Visit</div>
-                                <div class="service-amount">$30 / visit</div>
+                                <div class="service-name">Drop Ins & Dog Walking</div>
+                                <div class="service-amount">$20 / visit</div>
                             </div>
                         </div>
                         <div class="service-qty">
                             <label for="qty-dropin">Qty</label>
                             <div class="qty-control">
                                 <button class="qty-btn qty-decrease" data-target="qty-dropin" aria-label="Decrease quantity"></button>
-                                <input id="qty-dropin" class="qty-input" type="number" min="0" value="0" data-price="30">
+                                <input id="qty-dropin" class="qty-input" type="number" min="0" value="0" data-price="20">
                                 <button class="qty-btn qty-increase" data-target="qty-dropin" aria-label="Increase quantity"></button>
                             </div>
                         </div>
@@ -84,14 +84,14 @@
                 <div class="tip-row">
                     <div class="tip-buttons" id="tip-buttons">
                         <button class="tip-btn" data-tip="5">$5</button>
-                        <button class="tip-btn active" data-tip="7">$7</button>
+                        <button class="tip-btn" data-tip="7">$7</button>
                         <button class="tip-btn" data-tip="15">$15</button>
                         <button class="tip-btn" data-tip="25">$25</button>
-                        <button class="tip-btn" data-tip="custom" id="tip-custom-btn">Custom</button>
+                        <button class="tip-btn active" data-tip="custom" id="tip-custom-btn">Custom</button>
                     </div>
-                    <div class="tip-custom-input" id="tip-custom-input" style="display:none;">
+                    <div class="tip-custom-input" id="tip-custom-input" style="display:block;">
                         <label for="tip-custom-value">Custom amount (USD)</label>
-                        <input id="tip-custom-value" type="number" min="0" step="0.01" placeholder="Enter amount">
+                        <input id="tip-custom-value" type="number" min="0" step="0.01" placeholder="Enter amount" value="0.00">
                     </div>
                 </div>
             </div>
@@ -110,11 +110,11 @@
                     </div>
                     <div class="payment-row">
                         <span class="payment-label">Tip:</span>
-                        <span class="payment-value" id="payment-tip">$7.00</span>
+                        <span class="payment-value" id="payment-tip">$0.00</span>
                     </div>
                     <div class="payment-row total-row">
                         <span class="payment-label">Total:</span>
-                        <span class="payment-value" id="payment-total">$57.00</span>
+                        <span class="payment-value" id="payment-total">$50.00</span>
                     </div>
                 </div>
             </div>
