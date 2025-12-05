@@ -5,6 +5,11 @@ const HEADER_HTML = `<div class="hero-banner" style="width:100%;max-width:100vw;
 </div>`;
 
 const NAV_HTML = `<nav class="topnav account-nav">
+  <div class="nav-left">
+    <span>Contact: amansfld1@gmail.com | (727) 346-8269</span>
+    <a href="feedback.html">Feedback</a>
+    <a href="About.html">About Me</a>
+  </div>
   <div class="account-dropdown">
     <button class="account-button" type="button" aria-haspopup="true" aria-expanded="false">
       <span class="account-label">Guest</span>
@@ -13,8 +18,10 @@ const NAV_HTML = `<nav class="topnav account-nav">
       </span>
     </button>
     <div class="account-menu" role="menu">
+      <a href="About.html" role="menuitem" class="mobile-only">About Me</a>
       <a href="index.html" role="menuitem" class="nav-services-link nav-highlightable">Services</a>
       <a href="payment.html" role="menuitem" class="nav-payment-link nav-highlightable">Payment</a>
+      <a href="feedback.html" role="menuitem" class="mobile-only">Feedback</a>
       <hr>
       <button type="button" class="logout-button nav-highlightable" role="menuitem">Sign In</button>
     </div>

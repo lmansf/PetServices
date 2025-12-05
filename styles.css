@@ -1,30 +1,130 @@
-/* Account/email dropdown nav - positioned in bottom right of hero banner */
+/* Account/email dropdown nav - Full width bar */
 .topnav.account-nav {
-  background-color: #7e57a8f5;
-  padding: 0.46rem 1.15rem;
+  background-color: #7e57a8; /* Keep it purple as per user image, or maybe they want it to be the ribbon? */
+  /* Wait, if I make it black, it might look too different from the image they sent which shows purple. */
+  /* The image shows a purple bar. Maybe they want the ribbon to be purple? */
+  /* But they said "containing our original navbar". */
+  /* If the original navbar was purple, and the ribbon is purple, they merge. */
+  /* Let's stick to purple ribbon for now, but make the button distinct if needed. */
+  /* Actually, if the user says "original drop down button should not be the main navbar", */
+  /* and the image shows a purple bar with rounded corners... */
+  /* Maybe they want the ribbon to be full width (no corners) and the button to be... something else? */
+  /* Let's try making the ribbon full width first. */
+  
+  background-color: #7e57a8;
+  padding: 0.5rem 2rem;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  position: absolute;
-  top: 9.5%;
-  right: 1rem;
+  position: relative;
+  width: 100vw; /* Force full viewport width */
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  border-radius: 0 !important; /* Ensure no rounded corners */
   z-index: 10002;
-  border-radius: 9px;
   overflow: visible;
+  box-sizing: border-box;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1rem;
+  padding-left: max(2rem, calc(50vw - 500px)); /* Align with content if possible, or just padding */
+}
+
+.account-dropdown {
+  padding-right: max(2rem, calc(50vw - 500px));
+}
+
+/* Style the button to look like a distinct element if desired, 
+   but for now just ensure the ribbon is correct. 
+   The user said "original drop down button should not be the main navbar".
+   This might mean they want the button to look like a button.
+*/
+.account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.46rem;
+  background: rgba(255, 255, 255, 0.15); /* Slight background to distinguish it */
+  color: white;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.4rem 1.35rem;
+  font-size: 1.09rem;
+  cursor: pointer;
+  font-weight: 500;
+  min-width: 180px;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.account-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.nav-left a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.nav-left a:hover {
+  opacity: 0.8;
+}
+
+/* Hide footer on desktop */
+@media (min-width: 769px) {
+  .site-footer {
+    display: none !important;
+  }
+  #footer-container {
+    display: none;
+  }
+  .mobile-only {
+    display: none !important;
+  }
 }
 
 @media (max-width: 768px) {
   .topnav.account-nav {
-    position: relative;
-    top: auto;
-    right: auto;
-    left: auto;
-    margin: 0.25rem auto 0.65rem;
+    justify-content: center;
+    padding: 0.5rem 1rem;
     width: fit-content;
     max-width: calc(100% - 2rem);
-    display: flex;
-    justify-content: center;
-    transform: none;
+    left: auto;
+    right: auto;
+    margin: 0.25rem auto 0.65rem;
+    border-radius: 9px;
+    background-color: #7e57a8f5;
+  }
+  
+  .nav-left {
+    display: none;
+  }
+  
+  /* Ensure footer is visible on mobile */
+  .site-footer {
+    display: block !important;
+  }
+  #footer-container {
+    display: block;
+  }
+  
+  .account-button {
+    background: transparent;
+    border: none;
+    padding: 0.4rem 1.35rem;
+  }
+  
+  .account-dropdown {
+    padding-right: 0;
   }
 }
 
@@ -32,21 +132,7 @@
   position: relative;
 }
 
-.account-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.46rem;
-  background: transparent;
-  color: white;
-  border-radius: 999px;
-  border: none;
-  padding: 0.4rem 1.35rem;
-  font-size: 1.09rem;
-  cursor: pointer;
-  font-weight: 500;
-  min-width: 180px;
-  justify-content: center;
-}
+
 
 .account-button .account-label {
   display: inline-flex;
@@ -2268,6 +2354,15 @@ grid-row: 5 / span 3;
   filter: blur(7px) brightness(0.85);
   opacity: 0.85;
   pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .site-footer__video {
+    display: none;
+  }
+  .site-footer {
+    background: #663399; /* Fallback to brand purple or whatever color is desired */
+  }
 }
 
 .site-footer__overlay {
