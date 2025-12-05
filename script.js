@@ -1,12 +1,15 @@
 // Load header and navigation HTML dynamically
 // Templates stored in JavaScript for compatibility with file:// protocol
-const HEADER_HTML = `<div class="hero-banner" style="width:100%;max-width:100vw;overflow:hidden;margin-bottom:0.5rem;">
+const HEADER_HTML = `<div class="hero-banner" style="width:100%;max-width:100vw;overflow:hidden;margin-bottom:0.5rem;position:relative;">
+  <div class="hero-contact-overlay">
+    <span>amansfld1@gmail.com</span>
+    <span>(727) 346-8269</span>
+  </div>
   <img src="Amanda's Pet Services HERO.svg" alt="Dog walking hero" style="width:100%;display:block;">
 </div>`;
 
 const NAV_HTML = `<nav class="topnav account-nav">
   <div class="nav-left">
-    <span>Contact: amansfld1@gmail.com | (727) 346-8269</span>
     <a href="feedback.html">Feedback</a>
     <a href="About.html">About Me</a>
   </div>

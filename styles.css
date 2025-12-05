@@ -38,6 +38,41 @@
   padding-left: max(2rem, calc(50vw - 500px)); /* Align with content if possible, or just padding */
 }
 
+.hero-contact-overlay {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10001;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.hero-contact-overlay a {
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.hero-contact-overlay a:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .hero-contact-overlay {
+    display: none;
+  }
+  
+  .nav-left {
+    display: none;
+  }
+}
+
 .account-dropdown {
   padding-right: max(2rem, calc(50vw - 500px));
 }
@@ -68,16 +103,7 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
-.nav-left a {
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
-  transition: opacity 0.2s;
-}
 
-.nav-left a:hover {
-  opacity: 0.8;
-}
 
 /* Hide footer on desktop */
 @media (min-width: 769px) {

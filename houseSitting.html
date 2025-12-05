@@ -24,7 +24,11 @@
   </head>
   <body>
     <div id="header-container">
-      <div class="hero-banner" style="width:100%;max-width:100vw;overflow:hidden;margin-bottom:0.5rem;">
+      <div class="hero-banner" style="width:100%;max-width:100vw;overflow:hidden;margin-bottom:0.5rem;position:relative;">
+        <div class="hero-contact-overlay">
+          <span>amansfld1@gmail.com</span>
+          <span>(727) 346-8269</span>
+        </div>
         <a href="https://amandaspetservices-55506.web.app/index.html">
           <img src="WinterUpdated.svg" alt="Dog walking hero" style="width:100%;display:block;">
         </a>
@@ -32,6 +36,10 @@
     </div>
     <div id="nav-container">
       <nav class="topnav account-nav">
+        <div class="nav-left">
+          <a href="feedback.html">Feedback</a>
+          <a href="About.html">About Me</a>
+        </div>
         <div class="account-dropdown">
           <button class="account-button" type="button" aria-haspopup="true" aria-expanded="false">
             <span class="account-label">Guest</span>
@@ -40,11 +48,11 @@
             </span>
           </button>
           <div class="account-menu" role="menu">
-            <a href="About.html" role="menuitem">About Me</a>
+            <a href="About.html" role="menuitem" class="mobile-only">About Me</a>
             <a href="index.html" role="menuitem" class="nav-services-link nav-highlightable nav-highlight">Services</a>
             <a href="profile.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Profile</a>
             <a href="firstform.html" role="menuitem" class="auth-hidden" data-auth="signed-in">First Form</a>
-            <a href="feedback.html" role="menuitem" class="auth-hidden" data-auth="signed-in">Feedback</a>
+            <a href="feedback.html" role="menuitem" class="auth-hidden mobile-only" data-auth="signed-in">Feedback</a>
             <hr>
             <button type="button" class="logout-button nav-highlightable" role="menuitem">Log out</button>
           </div>
