@@ -29,11 +29,10 @@ const FOOTER_HTML = `<footer class="site-footer" aria-label="Amanda's Pet Servic
   <div class="site-footer__overlay">
     <div class="site-footer__content">
       <h2>Connect With Me</h2>
-      <p class="site-footer__contact">Contact: amansfld@gmail.com | (727) 346-8269</p>
+      <p class="site-footer__contact">Contact: amansfld1@gmail.com | (727) 346-8269</p>
       <div class="site-footer__links" role="group" aria-label="Primary footer links">
         <a href="feedback.html">Feedback</a>
         <a href="About.html">About Me</a>
-        <a href="https://www.rover.com/members/amanda-m-retired-dog-mom-ready-to-play/" target="_blank" rel="noopener">Rover Profile</a>
       </div>
     </div>
   </div>
