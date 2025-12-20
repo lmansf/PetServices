@@ -12,6 +12,7 @@ const NAV_HTML = `<nav class="topnav account-nav">
   <div class="nav-left">
     <a href="feedback.html">Feedback</a>
     <a href="About.html">About Me</a>
+    <a href="payment.html" class="nav-payment-link nav-highlightable">Make a Payment</a>
   </div>
   <div class="account-dropdown">
     <button class="account-button" type="button" aria-haspopup="true" aria-expanded="false">
@@ -21,11 +22,6 @@ const NAV_HTML = `<nav class="topnav account-nav">
       </span>
     </button>
     <div class="account-menu" role="menu">
-      <a href="About.html" role="menuitem" class="mobile-only">About Me</a>
-      <a href="index.html" role="menuitem" class="nav-services-link nav-highlightable">Services</a>
-      <a href="payment.html" role="menuitem" class="nav-payment-link nav-highlightable">Payment</a>
-      <a href="feedback.html" role="menuitem" class="mobile-only">Feedback</a>
-      <hr>
       <button type="button" class="logout-button nav-highlightable" role="menuitem">Sign In</button>
     </div>
   </div>
@@ -41,8 +37,10 @@ const FOOTER_HTML = `<footer class="site-footer" aria-label="Amanda's Pet Servic
       <h2>Connect With Me</h2>
       <p class="site-footer__contact">Contact: amansfld1@gmail.com | (727) 346-8269</p>
       <div class="site-footer__links" role="group" aria-label="Primary footer links">
-        <a href="feedback.html">Feedback</a>
+        <a href="index.html">Services</a>
+        <a href="payment.html">Make a Payment</a>
         <a href="About.html">About Me</a>
+        <a href="feedback.html">Feedback</a>
       </div>
     </div>
   </div>
@@ -390,7 +388,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const headerContainer = document.getElementById('header-container');
   const navContainer = document.getElementById('nav-container');
-  const reviewsContainer = document.getElementById('reviews-container');
   const footerContainer = document.getElementById('footer-container');
   
   if (headerContainer) {
@@ -420,14 +417,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  if (reviewsContainer) {
-    hydrateFragment({
-      url: 'reviews.html',
-      container: reviewsContainer,
-      afterRender: () => prepareReviewCarousel(reviewsContainer)
-    });
-  }
-
   if (footerContainer) {
     hydrateFragment({
       url: 'footer.html',
@@ -451,11 +440,6 @@ document.addEventListener('DOMContentLoaded', function() {
   scheduleIdleLazyLoad();
   updateBookingActions();
 });
-
-function prepareReviewCarousel(container) {
-  if (!container) return;
-  observeLazyFeature(container, 'initReviewCarousel', [{ container }]);
-}
 
 async function checkProfileCompletion(email, button) {
   // Check session storage first
@@ -540,15 +524,6 @@ function initializeAccountNav() {
   // Clear existing menu items to rebuild based on role
   menu.innerHTML = '';
 
-  const createLink = (text, href, extraClass = '') => {
-    const a = document.createElement('a');
-    a.href = href;
-    a.textContent = text;
-    a.setAttribute('role', 'menuitem');
-    if (extraClass) a.className = extraClass;
-    return a;
-  };
-
   const createButton = (text, onClick) => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -559,50 +534,9 @@ function initializeAccountNav() {
     return btn;
   };
 
-  const createHr = () => document.createElement('hr');
-  const appendCoreLinks = (includeProfile = false) => {
-    menu.appendChild(createLink('Make a Payment', 'payment.html', 'nav-payment-link nav-highlightable'));
-    menu.appendChild(createLink('Services', 'index.html', 'nav-services-link nav-highlightable'));
-    if (includeProfile) {
-      menu.appendChild(createLink('My Profile', 'profile.html'));
-    }
-  };
-
-  let adminLinkEl = null;
-  let adminCheckPromise = null;
-
-  const insertAdminLink = () => {
-    if (adminLinkEl || !menu) return;
-    adminLinkEl = createLink('Admin Management', 'admin.html');
-    menu.insertBefore(adminLinkEl, menu.firstChild);
-  };
-
-  const runAdminCheckOnce = () => {
-    if (!userEmail || adminLinkEl) return;
-    if (userIsAdmin()) {
-      insertAdminLink();
-      return;
-    }
-    if (adminCheckPromise) return;
-    adminCheckPromise = refreshAdminStatus({ forceRefresh: true })
-      .then((isAdmin) => {
-        if (isAdmin) insertAdminLink();
-        return isAdmin;
-      })
-      .catch(err => {
-        console.warn('Admin status refresh failed', err);
-      })
-      .finally(() => {
-        adminCheckPromise = null;
-      });
-  };
-
   if (userEmail) {
     checkProfileCompletion(userEmail, button);
-    appendCoreLinks(true);
-
-    // Log Out
-    menu.appendChild(createHr());
+    // Log Out only
     menu.appendChild(createButton('Log out', (e) => {
       e.preventDefault();
       sessionStorage.removeItem('userEmail');
@@ -614,9 +548,7 @@ function initializeAccountNav() {
     }));
 
   } else {
-    // Guest Menu
-    appendCoreLinks(false);
-    menu.appendChild(createHr());
+    // Guest Menu: Sign in only
     menu.appendChild(createButton('Sign in', (e) => {
         e.preventDefault();
         const currentPath = (typeof window !== 'undefined')
@@ -629,10 +561,6 @@ function initializeAccountNav() {
 
   updateBookingActions();
 
-  // Highlight services link if it exists
-  const servicesLink = menu.querySelector('.nav-services-link');
-  if (servicesLink) servicesLink.classList.add('nav-highlight');
-
   function setOpen(isOpen) {
     dropdown.classList.toggle('open', isOpen);
     button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
@@ -641,9 +569,7 @@ function initializeAccountNav() {
   button.addEventListener('click', () => {
     const isOpen = !dropdown.classList.contains('open');
     setOpen(isOpen);
-    if (isOpen && userEmail) {
-      runAdminCheckOnce();
-    }
+    // No additional dynamic links to build when opening
   });
 
   // Close when clicking outside
