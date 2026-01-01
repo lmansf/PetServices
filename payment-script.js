@@ -21,8 +21,9 @@ const PAYMENT_PROVIDERS = [
         // replace with your Venmo username
         handle: 'amanda-mansfield-82153',
         makeUrl: (amount, service) => `https://venmo.com/${encodeURIComponent('amanda-mansfield-82153')}?txn=pay&amount=${encodeURIComponent(amount)}&note=${encodeURIComponent(service)}`
-    },
-    {
+    }
+    /*
+    ,{
         id: 'paypal',
         name: 'PayPal.me',
         type: 'url',
@@ -38,6 +39,7 @@ const PAYMENT_PROVIDERS = [
         handle: 'your-cashtag',
         makeUrl: (amount, service) => `https://cash.app/$${encodeURIComponent('your-cashtag')}/${amount}`
     }
+    */
 ];
 
 // State
